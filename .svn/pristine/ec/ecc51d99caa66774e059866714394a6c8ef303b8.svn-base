@@ -1,0 +1,167 @@
+package com.wzlue.chain.chatMsg.service.impl;
+
+import com.wzlue.chain.chatMsg.entity.RegUser;
+import com.wzlue.chain.chatMsg.service.api.impl.EasemobIMUsers;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.sys.dao.ImageDao;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysUserService;
+import io.swagger.client.model.RegisterUsers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.chatMsg.dao.ChatMessageDao;
+import com.wzlue.chain.chatMsg.entity.ChatMessageEntity;
+import com.wzlue.chain.chatMsg.service.ChatMessageService;
+
+import static com.wzlue.chain.sys.common.util.ShiroUtils.getUserId;
+
+
+@Service("chatMessageService")
+public class ChatMessageServiceImpl implements ChatMessageService {
+    @Autowired
+    private ChatMessageDao chatMessageDao;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;//企业信息
+    @Autowired
+    private SysUserService sysUserService;
+    @Autowired
+    private final static EasemobIMUsers easemobIMUsers = new EasemobIMUsers();
+    @Autowired
+    private ImageDao imageDao;
+
+    //注册环信
+    public void createNewIMUser(String username) {
+        RegUser regUser = new RegUser();
+        regUser.setUsername(username);
+        regUser.setPassword(username);
+        regUser.setNickname(username);
+        RegisterUsers registerUsers = new RegisterUsers();
+        io.swagger.client.model.User p = new io.swagger.client.model.User().username(regUser.getUsername()).password(regUser.getPassword());
+        registerUsers.add(p);
+        Object result = easemobIMUsers.createNewIMUserSingle(registerUsers);
+    }
+
+    @Override
+    public void deleteImUserByUserName(String username) {
+        Object result = easemobIMUsers.deleteIMUserByUserName(username);
+        System.out.println(result);
+    }
+    @Override
+    public void deleteImUserByUserNames(String[] usernames) {
+        for (String username : usernames) {
+            Object result = easemobIMUsers.deleteIMUserByUserName(username);
+            System.out.println(result);
+        }
+    }
+
+    @Override
+    public List<Map> querytemporaryList(Map query) {
+        List<Map> list = chatMessageDao.querytemporaryList(query);
+        for (Map map : list) {
+            Long userId = (Long) map.get("user_id");
+            MerchantCompanyEntity company = merchantCompanyService.queryByUserId(userId);
+            if (company != null) {
+                map.put("companyName", company.getCompanyName());
+                ImageEntity image = imageDao.queryCompanyLogo(company.getUserId());
+                if (image != null) {
+                    map.put("companyLogo", image.getPicUrl());
+                }
+            }
+        }
+//			int  total=chatMessageDao.querytemporarytotal(query);
+        return list;
+    }
+
+    @Override
+    public int querytemporaryTotal(Map query) {
+        return 0;
+    }
+
+    @Override
+    public List<Map> queryRecentContacts(Map query) {
+        List<Map> list = chatMessageDao.queryRecentContacts(query);
+        for (Map map : list) {
+            Long userId = (Long) map.get("user_id");
+            MerchantCompanyEntity company = merchantCompanyService.queryByUserId(userId);
+            if (company != null) {
+                map.put("companyName", company.getCompanyName());
+                ImageEntity image = imageDao.queryCompanyLogo(company.getUserId());
+                if (image != null) {
+                    map.put("companyLogo", image.getPicUrl());
+                }
+            }
+        }
+        return list;
+    }
+    @Override
+    public ChatMessageEntity queryObject(Integer id) {
+        return chatMessageDao.queryObject(id);
+    }
+
+    @Override
+    public List<ChatMessageEntity> queryList(Map<String, Object> map) {
+        List<ChatMessageEntity> messageList = chatMessageDao.queryList(map);
+
+        Object curAcceptMsgObjType = map.get("curAcceptMsgObjType");
+        if (curAcceptMsgObjType != null && curAcceptMsgObjType.toString().equals("chat")) {
+            for (ChatMessageEntity message : messageList) {
+                SysUserEntity user = sysUserService.queryByUserName(message.getToUser());
+                if (user != null && user.getCompanyId() != null) {
+                    MerchantCompanyEntity toCompany = merchantCompanyService.queryObject(user.getCompanyId().intValue());
+                    if (toCompany != null) {
+                        message.setToPic(toCompany.getShopLogo());
+                    }
+                }
+            }
+        }
+        return messageList;
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return chatMessageDao.queryTotal(map);
+    }
+
+    @Override
+    public void save(ChatMessageEntity chatMessage) {
+        chatMessageDao.save(chatMessage);
+    }
+
+    @Override
+    public void update(ChatMessageEntity chatMessage) {
+        chatMessageDao.update(chatMessage);
+    }
+
+    @Override
+    public void delete(Integer id) {
+        chatMessageDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Integer[] ids) {
+        chatMessageDao.deleteBatch(ids);
+    }
+
+    @Override
+    public List<Map> querytemporaryToUserList(Query query) {
+        List<Map> list = chatMessageDao.querytemporaryToUserList(query);
+        return list;
+    }
+
+    @Override
+    public int insertChat(ChatMessageEntity chat) {
+        chat.setType("chat");
+        int count = chatMessageDao.insertChat(chat);
+        return count;
+
+    }
+
+}

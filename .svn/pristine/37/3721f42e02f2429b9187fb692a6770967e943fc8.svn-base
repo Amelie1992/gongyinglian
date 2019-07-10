@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOfferCustomsDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity" id="declareOfferCustomsMap">
+        <result property="id" column="id"/>
+        <result property="offerId" column="offer_id"/>
+        <result property="customsName" column="customs_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity">
+		SELECT * FROM declare_offer_customs WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity">
+        SELECT * FROM declare_offer_customs
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM declare_offer_customs
+	</select>
+    <select id="getListById" resultType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity">
+        SELECT d.* FROM  declare_offer_customs d
+        WHERE d.offer_id=#{value}
+
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO declare_offer_customs
+        (
+        `offer_id`,
+        `customs_name`,
+        `company_id`,
+        `dept_id`,
+        `create_by`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{offerId},
+        #{customsName},
+        #{companyId},
+        #{deptId},
+        #{createBy},
+        #{authorizesId}
+        )
+	</insert>
+
+    <insert id="saveList">
+        INSERT INTO declare_offer_customs
+        (
+        `offer_id`,
+        `customs_name`,
+        `company_id`,
+        `dept_id`,
+        `create_by`,
+        `authorizes_id`
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.offerId},
+            #{item.customsName},
+            #{item.companyId},
+            #{item.deptId},
+            #{item.createBy},
+            #{item.authorizesId}
+            )
+        </foreach>
+
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity">
+        UPDATE declare_offer_customs
+        <set>
+            <if test="offerId != null">`offer_id` = #{offerId},</if>
+            <if test="customsName != null">`customs_name` = #{customsName},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM declare_offer_customs WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM declare_offer_customs WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteList">
+        DELETE FROM declare_offer_customs WHERE id IN
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </delete>
+    <delete id="deleteOffer">
+        DELETE FROM declare_offer_customs WHERE offer_id IN
+        <foreach item="item" collection="array" open="(" separator="," close=")">
+            #{item.value}
+        </foreach>
+    </delete>
+
+</mapper>

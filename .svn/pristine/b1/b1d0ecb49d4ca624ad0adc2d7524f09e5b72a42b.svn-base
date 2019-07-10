@@ -1,0 +1,489 @@
+package com.wzlue.chain.agent.service.impl;
+
+import cn.hutool.core.util.StrUtil;
+import com.wzlue.chain.agent.entity.*;
+import com.wzlue.chain.common.exception.RRException;
+import com.wzlue.chain.agent.dao.*;
+import com.wzlue.chain.agent.service.AgentOrderService;
+import com.wzlue.chain.order.dao.GoodsOrderCommodityDao;
+import com.wzlue.chain.order.dao.GoodsOrderDao;
+import com.wzlue.chain.order.dao.GoodsOrderDetailDao;
+import com.wzlue.chain.sys.dao.SysNumberRuleDao;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysNumberRuleEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+
+@Service("agentOrderService")
+public class AgentOrderServiceImpl implements AgentOrderService {
+
+    @Autowired
+    private AgentOrderDao agentOrderDao;
+    //	@Autowired
+//	private GoodsOrderCinfoDao goodsOrderCommodityDao;
+//	@Autowired
+//	private DeclareOrderCommodityDao declareOrderCommodityDao;
+    @Autowired
+    private GoodsOrderDetailDao goodsOrderDetailDao;
+    @Autowired
+    private SysNumberRuleDao sysNumberRuleDao;
+    @Autowired
+    private AgentOrderGoodsDao agentOrderCommodityDao;
+    @Autowired
+    private AgentOrderBusinessDao agentOrderBusinessDao;
+    @Autowired
+    private AgentContractDao agentContractDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private AgentOfferDao agentOfferDao;
+    @Autowired
+    private AgentOrderOfferDao agentOrderOfferDao;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+
+
+    @Override
+    public AgentOrderEntity queryObject(Long id) {
+        return agentOrderDao.queryObject(id);
+    }
+
+    @Override
+    public List<AgentOrderEntity> queryList(Map<String, Object> map) {
+        return agentOrderDao.queryList(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return agentOrderDao.queryTotal(map);
+    }
+
+    @Override
+    @Transactional
+    public void save(AgentOrderEntity agentOrder) {
+        SysUserEntity user = sysUserDao.queryObject(agentOrder.getCreateBy());
+
+//		SysNumberRuleEntity orderRule = sysNumberRuleDao.queryByTypeAndName("代理订单编号","代理订单编号");
+//		String orderNumber= orderRule.getPrefix();
+//		orderNumber +=new SimpleDateFormat(orderRule.getTimeType()).format(new Date());
+//		orderNumber +=UUID.randomUUID().toString().substring(0,orderRule.getLength()).toUpperCase();
+        agentOrder.setOrderNumber(sysNumberRuleService.getCodeNumber("number_order_agent"));
+
+        Date now = new Date();
+        agentOrder.setOrderStatus(0);
+        agentOrder.setPayStatus(0);
+        agentOrder.setDelFlag(0);
+        agentOrder.setSubmitTime(now);
+        agentOrder.setCreateTime(now);
+        agentOrder.setUpdateTime(now);
+        agentOrder.setCusComplaintStatus(0);
+        agentOrder.setMerComplaintStatus(0);
+        agentOrder.setAfterStatus(0);
+        if (user != null) {
+            agentOrder.setDeptId(user.getDepartmentId());
+            agentOrder.setCompanyId(user.getCompanyId());
+        }
+        if (StringUtils.isBlank(agentOrder.getContractNumber())) {
+            agentOrder.setContractNumber(sysNumberRuleService.getCodeNumber("number_contract_declare"));
+        }
+        agentOrderDao.save(agentOrder);
+
+        /*新增订单商品信息*/
+        if (agentOrder.getGoods().size() > 0 && agentOrder.getGoods().get(0) != null) {
+            for (AgentOrderGoodsEntity item : agentOrder.getGoods()) {
+                item.setOrderNumber(agentOrder.getOrderNumber());
+                item.setOriginFlag(agentOrder.getOriginFlag());
+                item.setOriginNumber(agentOrder.getOriginNumber());
+                agentOrderCommodityDao.save(item);
+            }
+        }
+        /*新增订单代理项目信息*/
+        if (agentOrder.getBusiness().size() > 0 && agentOrder.getBusiness().get(0) != null) {
+            for (AgentOrderBusinessEntity busObj : agentOrder.getBusiness()) {
+                busObj.setOrderNumber(agentOrder.getOrderNumber());
+                busObj.setOriginFlag(agentOrder.getOriginFlag());
+                busObj.setOriginNumber(agentOrder.getOriginNumber());
+                agentOrderBusinessDao.save(busObj);
+            }
+        }
+
+        //备份订单所选择的报盘信息
+        AgentOfferEntity offer = agentOfferDao.queryInfo(agentOrder.getOfferId());
+        if (null != offer) {
+            AgentOrderOfferEntity orderOffer = new AgentOrderOfferEntity(offer);
+            orderOffer.setOrderNumber(agentOrder.getOrderNumber());
+            orderOffer.setCreateBy(agentOrder.getCreateBy());
+            orderOffer.setUpdateBy(agentOrder.getCreateBy());
+            orderOffer.setCreateTime(now);
+            orderOffer.setUpdateTime(now);
+            offer.setDeptId(user.getDepartmentId());
+            offer.setCompanyId(user.getCompanyId());
+            agentOrderOfferDao.save(orderOffer);
+        }
+
+    }
+
+    /**
+     * 修改订单(客户)
+     */
+    @Override
+    @Transactional
+    public void update(AgentOrderEntity agentOrder) throws RRException {
+        SysUserEntity user = sysUserDao.queryObject(agentOrder.getUpdateBy());
+        AgentOrderEntity temp = agentOrderDao.queryInfo(agentOrder.getId());
+        if (null != temp) {
+            Date now = new Date();
+            agentOrder.setUpdateTime(now);
+            if (user != null) {
+                agentOrder.setDeptId(user.getDepartmentId());
+                agentOrder.setCompanyId(user.getCompanyId());
+            }
+            //修改 订单信息
+            agentOrderDao.update(agentOrder);
+
+            String orderNo = agentOrder.getOrderNumber();
+            String originNumber = agentOrder.getOriginNumber();
+            //删除原有商品信息
+            agentOrderCommodityDao.deleteByOrderNumber(agentOrder.getOrderNumber());
+            /*新增订单商品信息*/
+            if (agentOrder.getGoods().size() > 0 && agentOrder.getGoods().get(0) != null) {
+                for (AgentOrderGoodsEntity item : agentOrder.getGoods()) {
+                    item.setOrderNumber(agentOrder.getOrderNumber());
+                    item.setOriginFlag(agentOrder.getOriginFlag());
+                    item.setOriginNumber(agentOrder.getOriginNumber());
+                    agentOrderCommodityDao.save(item);
+                }
+            }
+
+            //删除原有代理项目信息
+            agentOrderBusinessDao.deleteByOrderNumber(agentOrder.getOrderNumber());
+            /*新增订单代理项目信息*/
+            if (agentOrder.getBusiness().size() > 0 && agentOrder.getBusiness().get(0) != null) {
+                for (AgentOrderBusinessEntity busObj : agentOrder.getBusiness()) {
+                    busObj.setOrderNumber(agentOrder.getOrderNumber());
+                    busObj.setOriginFlag(agentOrder.getOriginFlag());
+                    busObj.setOriginNumber(agentOrder.getOriginNumber());
+                    agentOrderBusinessDao.save(busObj);
+                }
+            }
+            //删除原有报盘备份信息
+            agentOrderOfferDao.deleteByOrderNumber(agentOrder.getOrderNumber());
+            //备份订单所选择的报盘信息
+            AgentOfferEntity offer = agentOfferDao.queryInfo(agentOrder.getOfferId());
+            if (null != offer) {
+                AgentOrderOfferEntity orderOffer = new AgentOrderOfferEntity(offer);
+                orderOffer.setOrderNumber(agentOrder.getOrderNumber());
+                orderOffer.setCreateBy(agentOrder.getCreateBy());
+                orderOffer.setUpdateBy(agentOrder.getCreateBy());
+                orderOffer.setCreateTime(now);
+                orderOffer.setUpdateTime(now);
+                offer.setDeptId(user.getDepartmentId());
+                offer.setCompanyId(user.getCompanyId());
+                agentOrderOfferDao.save(orderOffer);
+            }
+        } else {
+            throw new RRException("未查询到该订单信息");
+        }
+    }
+
+
+    /**
+     * 确认接单(商家)
+     */
+    @Override
+    @Transactional
+    public void accept(AgentOrderEntity agentOrder) throws RRException {
+        //商家
+        SysUserEntity seller = sysUserDao.queryObject(agentOrder.getUpdateBy());
+        //客户
+        SysUserEntity customer = sysUserDao.queryObject(agentOrder.getCreateBy());
+
+        AgentOrderEntity temp = agentOrderDao.queryInfo(agentOrder.getId());
+        if (null != temp) {
+            Date now = new Date();
+            agentOrder.setUpdateTime(now);
+            agentOrder.setReceiptTime(now);
+            //修改 订单信息
+            agentOrder.setMerchantDeptId(seller.getDepartmentId());
+            agentOrder.setOrderStatus(1);
+            agentOrderDao.update(agentOrder);
+            SysNumberRuleEntity contractRule = sysNumberRuleDao.queryByTypeAndName("代理合同编号", "代理合同编号");
+            String contractNumber = "";
+
+            if (null != contractRule) {
+                contractNumber += contractRule.getPrefix();
+                contractNumber += new SimpleDateFormat(contractRule.getTimeType()).format(new Date());
+                contractNumber += UUID.randomUUID().toString().substring(0, contractRule.getLength()).toUpperCase();
+            }
+
+            if (StringUtils.isBlank(agentOrder.getContractNumber())) {
+                agentOrder.setContractNumber(contractNumber);
+            }
+
+            /**
+             * 修改报盘的最新成交信息 (可能需后置到买家付款时)
+             */
+            AgentOfferEntity offerEntity = agentOfferDao.queryInfo(agentOrder.getOfferId());
+            if (null != offerEntity) {
+                offerEntity.setTransactionTime(now);
+                offerEntity.setTransactionNumber(agentOrder.getOutlayQuantity());
+                agentOfferDao.update(offerEntity);
+            }
+
+            /*新增合同信息 */
+            AgentContractEntity cuscontractEntity = new AgentContractEntity();
+            AgentContractEntity mercontractEntity = new AgentContractEntity();
+
+            cuscontractEntity.setDataSource(1);
+            mercontractEntity.setDataSource(1);
+
+            cuscontractEntity.setOrderNumber(agentOrder.getOrderNumber());
+            mercontractEntity.setOrderNumber(agentOrder.getOrderNumber());
+
+            if (cuscontractEntity.getDataSource() == 1) {
+                cuscontractEntity.setContractNumber(contractNumber);
+                mercontractEntity.setContractNumber(contractNumber);
+            }
+            if (!StringUtils.isBlank(agentOrder.getContractNumber())) {
+                cuscontractEntity.setContractNumber(agentOrder.getContractNumber());
+                mercontractEntity.setContractNumber(agentOrder.getContractNumber());
+            }
+
+            cuscontractEntity.setCreateBy(agentOrder.getCreateBy());
+            mercontractEntity.setCreateBy(agentOrder.getCreateBy());
+
+            cuscontractEntity.setCreateTime(now);
+            mercontractEntity.setCreateTime(now);
+
+            cuscontractEntity.setUpdateBy(agentOrder.getUpdateBy());
+            mercontractEntity.setUpdateBy(agentOrder.getUpdateBy());
+
+            cuscontractEntity.setUpdateTime(now);
+            mercontractEntity.setUpdateTime(now);
+
+            cuscontractEntity.setCusDeptId(customer.getDepartmentId());
+            mercontractEntity.setCusDeptId(customer.getDepartmentId());
+
+            cuscontractEntity.setCusCompanyId(agentOrder.getContactCompanyId());
+            mercontractEntity.setCusCompanyId(agentOrder.getContactCompanyId());
+            cuscontractEntity.setCustomsCopName(agentOrder.getContactCompanyName());
+            mercontractEntity.setCustomsCopName(agentOrder.getContactCompanyName());
+
+            cuscontractEntity.setMerDeptId(seller.getDepartmentId());
+            mercontractEntity.setMerDeptId(seller.getDepartmentId());
+            cuscontractEntity.setMerCompanyId(agentOrder.getMerchantCompanyId());
+            mercontractEntity.setMerCompanyId(agentOrder.getMerchantCompanyId());
+            cuscontractEntity.setMerchantCopName(agentOrder.getMerchantCompanyName());
+            mercontractEntity.setMerchantCopName(agentOrder.getMerchantCompanyName());
+
+            cuscontractEntity.setContractAmount(agentOrder.getTotalPrice());
+            mercontractEntity.setContractAmount(agentOrder.getTotalPrice());
+
+            //创建人为商家, 因为属于商家确认接单
+            cuscontractEntity.setCreateBy(seller.getUserId());
+            mercontractEntity.setCreateBy(seller.getUserId());
+
+            cuscontractEntity.setCreateTime(now);
+            mercontractEntity.setCreateTime(now);
+
+            cuscontractEntity.setUpdateBy(seller.getUserId());
+            mercontractEntity.setUpdateBy(seller.getUserId());
+
+            cuscontractEntity.setUpdateTime(now);
+            mercontractEntity.setUpdateTime(now);
+
+            cuscontractEntity.setAdscription(1);
+            mercontractEntity.setAdscription(2);
+
+            cuscontractEntity.setCompanyId(customer.getCompanyId());
+            mercontractEntity.setCompanyId(seller.getCompanyId());
+            agentContractDao.save(cuscontractEntity);
+            agentContractDao.save(mercontractEntity);
+            // 接单完成 报盘订单数量 +1
+            agentOfferDao.updateNumber(offerEntity);
+            //考虑订单是否有来源的货物订单且需要垫付
+            if (agentOrder.getOriginNumber() != null && agentOrder.getOriginFlag() == 1) {
+                //是否需要垫付
+                if (agentOrder.getOriginPayType() == 1) {
+                    /** @todo 待处理:
+                     *  setp1. 查询来源订单的应收应付订单, 挂起客户与第三方的应收应付订单
+                     *  step2. 查询相关数据对象 移交应付给商家,生成对商家的应收
+                     */
+					/*BillService billService = null;
+					BillEntity bill = new BillEntity();
+					bill.setOrderType(4);
+					bill.setOrderNumber(agentOrder.getOrderNumber());
+					billService.save(bill);*/
+
+                }
+            }
+
+        } else {
+            throw new RRException("未查询到该订单信息");
+        }
+
+    }
+
+    @Override
+    public void delete(Long id) {
+        agentOrderDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        agentOrderDao.deleteBatch(ids);
+    }
+
+    @Override
+    public List<AgentOrderEntity> pageList(Map<String, Object> map) {
+        SysUserEntity user = sysUserDao.queryObject((Long) map.get("userId"));
+        if (null != user && user.getUserId() == 1) {
+            map.put("userId", null);
+
+        } else {
+            if (map.get("queryType") != null && Integer.valueOf(map.get("queryType").toString()) == 2) {
+
+                map.put("companyId", user.getCompanyId());
+
+            } else if (map.get("queryType") != null && Integer.valueOf(map.get("queryType").toString()) == 1) {
+
+                map.put("companyId", user.getCompanyId());
+
+            }
+        }
+
+        return agentOrderDao.pageList(map);
+    }
+
+    @Override
+    public int pageCount(Map<String, Object> map) {
+        if (map.get("queryType") != null && Integer.valueOf(map.get("queryType").toString()) == 2) {
+            SysUserEntity user = sysUserDao.queryObject((Long) map.get("userId"));
+            if (null != user && user.getUserId() != 1) {
+                map.put("companyId", user.getCompanyId());
+            }
+        }
+        return agentOrderDao.pageCount(map);
+    }
+
+    /**
+     * 首页展示数据查询 代理订单成交统计
+     * queryBy: year season month week days
+     * Map 增加 userId, companyId
+     */
+    @Override
+    public List showList(Map<String, Object> map) {
+        if (null != map.get("userId").toString()) {
+            SysUserEntity sysUserEntity = sysUserDao.queryObject(Long.valueOf(map.get("userId").toString()));
+            if (null != sysUserEntity) {
+                map.put("companyId", sysUserEntity.getCompanyId());
+            }
+        }
+        List<Map<String, Object>> list = agentOrderDao.showList(map);
+        return list;
+    }
+
+    /**
+     * 根据订单编号的前缀判断并查询订单商品信息
+     */
+    @Override
+    public Map getListByOrderNumber(String orderNum, String orderType, Long userId) {
+        Map map = new HashMap();
+        List list = new ArrayList<>();
+        int type = 0;
+        try {
+            switch (orderType) {
+                case "AGOD":
+                    //代理
+                    list = agentOrderCommodityDao.listByOrderNumber(orderNum, userId);
+                    type = 1;
+                    break;
+                case "LCOD":
+                    //物流
+                    list = new ArrayList();
+                    type = 2;
+                    break;
+                case "DCOD":
+                    //报关
+                    list = new ArrayList();
+                    type = 4;
+                    break;
+                case "GDOD":
+                    //货物
+                    list = goodsOrderDetailDao.listByOrderNumber(orderNum);
+                    type = 1;
+                    break;
+                case "SORD":
+                    //仓储
+                    list = new ArrayList();
+                    type = 3;
+                    break;
+            }
+            map.put("list", list);
+            map.put("orderType", type);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    /**
+     * 详情查询
+     */
+    @Override
+    public AgentOrderEntity queryInfo(Long id) {
+        return agentOrderDao.queryInfo(id);
+    }
+
+    /**
+     * 取消 删除 挂起订单(客户/商家)
+     * updateBy 决定是哪方取消
+     */
+    @Override
+    public void updateDel(Long userId, Long id, Integer flag) {
+//	    flag 判断分支 4则为 取消订单 5则为 系统挂起订单 6则为 删除订单 7则为 买家取消 8则为买家取消
+        if (flag == 6) {
+            agentOrderDao.updateDel(1, userId, null, new Date(), id);
+        } else if (flag == 4) {
+            agentOrderDao.updateDel(null, userId, flag, new Date(), id);
+        } else if (flag == 7) {
+            agentOrderDao.updateDel(null, userId, flag, new Date(), id);
+        } else if (flag == 8) {
+            agentOrderDao.updateDel(null, userId, flag, new Date(), id);
+        }
+    }
+
+    @Override
+    public void changePrice(Map<String, Object> map) {
+        agentOrderDao.changePrice(map);
+    }
+
+    @Override
+    public void setAgentAuthorize(Map<String, Object> map) {
+        agentOrderDao.setAgentAuthorize(map);
+    }
+
+    @Override
+    public List<String> getAgentAuthorize(SysUserEntity user) {
+        return agentOrderDao.getAgentAuthorize(user);
+    }
+
+    @Override
+    public AgentOrderEntity queryByOrderNumber(String orderNumber) {
+        return agentOrderDao.queryByOrderNum(orderNumber);
+    }
+
+    @Override
+    public boolean cancelAgentAuthorize(Map<String, Object> map) {
+        return agentOrderDao.cancelAgentAuthorize(map);
+    }
+}
+

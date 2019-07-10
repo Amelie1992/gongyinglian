@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>代理(订单)表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1 v-if="authorizeDetail != true">
+            {{$t('agentOrder')}}{{$t('Buy')}}&nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.orderNumber" @keyup.enter="query"
+                           :placeholder="$t('EnterOrderNumber')" maxlength="30">
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.contractNumber" @keyup.enter="query"
+                           :placeholder="$t('EnterContractNumber')" maxlength="30">
+                </div>
+                <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                </button>
+                <button class="btn btn-primary m-left-5" @click="add"><i class="fa fa-floppy-o"></i>&nbsp;{{$t('added')}}
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table" class="table text-nowrap"></table>
+            </div>
+        </div>
+    </div>
+    <!-- 授权订单-->
+    <div v-show="authorizePage">
+        <div class="row">
+            <button class="btn btn-default m-left-5" @click="authorize(2)">&nbsp;{{$t('returnAgentOrder')}}</button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table class="table text-nowrap" id="authorizetable">
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="showAddOrUpdate" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-group">
+            <form class="form-horizontal addOrUpdate" :model="agentOrder"
+                  onkeydown="if(event.keyCode==13){return false;}">
+                <!--//合同信息-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span>{{$t('ContractInformation')}}</span>
+
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('ContractNumber')}}</label>
+                                        <div class="col-lg-9">
+                                            <input id="contractNumber" type="text" name="contractNumber"
+                                                   class="form-control"
+                                                   v-model="agentOrder.contractNumber"
+                                                   :placeholder="$t('ContractNumber')" disabled
+                                                   @change="contractWrite(this)"/>
+
+                                            <input type="radio" name="contractNumber" value="1" checked="checked"
+                                                   onchange="change2(this)"/>{{$t('AutomaticGeneration')}}
+                                            &nbsp;&nbsp;<input type="radio" name="contractNumber" value="0"
+                                                               onchange="change2(this)"/>{{$t('ManualInput')}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--//商家信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <span>{{$t('BusinessInformation')}}</span>
+                                <a href="javascript:void(0);" class="pull-right m-right-5" @click="openMerchantCheck">{{$t('SelectBusiness')}}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('CorporateName')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" name="merchantCompanyName" class="form-control"
+                                                   v-model="agentOrder.merchantCompanyName"
+                                                   :placeholder="$t('CorporateName')" :readonly="true"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('OfferInformation')}}</label>
+                                        <div class="col-lg-8">
+                                            <select name="offerId" class="form-control selectpicker selectOfferInfo"
+                                                    id="sltOffer" :placeholder="$t('PleaseMakeAnOffer')">
+                                                <option :value="item.id" :data-obj="JSON.stringify(item)"
+                                                        v-for="item in offerList">{{item.title}}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('contact')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" v-model="agentOrder.merchantPerson"
+                                                   :placeholder="$t('contact')" :disabled="true"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('phone')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" v-model="agentOrder.merchantPhone"
+                                                   name="merchantPhone"
+                                                   :placeholder="$t('phone')" :disabled="true"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">{{$t('itemsUnderAgency')}}</label>
+                                        <div class="col-sm-9">
+                                            <laebl-gruop id="serviceLab">
+                                                <label class="radio-inline" v-for="item in serviceList">
+                                                    <input name="serviceId" type="checkbox" :text="item.serviceName"
+                                                           :value="item.serviceId">&nbsp;{{item.serviceName}}
+                                                </label>
+                                            </laebl-gruop>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-7">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('PurchaseInformation')}}</label>
+                                        <div class="col-sm-10">
+                                            <div class="col-sm-3">
+                                                <input class="form-control"
+                                                       style="padding-left: 10px; padding-right: 10px;"
+                                                       type="number" step="0.001" min="0.001" name="price"
+                                                       v-model="agentOrder.unitPrice"
+                                                       :placeholder="$t('UnitPrice')" :readonly="true">
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <input class="form-control"
+                                                       style="padding-left: 10px; padding-right: 10px;"
+                                                       type="number" step="1" min="1" name="outlayQuantity"
+                                                       v-model="agentOrder.outlayQuantity"
+                                                       :placeholder="$t('num')" @change="quantityC">
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <input class="form-control"
+                                                       style="padding-left: 10px; padding-right: 10px;"
+                                                       type="number" step="0.001" min="0.001" name="totalPrice"
+                                                       v-model="agentOrder.totalPrice"
+                                                       :placeholder="$t('TotalAmount')">
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <select class="form-control selectpicker selectCurrencyCode"
+                                                        v-model="agentOrder.currency" id="sltCurrency"
+                                                        :placeholder="$t('PleaseChooseCurrency')"
+                                                        :disabled="true">
+                                                    <option value="CNY">{{$t('RMB')}}</option>
+                                                    <option value="USD">{{$t('Dollar')}}</option>
+                                                    <option value="JPY">{{$t('Yen')}}</option>
+                                                    <!--<option value="item.value" v-for="item in currencyList" >{{item.name}}</option>-->
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                                        <div class="col-sm-9">
+                                            <textarea class="form-control" v-model="agentOrder.remark"
+                                                      :placeholder="$t('PleaseInputNoteInformation')"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--//收货地址信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <span>{{$t('ReceiptInformation')}}</span>
+                                <a href="javascript:void(0);" class="pull-right m-right-5" @click="openAddressCheck">{{$t('ChooseReceiptAddress')}}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('contact')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" v-model="agentOrder.contactPerson"
+                                                   name="contactPerson"
+                                                   :placeholder="$t('contact')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('phone')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" v-model="agentOrder.contactPhone"
+                                                   name="contactPhone"
+                                                   :placeholder="$t('phone')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-12">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('ReceivingAddress')}}</label>
+                                        <div class="col-lg-8">
+                                            <input type="text" class="form-control" v-model="agentOrder.contactAddress"
+                                                   name="contactAddress"
+                                                   :placeholder="$t('ReceivingAddress')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('GoodsInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-xs-2" style="padding-left: 0px;">
+                                    <input id="orderNum" type="text" class="form-control" @change="addGoods('orderNum')"
+                                           v-model="agentOrder.originNumber" :placeholder="$t('OrderNumber')"/>
+                                </div>
+
+                                <!--&lt;!&ndash;v-if="agentOrder.originType == 1 && agentOrder.originNumber != null"&ndash;&gt;-->
+                                <!--<div class="col-xs-3" style="">-->
+                                <!--{{$t('PaymentForPaymentOfGoods')}}?&nbsp;-->
+                                <!--&lt;!&ndash;<laebl-gruop id="originPayType">&ndash;&gt;-->
+                                <!--&lt;!&ndash;<label class="radio-inline">&ndash;&gt;-->
+                                <!--<input type="radio" value="1" name="originPayType" v-model="agentOrder.originPayType">&nbsp;{{$t('AuthorizationPayment')}}-->
+                                <!--&lt;!&ndash;</label>&ndash;&gt;-->
+                                <!--&lt;!&ndash;<label class="radio-inline">&ndash;&gt;-->
+                                <!--<input type="radio" value="2" name="originPayType" v-model="agentOrder.originPayType">&nbsp;{{$t('NoNeedToPay')}}-->
+                                <!--&lt;!&ndash;</label>&ndash;&gt;-->
+                                <!--&lt;!&ndash;</laebl-gruop>&ndash;&gt;-->
+                                <!--</div>-->
+
+                                <div class="col-xs-3">
+                                    <div class="form-group required" style="width: 400px">
+                                        <label class="col-sm-2 control-label" style="width: 100px">{{$t('PaymentForPaymentOfGoods')}}?&nbsp;</label>
+                                        <label class="radio-inline" style="width: 100px">
+                                            <input type="radio" value="1" name="originPayType"
+                                                   v-model="agentOrder.originPayType"/>&nbsp;{{$t('AuthorizationPayment')}}
+                                        </label>
+                                        <label class="radio-inline" style="width: 120px">
+                                            <input type="radio" value="2" name="originPayType"
+                                                   v-model="agentOrder.originPayType"/>&nbsp;{{$t('NoNeedToPay')}}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="button" id="txtBtn" @click="addGoods('txtBtn')"
+                                        class="btn btn-sm btn-primary pull-right">{{$t('NewGoods')}}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table id="goodsTab" class="table ">
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <textarea type="text" class="form-control" v-model="agentOrder.goodsMoreRemark"
+                                          :placeholder="$t('SupplementaryInformation')"></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 col-md-offset-8">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">{{$t('OrderTotalPrice')}}</label>
+                                    <div class="col-sm-4">
+                                        <input id="totalPrice" type="text" class="form-control"
+                                               v-model="agentOrder.totalPrice" :placeholder="$t('OrderTotalPrice')"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-success m-left-10 m-right-15 pull-right"
+                                    @click="validate">{{$t('submit')}}
+                            </button>
+                            <button type="button" class="btn btn-warning pull-right" @click="back">{{$t('cancel')}}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div v-show="showDetail" style="margin-top: 20px;">
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="panel panel-default col-sm-6 text-center" style="height: 200px">
+                    <div class="panel-body text-center" style="height: 300px">
+                        <div>{{$t('ContractNumber')}}：{{agentOrder.currency}}&nbsp;{{agentOrder.contractNumber}}</div>
+                        <div class="m-top-5">{{$t('OrderId')}}：{{agentOrder.orderNumber}}</div>
+                        <div class="m-top-5">{{$t('TotalPrice')}}：{{agentOrder.totalPrice}}</div>
+                        <template>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==0">
+                                <h5>{{$t('currentState')}}：{{$t('WaitingForConfirmation')}}</h5>
+                            </div>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==1">
+                                <h5>{{$t('currentState')}}：{{$t('Receipt')}}</h5>
+                            </div>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==2">
+                                <h5>{{$t('currentState')}}：{{$t('InTheProcessing')}}</h5>
+                            </div>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==3">
+                                <h5>{{$t('currentState')}}：{{$t('OrderCompletion')}}</h5>
+                            </div>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==4">
+                                <h5>{{$t('currentState')}}：{{$t('OrderCancellation')}}</h5>
+                            </div>
+                            <div class="m-top-5" v-show="agentOrder.orderStatus==5">
+                                <h5>{{$t('currentState')}}：{{$t('OrderHangs')}}</h5>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="panel panel-default col-sm-6" align="center" style="height: 200px">
+                    <!--v-if="order.passStatus==1"-->
+                    <div class="panel-body">
+                        <div><h4>{{$t('CustomerInformation')}}</h4></div>
+                        <div class="m-top-5">{{$t('contact')}}：{{agentOrder.contactPerson}}</div>
+                        <div class="m-top-5">{{$t('phone')}}：{{agentOrder.contactPhone}}</div>
+                        <div class="m-top-5">{{$t('address')}}：{{agentOrder.contactAddress}}</div>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+        <div class="panel panel-default" v-show="0==1">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    {{$t('customsInformation')}}
+                </h3>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('DeclarationForm')}}:</div>
+                                <div class="col-sm-10">
+                                    <a href="">{{$t('DeclarationForm')}}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('paymentSheet')}}:</div>
+                                <div class="col-sm-10">
+                                    <a href="">{{$t('paymentSheet')}}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('CheckList')}}:</div>
+                                <div class="col-sm-10">
+                                    <a href="">{{$t('CheckList')}}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('QuarantineCertificate')}}:</div>
+                                <div class="col-sm-10">
+                                    <a href="">{{$t('QuarantineCertificate')}}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Other')}}:</div>
+                                <div class="col-sm-10">
+                                    <a href="">{{$t('Other')}}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <div>
+                    {{$t('OrderInformation')}}
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-3">
+                            {{$t('MerchantName')}}：&nbsp;{{agentOrder.contactCompanyName}}
+                        </div>
+                        <div class="col-lg-3">
+                            {{$t('contact')}}：&nbsp;{{agentOrder.merchantPerson}}
+                        </div>
+                        <div class="col-lg-3">
+                            {{$t('ContactInformation')}}：&nbsp;{{agentOrder.merchantPhone}}
+                        </div>
+                    </div>
+                </div>
+                <!--//订单相关时间-->
+                <div class="row m-top-5">
+
+                    <div class="col-lg-12">
+                        <div class="col-lg-3">
+                            {{$t('CreationTime')}}：{{agentOrder.submitTime}}
+                        </div>
+                        <div class="col-lg-3" v-show="agentOrder.orderStatus==1">
+                            {{$t('SingleTime')}}：{{agentOrder.receiptTime}}
+                        </div>
+                        <div class="col-lg-3" v-show="agentOrder.payStatus!=null && agentOrder.payStatus!=0">
+                            {{$t('TimeOfPayment')}}：{{agentOrder.submitTime}}
+                        </div>
+                        <div class="col-lg-3"
+                             v-show="agentOrder.orderStatus==3 || agentOrder.orderStatus==4 || agentOrder.orderStatus==5">
+                            {{$t('EndTime')}}：{{agentOrder.submitTime}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row m-top-5">
+                    <div class="col-lg-12">
+                        <div class="col-lg-1">
+                            <div class="control-label">{{$t('itemsUnderAgency')}}</div>
+                        </div>
+                        <div class="col-lg-10">
+                            <laebl-gruop id="serviceLab">
+                                <label class="radio-inline" v-for="item in serviceList">
+                                    <input name="serviceId" type="checkbox" :text="item.serviceName"
+                                           :value="item.serviceId" :disabled="true">&nbsp;{{item.serviceName}}
+                                </label>
+                            </laebl-gruop>
+                        </div>
+                    </div>
+
+                    <!--//订单备注信息-->
+                    <div class="row m-top-20">
+                        <div class="col-sm-12">
+                            <div class="col-sm-1">
+                                <div class="control-label">{{$t('Remarks')}}</div>
+                            </div>
+                            <div class="col-sm-8"><textarea type="text" class="form-control"
+                                                            :placeholder="$t('Remarks')" :readonly="true"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+
+                        <div>{{$t('num')}}： {{agentOrder.outlayQuantity}}</div>
+                        <div>{{$t('UnitPrice')}}： {{agentOrder.currency}}&nbsp;{{agentOrder.unitPrice}}</div>
+                        <div>{{$t('TotalPrice')}}： {{agentOrder.currency}}&nbsp;{{agentOrder.totalPrice}}</div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!--//货物信息-->
+        <div class="panel panel-default m-top-10">
+            <div class="panel-heading">
+                <span>{{$t('GoodsInformation')}}</span>
+            </div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-xs-2" style="padding-left: 0px;">
+                            <input id="orderNum" type="text" class="form-control" @change="addGoods('orderNum')"
+                                   v-model="params.originNumber" :placeholder="$t('OrderNumber')" :readonly="true"/>
+                        </div>
+
+                        <!--v-if="agentOrder.originType == 1 && agentOrder.originNumber != null"-->
+                        <div class="col-xs-3">
+                            {{$t('PaymentForPaymentOfGoods')}}?&nbsp;<laebl-gruop id="originPayType">
+                            <label class="radio-inline">
+                                <input name="originPayType" type="radio" text="授权垫付"
+                                       value="1" :disabled="true">&nbsp;{{$t('AuthorizationPayment')}}
+                            </label><label class="radio-inline">
+                            <input name="originPayType" type="radio" text="无需垫付"
+                                   value="2" :disabled="true">&nbsp;{{$t('NoNeedToPay')}}
+                        </label>
+                        </laebl-gruop>
+                        </div>
+                        <!--<button type="button" id="txtBtn" @click="addGoods('txtBtn')" class="btn btn-sm btn-primary pull-right" :disabled="true">新增货物</button>-->
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table id="detailGoodsTab" class="table goodsTable">
+
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                                <textarea type="text" class="form-control" v-model="agentOrder.goodsMoreRemark"
+                                          :placeholder="$t('SupplementaryInformation')"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--代理信息-->
+        <div class="panel panel-default m-top-10" v-if="agentOrder.goodsOrderEntity != null">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <span>{{$t('agentInfo')}}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="form-group row">
+                    <label style="width: 120px" class="col-sm-3 control-label">{{$t('CorporateName')}}</label>
+                    <div class="col-md-2">
+                        {{agentOrder.goodsOrderEntity.sellerName}}
+                    </div>
+                </div>
+                <div id="shipElement"></div>
+                <form class="form-horizontal" v-if="agentOrder.goodsOrderEntity.ship != null"
+                      onkeydown="if(event.keyCode==13){return false;}">
+
+                    <div class="form-group row">
+                        <label for="logisticsCode" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+                        <div class="col-md-2" id="logisticsCode">
+                            <input class="form-control" type="text"
+                                   v-model="agentOrder.goodsOrderEntity.ship.logisticsCode" disabled/>
+                        </div>
+                        <label for="logisticsNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+                        <div class="col-md-2">
+                            <input class="form-control" type="text"
+                                   id="logisticsNumber" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.singleNumber"/>
+                        </div>
+                        <label for="numberPlate" style="width: 120px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+                        <div class="col-md-2">
+                            <input class="form-control" type="text"
+                                   id="numberPlate" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.numberPlate"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="driverName" style="width: 120px"
+                               class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+                        <div class="col-md-2">
+                            <input class="form-control" type="text"
+                                   id="driverName" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.driverName"/>
+                        </div>
+                        <label for="driverNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+                        <div class="col-md-2">
+                            <input class="form-control" type="text"
+                                   id="driverNumber" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.driverNumber"/>
+                        </div>
+                        <label for="driverIdNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+                        <div class="col-md-2">
+                            <input class="form-control" type="text"
+                                   id="driverIdNumber" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.driverIdNumber"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="remark" style="width: 120px"
+                               class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                        <div class="col-md-5">
+                            <input class="form-control" type="text" id="remark" disabled
+                                   v-model="agentOrder.goodsOrderEntity.ship.remark"/>
+                        </div>
+                    </div>
+                </form>
+                <div class="form-group row" v-else>
+                    <label style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsInformation')}}</label>
+                    <div class="col-md-2">
+                        无
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <button type="button" class="btn btn-default pull-right" @click="back">{{$t('return')}}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 运抵地址 弹窗-->
+    <div class="modal fade" id="addressModel" role="addressModel" aria-labelledby="addressLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">{{$t('ChooseReceiptAddress')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <input class="form-control" v-model="params.addressTitle" @keyup.enter="addressQuery"
+                                       :placeholder="$t('PleaseEnterTheTitleName')"/>
+                            </div>
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <button class="btn btn-default" @click="addressQuery"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table id="addressTab"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="getAddressDate">{{$t('sure')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!-- 选择商家信息-->
+    <div class="modal fade" id="merchantModel" role="merchantModel" aria-labelledby="merchantLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">{{$t('ChoosingBusinessEnterprises')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <input class="form-control" v-model="params.companyName" @keyup.enter="merchantQuery"
+                                       :placeholder="$t('PleaseEnterEnterpriseName')"/>
+                            </div>
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <button class="btn btn-default" @click="merchantQuery"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table id="merTab"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="getMerchantDate">{{$t('sure')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!--投诉-->
+    <div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="complaintModal"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form class="form-horizontal" id="complaintForm" onkeydown="if(event.keyCode==13){return false;}">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">{{$t('Complaint')}}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ComplaintReason')}}</div>
+                                <div class="col-sm-10">
+                            <textarea name="reason" class="form-control" rows="8"
+                                      v-model="complaint.reason"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                                <div class="col-sm-10">
+                                    <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                                         :image_list="complaint.images"></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="row" v-if="complaint.id != null">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                        </div>
+                        <div class="row" v-if="complaint.id == null">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('cancel')}}</button>
+                            <button type="button" class="btn btn-primary" @click="saveComplaint">{{$t('submission')}}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!--售后处理-->
+    <div class="panel panel-default" v-show="showAfterSales">
+        <div class="panel-body">
+            <form class="form-horizontal afterForm" :model="afterSale" onkeydown="if(event.keyCode==13){return false;}">
+                <!--申请售后的商品信息-->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ServiceType')}}</div>
+                                <div class="col-sm-10">
+                                    <!--placeholder="服务类型 索赔"/>-->
+                                    <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio"
+                                           value="0" checked="checked"/>
+                                    {{$t('ClaimDemage')}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ClaimReason')}}</div>
+                                <div class="col-sm-8">
+                                    <select class="form-control"
+                                            v-model="afterSale.reason" name="reason"
+                                            data-width="auto">
+                                        <option value="">{{$t('PleaseChooseTheReason')}}</option>
+                                        <option v-for="item in reasonList" :value="item.value">
+                                            {{item.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ProblemDescription')}}</div>
+                                <div class="col-sm-10">
+
+                            <textarea name="description" class="form-control" rows="5"
+                                      v-model="afterSale.description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('Pictures')}}</div>
+                            <div class="col-sm-3">
+                                <commodity-fileinput :this_maxFileCount="6" ref="afterFile" :files="afterImages"
+                                                     :image_list="afterSale.images"></commodity-fileinput>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate2" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../plugins/select/js/select2.js"></script>
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/agent/agent_order_client.js"></script>
+
+<script type="text/javascript">
+    $(".selectpicker").select2({
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+    });
+</script>
+</body>
+</html>

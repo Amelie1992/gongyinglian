@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.order.dao.GoodsOrderDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.order.entity.GoodsOrderEntity" id="goodsOrderMap">
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="sellerId" column="seller_id"/>
+        <result property="sellerName" column="seller_name"/>
+        <result property="sellerContact" column="seller_contact"/>
+        <result property="purchaserCompanyId" column="purchaser_company_id"/>
+        <result property="purchaserCompanyName" column="purchaser_company_name"/>
+        <result property="purchaserName" column="purchaser_name"/>
+        <result property="purchaserContact" column="purchaser_contact"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="shipTime" column="ship_time"/>
+        <result property="orderCount" column="order_count"/>
+        <result property="transportationExpenses" column="transportation_expenses"/>
+        <result property="transactionManner" column="transaction_manner"/>
+        <result property="actualPayment" column="actual_payment"/>
+        <result property="distributionMode" column="distribution_mode"/>
+        <result property="transactionMode" column="transaction_mode"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="customsDeclaration" column="customs_declaration"/>
+        <result property="storageMode" column="storage_mode"/>
+        <result property="insuranceMethod" column="insurance_method"/>
+        <result property="modeOfPayment" column="mode_of_payment"/>
+        <result property="downPayment" column="down_payment"/>
+        <result property="prePickUpTime" column="pre_pick_up_time"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="statusCount" column="status_count"/>
+        <result property="statusOwner" column="status_owner"/>
+        <result property="complaintP" column="complaint_p"/>
+        <result property="complaintS" column="complaint_s"/>
+        <result property="orderGoodsType" column="order_goods_type"/>
+        <result property="agreementId" column="agreement_id"/>
+        <result property="goodsCsc" column="order_css"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="isPayment" column="is_payment"/>
+        <association property="ship"
+                     column="{orderId=order_number}"
+                     select="com.wzlue.chain.ship.dao.GoodsOrderShipDao.queryObject"
+        ></association>
+        <association property="depot"
+                     column="{orderId=order_number}"
+                     select="com.wzlue.chain.depot.dao.GoodsOrderDepotDao.queryObject"
+        ></association>
+        <association property="cinfo"
+                     column="{orderId=order_number}"
+                     select="com.wzlue.chain.order.dao.GoodsOrderCinfoDao.queryObject"></association>
+    </resultMap>
+
+    <resultMap id="goodsOrderMapsName" type="com.wzlue.chain.order.entity.GoodsOrderEntity" extends="goodsOrderMap">
+        <collection property="detail"
+                    column="{orderId=order_number,goodsName=goods_name}"
+                    select="com.wzlue.chain.order.dao.GoodsOrderDetailDao.queryList"></collection>
+    </resultMap>
+
+    <resultMap id="goodsOrderMaps" type="com.wzlue.chain.order.entity.GoodsOrderEntity" extends="goodsOrderMap">
+        <collection property="detail"
+                    column="{orderId=order_number}"
+                    select="com.wzlue.chain.order.dao.GoodsOrderDetailDao.queryList"></collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="goodsOrderMaps">
+		SELECT * FROM goods_order WHERE order_id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="goodsOrderMapsName">
+        SELECT o.*,
+        t.is_payment,
+        #{owner} owner ,
+        #{goodsName} AS goods_name
+        FROM goods_order o
+        LEFT JOIN agent_order_authorize t ON o.order_number = t.order_no AND t.is_cancel = '0'
+        <where>
+            <if test="isDelete!=null and isDelete!=''">
+                and is_delete = '0'
+            </if>
+            <if test="delFlag!=null and delFlag!=''">
+                and del_flag = '0'
+            </if>
+            <if test="purchaserCompanyId != null and purchaserCompanyId != ''">
+                and purchaser_company_id=#{purchaserCompanyId}
+            </if>
+            <if test="sellerId != null and sellerId!=''">
+                and seller_id=#{sellerId} and order_status not in ('pre','af')
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and order_status=#{orderStatus}
+            </if>
+            <if test="orderNumber!=null and orderNumber!=''">
+                and order_number LIKE concat ('%',#{orderNumber},'%')
+            </if>
+            <if test="sellerName!=null and sellerName!=''">
+                and seller_name LIKE concat ('%',#{sellerName},'%')
+            </if>
+            <if test="orderNos != null and orderNos.size > 0">
+                AND order_number IN
+                <foreach collection="orderNos" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="agr !=null and agr !=''">
+                and order_status != #{agr}
+            </if>
+        </where>
+        ORDER BY create_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(1) FROM goods_order o
+        <where>
+            <if test="isDelete!=null and isDelete!=''">
+                and is_delete = '0'
+            </if>
+            <if test="delFlag!=null and delFlag!=''">
+                and del_flag = '0'
+            </if>
+            <if test="purchaserCompanyId != null and purchaserCompanyId != ''">
+                and purchaser_company_id=#{purchaserCompanyId}
+            </if>
+
+            <if test="sellerId != null">
+                and seller_id=#{sellerId} and order_status not in ('pre','af')
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and order_status=#{orderStatus}
+            </if>
+            <if test="orderNumber!=null and orderNumber!=''">
+                and order_number LIKE concat ('%',#{orderNumber},'%')
+            </if>
+            <if test="sellerName!=null and sellerName!=''">
+                and seller_name LIKE concat ('%',#{sellerName},'%')
+            </if>
+            <if test="orderNos != null and orderNos.size > 0">
+                AND order_number IN
+                <foreach collection="orderNos" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY create_time desc
+
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity" useGeneratedKeys="true"
+            keyProperty="orderId">
+        INSERT INTO goods_order
+        (
+        `order_number`,
+        `seller_id`,
+        `seller_name`,
+        `seller_contact`,
+        `purchaser_company_id`,
+        `purchaser_company_name`,
+        `purchaser_name`,
+        `order_status`,
+        `purchaser_contact`,
+        `total_price`,
+        `order_count`,
+        `ship_time`,
+        `transportation_expenses`,
+        `actual_payment`,
+        `distribution_mode`,
+        `transaction_mode`,
+        `payment_method`,
+        `customs_declaration`,
+        `storage_mode`,
+        `insurance_method`,
+        `mode_of_payment`,
+        `down_payment`,
+        `pre_pick_up_time`,
+        `complaint_p`,
+        `complaint_S`,
+        `status_count`,
+        `status_owner`,
+        `order_goods_type`,
+        `agreement_id`,
+        `order_css`,
+        `transaction_manner`,
+        `create_by`,
+        `create_time`,
+        `modify_by`,
+        `modify_time`,
+        `dept_id`,
+        `company_id`,
+        `authorizes_id`,
+        `remarks`,
+        is_agent,
+        agent_order_number,
+        del_flag
+        )
+        VALUES
+        (
+        #{orderNumber},
+        #{sellerId},
+        #{sellerName},
+        #{sellerContact},
+        #{purchaserCompanyId},
+        #{purchaserCompanyName},
+        #{purchaserName},
+        #{orderStatus},
+        #{purchaserContact},
+        #{totalPrice},
+        #{orderCount},
+        #{shipTime},
+        #{transportationExpenses},
+        #{actualPayment},
+        #{distributionMode},
+        #{transactionMode},
+        #{paymentMethod},
+        #{customsDeclaration},
+        #{storageMode},
+        #{insuranceMethod},
+        #{modeOfPayment},
+        #{downPayment},
+        #{prePickUpTime},
+        #{complaintP},
+        #{complaintS},
+        #{statusCount},
+        #{statusOwner},
+        #{orderGoodsType},
+        #{agreementId},
+        #{goodsCsc},
+        #{transactionManner},
+        #{createBy},
+        #{createTime},
+        #{modifyBy},
+        #{modifyTime},
+        #{deptId},
+        #{companyId},
+        #{authorizesId},
+        #{remarks},
+        #{isAgent},
+        #{agentOrderNumber},
+        '0'
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        UPDATE goods_order
+        <set>
+            <if test="sellerId != null">`seller_id` = #{sellerId},</if>
+            <if test="sellerName != null">`seller_name` = #{sellerName},</if>
+            <if test="sellerContact != null">`seller_contact` = #{sellerContact},</if>
+            <if test="purchaserCompanyId != null">`purchaser_company_id` = #{purchaserCompanyId},</if>
+            <if test="purchaserCompanyName != null">`purchaser_company_name` = #{purchaserCompanyName},</if>
+            <if test="purchaserName != null">`purchaser_name` = #{purchaserName},</if>
+            <if test="purchaserContact != null">`purchaser_contact` = #{purchaserContact},</if>
+            <if test="totalPrice != null">`total_price` = #{totalPrice},</if>
+            <if test="orderCount != null">`order_count` = #{orderCount},</if>
+            <if test="shipTime != null">`ship_time` = #{shipTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag},</if>
+            <if test="transportationExpenses != null">`transportation_expenses` = #{transportationExpenses},</if>
+            <if test="actualPayment != null">`actual_payment` = #{actualPayment},</if>
+            <if test="distributionMode != null">`distribution_mode` = #{distributionMode},</if>
+            <if test="transactionMode != null">`transaction_mode` = #{transactionMode},</if>
+            <if test="paymentMethod != null">`payment_method` = #{paymentMethod},</if>
+            <if test="customsDeclaration != null">`insurance_method` = #{customsDeclaration},</if>
+            <if test="storageMode != null">`storage_mode` = #{storageMode},</if>
+            <if test="insuranceMethod != null">`insurance_method` = #{insuranceMethod},</if>
+            <if test="modeOfPayment != null">`mode_of_payment` = #{modeOfPayment},</if>
+            <if test="downPayment != null">`down_payment` = #{downPayment},</if>
+            <if test="prePickUpTime != null">`pre_pick_up_time` = #{prePickUpTime},</if>
+            <if test="complaintP != null">`complaint_p` = #{complaintP},</if>
+            <if test="complaintS != null">`complaint_s` = #{complaintS},</if>
+            <if test="orderStatus != null">`order_status` = #{orderStatus},</if>
+            <if test="statusCount != null">`status_count` = #{statusCount},</if>
+            <if test="statusOwner != null">`status_owner` = #{statusOwner},</if>
+            <if test="orderGoodsType != null">`order_goods_type` = #{orderGoodsType},</if>
+            <if test="transactionManner != null">`transaction_manner` = #{transactionManner},</if>
+            <if test="agreementId != null">`agreement_id` = #{agreementId},</if>
+            <if test="goodsCsc != null">`order_css` = #{goodsCsc},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modifyBy != null">`modify_by` = #{modifyBy},</if>
+            <if test="modifyTime != null">`modify_time` = #{modifyTime},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        <where>
+            <choose>
+                <when test="orderId != null">
+                    order_id = #{orderId}
+                </when>
+                <otherwise>
+                    `order_number` = #{orderNumber}
+                </otherwise>
+            </choose>
+        </where>
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_order WHERE order_id = #{value}
+	</delete>
+
+    <delete id="deleteBatchBuy">
+        UPDATE goods_order
+        SET
+        del_flag = '1'
+        WHERE order_id IN
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteBatchSell">
+        UPDATE goods_order
+        SET
+        is_delete = '1'
+        WHERE order_id IN
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+
+    <select id="searchStatus" resultType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        SELECT order_status as orderStatus FROM goods_order WHERE order_id IN
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </select>
+
+    <select id="getListByOrderNumber" resultMap="goodsOrderMaps">
+        select * from goods_order
+        WHERE order_number=#{value}
+    </select>
+
+    <select id="queryObjectByCompanyIdOrOrderNumber" resultMap="goodsOrderMaps">
+        select * from goods_order
+        <where>
+            <if test="companyId != null">
+                and seller_id == #{companyId} or purchaser_company_id=#{companyId}
+            </if>
+            <if test="orderNumber != null">
+                and order_number=#{order_number}
+            </if>
+        </where>
+        limit 1
+    </select>
+
+    <select id="getMerchants" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        select * from merchant_company c
+        LEFT JOIN merchant_company_service s ON s.company_id = c.`id`
+        <where>
+            <if test="serviceName !=null and serviceName.trim() != ''">
+                s.service_id in (select id from service_type where service_name LIKE concat('%',#{serviceName},'%'))
+                and (SELECT count(*) from goods_offer where company_id = c.id and goods_type=#{goodsType} and
+                goods_state=1)>0 and c.id!=#{userCompanyId}
+            </if>
+        </where>
+    </select>
+    <!--订单数量-->
+    <select id="showList" resultType="java.util.Map">
+        SELECT
+        IFNULL(COUNT(go.`order_id`),0) AS total
+        <choose>
+            <when test="dateType !=null and dateType=='year' ">
+                ,CONCAT(MONTH(go.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType=='quarter' ">
+                ,CONCAT(MONTH(go.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType =='month'">
+                ,CONCAT(MONTH(go.`create_time`),'-',DAYOFMONTH(go.`create_time`)) AS title
+            </when>
+        </choose>
+        FROM goods_order go
+        WHERE 1=1
+        AND go.`del_flag` != 1
+        <if test="companyId !=null ">
+             AND go.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(go.`create_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND
+            TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(go.`create_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(go.`create_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="showGoodsTypeNumber" resultType="java.util.Map">
+        SELECT
+        ic.id,IFNULL(COUNT(goc.id),0) AS y,ic.category_name as name
+        from goods_order_commodity goc
+        left join goods_order go on go.order_number = goc.goods_order_number
+        join item_info ii on goc.commodity_id = ii.id
+        join item_category ic on ic.id = ii.category_id
+        WHERE 1=1
+
+        <if test="companyId !=null ">
+             AND go.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(go.`create_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND
+            TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            GROUP BY ic.category_name
+        </if>
+    </select>
+
+    <select id="getPayInfo" resultType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        SELECT total_price as totalPrice,transportation_expenses as transportationExpenses FROM goods_order WHERE order_number = #{orderNumber}
+    </select>
+
+    <update id="updatePayTotal" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        UPDATE goods_order
+        SET
+            actual_payment = #{actualPayment}
+        WHERE order_number = #{orderNumber}
+    </update>
+
+    <select id="getAgentInfo" parameterType="String" resultType="int">
+        SELECT count(1) FROM agent_order WHERE order_number = #{orderNumber}
+    </select>
+
+    <insert id="saveAgentOrder" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        INSERT INTO goods_order
+        (
+        `order_number`,
+        `purchaser_company_id`,
+        `purchaser_company_name`,
+        `purchaser_name`,
+        `order_status`,
+        `create_by`,
+        `create_time`,
+        is_agent,
+        agent_order_number
+        )
+        VALUES
+        (
+        #{orderNumber},
+        #{purchaserCompanyId},
+        #{purchaserCompanyName},
+        #{purchaserName},
+        #{orderStatus},
+        #{createBy},
+        #{createTime},
+        #{isAgent},
+        #{agentOrderNumber}
+        )
+    </insert>
+
+    <select id="getGoodsOrderByAgentOrder" resultMap="goodsOrderMaps">
+        SELECT
+        order_id, order_number, seller_id, seller_name, seller_contact, goods_unit, purchaser_company_id, purchaser_company_name, purchaser_name, purchaser_contact, total_price,
+        transportation_expenses, actual_payment, distribution_mode, transaction_mode, payment_method, insurance_method, customs_declaration, storage_mode, mode_of_payment, ship_time, down_payment,
+        pre_pick_up_time, complaint_p, transaction_manner, complaint_s, order_status, status_count, status_owner, order_goods_type, order_css, del_flag, agreement_id, create_by, create_time,
+        modify_by, modify_time, remarks, order_count, dept_id, company_id, authorizes_id, is_agent, agent_order_number, is_delete
+        FROM
+        goods_order
+        WHERE
+        agent_order_number = #{orderNo} AND is_agent = 1
+        <choose>
+            <when test="authorizeId == null">
+                AND authorizes_id is null
+            </when>
+            <otherwise>
+                AND authorizes_id = #{authorizeId}
+            </otherwise>
+
+        </choose>
+
+    </select>
+
+    <select id="getAccreditCompany" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT DISTINCT
+            a.id,
+            a.company_name
+        FROM
+            merchant_company a
+        LEFT JOIN merchant_company_service b ON a.id = b.company_id
+        WHERE
+            b.service_name = '代理服务'
+    </select>
+
+    <select id="getCompanyStaff" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        SELECT
+            user_id as userId,
+            username
+        FROM
+            sys_user
+        WHERE
+            company_id = #{companyId}
+    </select>
+
+    <select id="getAccredit" resultType="map">
+        SELECT
+            t1.company_id,
+	        t1.order_no,
+	        t2.company_name,
+	        t3.username,
+	        t1.is_payment
+        FROM
+            agent_order_authorize t1
+        LEFT JOIN merchant_company t2 ON t1.company_id = t2.id
+        LEFT JOIN sys_user t3 ON t1.create_by = t3.user_id
+        WHERE
+            t1.order_no = #{orderNumber}
+            and t1.is_cancel = '0'
+    </select>
+
+    <insert id="savePriceVersion" parameterType="com.wzlue.chain.order.entity.OrderPriceVersionEntity">
+        INSERT INTO order_price_version(
+            order_number,
+            original_total_price,
+            later_total_price,
+            original_carriage,
+            later_carriage,
+            create_time
+        )VALUES(
+            #{orderNumber},
+            #{originalTotalPrice},
+            #{laterTotalPrice},
+            #{originalCarriage},
+            #{laterCarriage},
+            now()
+        )
+    </insert>
+
+    <select id="getPriceVersion" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity" resultType="com.wzlue.chain.order.entity.OrderPriceVersionEntity">
+        SELECT
+            id,
+            order_number as orderNumber,
+            original_total_price as originalTotalPrice,
+            later_total_price as laterTotalPrice,
+            original_carriage as originalCarriage,
+            later_carriage as laterCarriage,
+	        date_format(create_time, '%Y-%c-%d %H:%i:%s') as createTime
+        FROM order_price_version
+        WHERE order_number = #{orderNumber}
+    </select>
+
+    <select id="queryAllList" resultType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        SELECT
+            *
+        FROM
+            goods_order
+        WHERE
+            order_status = #{orderStatus}
+        AND is_Delete = '0'
+        AND del_flag = '0'
+    </select>
+
+    <update id="updateActualPay" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        UPDATE goods_order
+        SET
+            actual_payment = #{actualPayment}
+        WHERE
+            order_id = #{orderId}
+    </update>
+</mapper>

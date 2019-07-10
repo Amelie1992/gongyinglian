@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>招标表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('Bidding')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.tenderName"
+                       :placeholder="$t('PleaseInputProjectName')"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <!--<button v-if="hasPermission('marketing:markettender:save')" class="btn btn-primary"-->
+            <!--@click="add">-->
+            <!--<i class="fa fa-plus"></i>&nbsp;{{$t('added')}}-->
+            <!--</button>-->
+            <!--<button v-if="hasPermission('marketing:markettender:update')" class="btn btn-warning"-->
+            <!--@click="update">-->
+            <!--<i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}-->
+            <!--</button>-->
+            <!--<button v-if="hasPermission('marketing:markettender:delete')" class="btn btn-danger"-->
+            <!--@click="del">-->
+            <!--<i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}-->
+            <!--</button>-->
+            <!--<button v-if="hasPermission('marketing:markettender:update')" class="btn btn-warning"-->
+            <!--@click="updateStatus">-->
+            <!--<i></i>{{$t('shelf')}}/{{$t('obtained')}}-->
+            <!--</button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-heading">
+            <span class="panel-title">{{$t('Bidding')}}</span>
+        </div>
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('BiddingCode')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTender.tenderNumber"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('NameOfTenderItem')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTender.tenderName" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Tendering')}}{{$t('business')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTender.companyName"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Bidder')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTenderRecord.createByName"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('BiddingTime')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control select-box-input datepicker"
+                                           id="createDate" v-model="marketTenderRecord.createDate"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Bidders')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTenderRecord.companyName"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Bidding')}}{{$t('Bid')}}</div>
+                                <div class="col-sm-10">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" v-model="marketTenderRecord.price"
+                                               :placeholder="$t('price')" disabled/>
+                                        <div class="input-group-addon">{{$t('Yuan')}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('contact')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTenderRecord.contact"
+                                           :placeholder="$t('contact')" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('phone')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control" v-model="marketTenderRecord.telephone"
+                                           :placeholder="$t('phone')" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-8">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('BidingDocument')}}</div>
+                                <div class="col-sm-10">
+                                    <template v-if="marketTenderRecord.file != null">
+                                        <td>
+                                            {{marketTenderRecord.file.fileName}}
+                                            <a :href="marketTenderRecord.file.url" target="_blank">查看</a>
+                                        </td>
+                                    </template>
+                                    <template v-else>
+                                        <td>无</td>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">
+                            <input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<!--时间插件-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+
+<script src="../../js/modules/marketing/mymarkettender.js"></script>
+</body>
+</html>

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储订单</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-editable/css/bootstrap-editable.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid" style="min-height: 800px;">
+    <section class="content-header">
+        <h1>
+            {{$t('StorageOrderList')}}{{$t('Buy')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber"
+                       :placeholder="$t('PleaseInputOrderNumber')" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" data-width="auto" v-model="params.passStatus">
+                    <option value="">{{$t('OrderStatus')}}</option>
+                    <option v-for="(item,index) in passStatusList" :value="index">{{item}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button v-if="hasPermission('storage:order:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <!--<button v-if="hasPermission('storage:order:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('storage:order:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!--订单详情-->
+    <div v-show="show1" class="" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="panel panel-default col-sm-6 text-center" style="height: 260px">
+                        <div class="panel-body text-center" style="height: 300px">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('ContractNumber')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.contractNumber}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('OrderId')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.orderNumber}}</div>
+                                </div>
+                            </div>
+                            <template v-if="order.passStatus==0">
+                                <h1>{{$t('WaitingForConfirmation')}}</h1>
+                            </template>
+                            <template v-if="order.passStatus==1">
+                                <h1>{{$t('Receipt')}}</h1>
+                            </template>
+                            <template v-if="order.passStatus==2">
+                                <h1 v-if="order.payStatus==0&&order.stockStatus==0">{{$t('InTheTransaction')}}</h1>
+                            </template>
+                            <template v-if="order.passStatus==3">
+                                <h1>{{$t('OrderCancelled')}}</h1>
+                            </template>
+                            <template v-if="order.passStatus==6">
+                                <h1 v-if="order.payStatus==0&&order.stockStatus==1">
+                                    {{$t('WarehousingChargesHaveNotBeenCleared')}}</h1>
+                            </template>
+                            <template v-if="order.passStatus==7">
+                                <h1 v-if="order.payStatus==1&&order.stockStatus==1">{{$t('TransactionCompletion')}}</h1>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="panel panel-default col-sm-6" align="center" style="height: 260px"
+                         v-if="order.passStatus==1">
+                        <div class="panel-body">
+                            <h5>{{$t('WarehousePickUpInformation')}}</h5>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('contact')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.merchantContact}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('address')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.merchantAddress}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('phone')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.merchantPhone}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('MailboxAccount')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.merchantEmail}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="pull-right">{{$t('SingleTime')}}：</div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="pull-left">{{order.receiptTime}}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--报盘信息-->
+                <div class="row" v-if="offer">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                {{$t('WarehousingInformation')}}
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-sm-4">{{$t('warehouseName')}}：{{offer.storageName}}</div>
+                                <div class="col-sm-4">{{$t('contact')}}：{{offer.contact}}</div>
+                                <div class="col-sm-4">{{$t('phone')}}：{{offer.phone}}</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    {{$t('ChargeUnitPrice')}}：{{order.price==null?offer.price:order.price}}&nbsp;{{offer.unit}}
+                                </div>
+                                <div class="col-sm-4">{{$t('address')}}：{{offer.provinceName}}&nbsp;{{offer.cityName}}&nbsp;{{offer.countyName}}</div>
+                                <div class="col-sm-4">{{$t('Area')}}:{{offer.area}}</div>
+                            </div>
+                            <div class="row" v-if="order.price">
+                                <div style="color: red;">{{$t('StorageChargesAccordingToThe')}}{{order.price}}&nbsp;{{offer.unit}}{{$t('Collect')}}，{{$t('OtherFeesChargedAtOnce')}}。</div>
+                                <table class="table table-bordered">
+                                    <tr>
+                                        <td>{{$t('WarehousingFee')}}</td>
+                                        <td>{{$t('HandlingCharge')}}</td>
+                                        <td>{{$t('DisposalCharge')}}</td>
+                                        <td>{{$t('RepeatUpAndDown')}}</td>
+                                        <td>{{$t('SortingFee')}}</td>
+                                        <td>{{$t('TallyFee')}}</td>
+                                        <td>{{$t('CopyTheCodeFor')}}</td>
+                                        <td>{{$t('AfterFrozenFee')}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{{order.money1}}</td>
+                                        <td>{{order.money2}}</td>
+                                        <td>{{order.money3}}</td>
+                                        <td>{{order.money4}}</td>
+                                        <td>{{order.money5}}</td>
+                                        <td>{{order.money6}}</td>
+                                        <td>{{order.money7}}</td>
+                                    </tr>
+                                    <tr>
+                                        <!--<td>{{$t('InspectionOfTransferFare')}}</td>-->
+                                        <td>{{$t('CheckTheCostOfDigging')}}</td>
+                                        <!--<td>{{$t('CheckSwitchBoxDoorChargesAndLeadSeals')}}</td>-->
+                                        <!--<td>{{$t('DoorToDoorInspectionFee')}}</td>-->
+                                        <!--<td>{{$t('EntryAndExitFee')}}</td>-->
+                                        <td>{{$t('WrappingFilm')}}</td>
+                                        <td>{{$t('BoxCarOpposite')}}</td>
+                                        <td>{{$t('PreCoolingFee')}}</td>
+                                        <td colspan="4">{{$t('Other')}}</td>
+                                    </tr>
+                                    <tr>
+                                        <!--<td>{{order.money8}}</td>-->
+                                        <td>{{order.money9}}</td>
+                                        <!--<td>{{order.money10}}</td>-->
+                                        <!--<td>{{order.money11}}</td>-->
+                                        <!--<td>{{order.money12}}</td>-->
+                                        <td>{{order.money13}}</td>
+                                        <td>{{order.money14}}</td>
+                                        <td>{{order.money15}}</td>
+                                        <td colspan="4">{{order.money16}}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--<div class="row">
+                                <div class="col-sm-12">{{$t('Remarks')}}：{{order.remarks}}</div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+                <!--下单信息-->
+                <div class="row">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">
+                                {{$t('SingleInformation')}}
+                            </h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-sm-4">{{$t('OrderTime')}}：{{order.createdTime}}</div>
+                                <div class="col-sm-4">{{$t('EstimatedStorageDate')}}：{{order.intTime}}</div>
+                                <!--<div class="col-sm-4">预计出库日期：{{order.outTime}}</div>-->
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">{{$t('contact')}}：{{order.contact}}</div>
+                                <div class="col-sm-4">{{$t('phone')}}：{{order.phone}}</div>
+                                <div class="col-sm-4">{{$t('MailboxAccount')}}：{{order.email}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--//货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('GoodsInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <input type="text" class="form-control" v-model="order.goodNumber"
+                                       placeholder="订单编号" readonly/>
+                            </div>
+                            <div class="col-xs-4">
+                                <div class="form-group">
+                                    <label class="col-sm-4">{{$t('InspectionNo')}}</label>
+                                    <div class="col-sm-7">
+                                        <input type="text" class="form-control" v-model="order.inspectionNo"
+                                               name="inspectionNo" :placeholder="$t('InspectionNo')" :disabled="show1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 table-responsive" style="max-height: 550px;">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>{{$t('ContainerNo')}}</th>
+                                        <!--<th>{{$t('InspectionNo')}}</th>-->
+                                        <th>{{$t('ProductName')}}</th>
+                                        <th>{{$t('place')}}</th>
+                                        <th>{{$t('ProducerOrNumber')}}</th>
+                                        <th>{{$t('UnitPrice')}}</th>
+                                        <th>{{$t('weight')}}</th>
+                                        <th>{{$t('unit')}}</th>
+                                        <th>{{$t('pack')}}</th>
+                                        <th>{{$t('DateOfManufacture')}}</th>
+                                        <th>{{$t('ShelfLife')}}</th>
+                                        <th>{{$t('ExpirationDate')}}</th>
+                                        <!---->
+                                        <th>{{$t('WeightOfWarehouse')}}</th>
+                                        <!--<th>{{$t('QuantityOfWarehouse')}}</th>-->
+                                        <th>{{$t('OutgoingWeight')}}</th>
+                                        <!--<th>{{$t('QuantityOfOutgoing')}}</th>-->
+                                        <th>{{$t('ResidualWeight')}}</th>
+                                        <!--<th>{{$t('ResidualQuantity')}}</th>-->
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(item,index) in commodityEntityList">
+                                        <td>{{item.containerNo}}</td>
+                                        <!--<td>{{item.inspectionNo}}</td>-->
+                                        <td>{{item.commodityName}}</td>
+                                        <td>{{item.commodityCountry}}</td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <td>{{item.commodityPrice}}</td>
+                                        <td>{{item.commodityCount}}</td><!--***-->
+                                        <td v-for="p in unitList" v-if="p.code==item.commodityUnit">{{p.name}}</td>
+                                        <td>{{item.commodityPacking}}</td>
+                                        <td>{{item.productionDate}}</td>
+                                        <td>{{item.qualityTime}}</td>
+                                        <td>{{item.expirationDate}}</td>
+                                        <!---->
+                                        <td v-if="item.weight!=null">{{item.weight}}{{item.unitName}}</td>
+                                        <td v-else>&nbsp;</td>
+                                        <!--<td v-if="item.merchantWeight!=null">{{item.merchantWeight}}{{item.unitName}}</td>-->
+                                        <!--<td v-else>&nbsp;</td>-->
+                                        <td v-if="item.outWeight!=null">{{item.outWeight}}{{item.unitName}}</td>
+                                        <td v-else>&nbsp;</td>
+                                        <!--<td v-if="item.outWeightNum!=null">{{item.outWeightNum}}{{item.unitName}}</td>-->
+                                        <!--<td v-else></td>-->
+                                        <td v-if="item.outWeight!=null">{{item.residualWeight}}{{item.unitName}}</td>
+                                        <td v-else-if="item.weight==null">&nbsp;</td>
+                                        <td v-else>{{item.weight}}{{item.unitName}}</td>
+                                        <!--<td v-if="item.outWeightNum!=null">{{item.residualQuantity}}{{item.unitName}}</td>-->
+                                        <!--<td v-else-if="item.merchantWeight!=null">{{item.merchantWeight}}{{item.unitName}}</td>-->
+                                        <!--<td v-else>&nbsp;</td>-->
+                                    </tr>
+                                    </tbody>
+                                    <!--<thead>-->
+                                    <!--<tr>-->
+                                    <!--<th>{{$t('WeightOfWarehouse')}}</th>-->
+                                    <!--<th>{{$t('QuantityOfWarehouse')}}</th>-->
+                                    <!--<th>{{$t('OutgoingWeight')}}</th>-->
+                                    <!--<th>{{$t('QuantityOfOutgoing')}}</th>-->
+                                    <!--<th>{{$t('ResidualWeight')}}</th>-->
+                                    <!--<th>{{$t('ResidualQuantity')}}</th>-->
+                                    <!--</tr>-->
+                                    <!--</thead>-->
+                                    <!--<tbody>-->
+                                    <!--<tr v-for="(item,index) in commodityEntityList">-->
+                                    <!--<td v-if="item.weight!=null">{{item.weight}}{{item.commodityUnitName}}</td>-->
+                                    <!--<td v-else>&nbsp;</td>-->
+                                    <!--<td v-if="item.merchantWeight!=null">{{item.merchantWeight}}{{item.unitName}}</td>-->
+                                    <!--<td v-else>&nbsp;</td>-->
+                                    <!--<td v-if="item.outWeight!=null">{{item.outWeight}}{{item.commodityUnitName}}</td>-->
+                                    <!--<td v-else>&nbsp;</td>-->
+                                    <!--<td v-if="item.outWeightNum!=null">{{item.outWeightNum}}{{item.unitName}}</td>-->
+                                    <!--<td v-else></td>-->
+                                    <!--<td v-if="item.outWeight!=null">{{item.weight-item.outWeight}}{{item.commodityUnitName}}</td>-->
+                                    <!--<td v-else-if="item.merchantWeight!=null">{{item.weight}}{{item.commodityUnitName}}</td>-->
+                                    <!--<td v-else></td>-->
+                                    <!--<td v-if="item.outWeightNum!=null">{{item.merchantWeight-item.outWeightNum}}{{item.unitName}}</td>-->
+                                    <!--<td v-else-if="item.merchantWeight!=null">{{item.merchantWeight}}{{item.unitName}}</td>-->
+                                    <!--<td v-else></td>-->
+                                    <!--</tr>-->
+                                    <!--</tbody>-->
+                                </table>
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea name="remarks" class="form-control" cols="20" rows="3"
+                                              v-model="order.remarks"
+                                              :placeholder="$t('Remarks')"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        <input type="button" class="btn btn-danger" style="float: right;margin-left: 10px;"
+                               v-if="order.passStatus!=0&&order.buyStatus==0" @click="addComplaint"
+                               :value="$t('Complaint')"/>
+                        <input type="button" class="btn btn-primary" style="float: right"
+                               v-if="order.passStatus==7&&order.alterSale==0" @click="afterSaleApply"
+                               :value="$t('AfterSale')"/>
+                        <input type="button" class="btn btn-danger" style="float: right;margin-right: 10px;"
+                               v-if="order.buyStatus==1" @click="complaintDeatil" :value="$t('DetailsOfComplaint')"/>
+                        <input type="button" class="btn btn-primary" style="float: right;margin-right: 10px;"
+                               v-if="order.alterSale==1||order.alterSale==2" @click="asDetail"
+                               :value="$t('DetailsOfAfterSaleService')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--付款页-->
+    <play_page :payList="playShow"></play_page>
+
+    <!--新增订单、修改订单-->
+    <div v-show="show2" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="addForm" onkeydown="if(event.keyCode==13){return false;}">
+                <!--//合同信息-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span>{{$t('ContractInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">{{$t('ContractNumber')}}</label>
+                                    <div class="col-sm-10">
+                                        <input id="contractNumber" type="text" name="contractNumber" class="form-control"
+                                               :placeholder="$t('ContractNumber')" disabled="disabled"
+                                               v-model="order.contractNumber"  onblur="checkCode(this.value)"/>
+                                        <input type="radio" name="choose" value="1" checked="checked"
+                                               onchange="change2(this)"/>{{$t('AutomaticGeneration')}}
+                                        &nbsp;&nbsp;<input type="radio" name="choose" value="0"
+                                                           onchange="change2(this)"/>{{$t('ManualInput')}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--//收货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('BuyerInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('contact')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contact" class="form-control" v-model="order.contact"
+                                           :placeholder="$t('contact')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('phone')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phone" class="form-control" v-model="order.phone"
+                                           :placeholder="$t('phone')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('MailboxAccount')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="email" class="form-control" v-model="order.email"
+                                           :placeholder="$t('MailboxAccount')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('EstimatedStorageDate')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="intTime" class="form-control select-box-input"
+                                           v-model="order.intTime" id="datetimepicker" readonly
+                                           :placeholder="$t('EstimatedStorageDate')" data-date-format="yyyy-mm-dd"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--//卖家信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('SellerInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('SellerCompany')}}</label>
+                                <div class="col-sm-10" v-show="!updateStatus">
+                                    <vm-select :options="companys" title="请选择卖家公司" search="true"
+                                               v-model="order.receiptMerchantId" name="receiptMerchantId"
+                                               :value="order.receiptMerchantId"
+                                               :method="getOffers"></vm-select>
+                                </div>
+                                <div class="col-sm-10" v-show="updateStatus">
+                                    <input style="width: 50%" type="text" name="receiptMerchantId" class="form-control"
+                                           v-model="orderOfferEntity.companyName" readonly
+                                           :placeholder="$t('SellerCompany')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-5 required">
+                                <label class="col-sm-2 control-label">{{$t('Headlines')}}</label>
+                                <div class="col-sm-10" v-show="!updateStatus">
+                                    <vm-select :options="offers" title="请选择报盘标题" search="true"
+                                               v-model="orderOfferEntity.offerId" name="offerId"
+                                               :value="orderOfferEntity.offerId"
+                                               :method="getOffer"></vm-select>
+                                </div>
+                                <div class="col-sm-10" v-show="updateStatus">
+                                    <input style="width: 50%" type="text" name="offerId" class="form-control"
+                                           v-model="orderOfferEntity.title" readonly
+                                           :placeholder="$t('Headlines')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-5">
+                                <label class="col-sm-2 control-label">{{$t('ChargeUnitPrice')}}</label>
+                                <div class="col-sm-10 input-group">
+                                    <input style="width: 50%" type="text" name="price" class="form-control"
+                                           v-model="orderOfferEntity.price" readonly
+                                           :placeholder="$t('ChargeUnitPrice')"/>
+                                    <select style="width: 46%" class="form-control" v-model="orderOfferEntity.unit"
+                                            disabled
+                                            name="unit">
+                                        <option value="1">{{$t('Yuan')}}/{{$t('ton')}}/{{$t('day')}}</option>
+                                        <option value="2">{{$t('Yuan')}}/{{$t('kg')}}/{{$t('day')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-5">
+                                <label class="col-sm-2 control-label">{{$t('warehouseName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="storageName" class="form-control"
+                                           v-model="orderOfferEntity.storageName" readonly
+                                           :placeholder="$t('warehouseName')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-5">
+                                <label class="col-sm-2 control-label">{{$t('contact')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control"
+                                           v-model="orderOfferEntity.contact" readonly
+                                           :placeholder="$t('contact')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-5">
+                                <label class="col-sm-2 control-label">{{$t('phone')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control"
+                                           v-model="orderOfferEntity.phone" readonly
+                                           :placeholder="$t('phone')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="row">
+                            <div class="form-group col-sm-12">
+                                <label class="col-sm-2 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-sm-10">
+                                    <textarea v-model="order.remarks" class="form-control" cols="20" rows="3"
+                                              :placeholder="$t('Remarks')"></textarea>
+                                </div>
+                            </div>
+                        </div>-->
+                    </div>
+                </div>
+
+                <!--//货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('GoodsInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <input id="orderNum" type="text" class="form-control" v-model="order.goodNumber"
+                                       :placeholder="$t('OrderNumber')" @change="addGoods('orderNum')"/>
+                            </div>
+                            <div class="col-xs-4">
+                                <div class="form-group required">
+                                    <label class="col-sm-4">{{$t('InspectionNo')}}<font style="color: #ff0000">*</font></label>
+                                    <div class="col-sm-7">
+                                        <input type="text" class="form-control" v-model="order.inspectionNo"
+                                               name="inspectionNo" :placeholder="$t('InspectionNo')" :disabled="updateStatus"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <input v-if="!addTxBtn&&!updateStatus" type="button" class="btn btn-primary pull-right"
+                                   @click="addGoods('txtBtn')" :value="$t('NewGoods')"/>
+                            <!--<a v-if="!addTxBtn&&!updateStatus" href="javascript:void(0);" class="pull-right"-->
+                            <!--@click="addGoods('txtBtn')" style="font-size: 20px">{{$t('NewGoods')}}</a>-->
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 table-responsive" style="height: 400px;">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th width="5%">{{$t('ContainerNo')}}</th>
+                                        <!--<th width="5%">{{$t('InspectionNo')}}</th>-->
+                                        <th width="5%">{{$t('ProductName')}}</th>
+                                        <th width="5%">{{$t('place')}}</th>
+                                        <th width="5%">{{$t('ProducerOrNumber')}}</th>
+                                        <th width="5%">{{$t('UnitPrice')}}</th>
+                                        <th width="5%">{{$t('weight')}}</th>
+                                        <th width="5%">{{$t('unit')}}</th>
+                                        <th width="5%">{{$t('pack')}}</th>
+                                        <th width="5%">{{$t('DateOfManufacture')}}</th>
+                                        <th width="5%">{{$t('ShelfLife')}}</th>
+                                        <th width="5%">{{$t('ExpirationDate')}}</th>
+                                        <th v-if="!addTxBtn&&!updateStatus" width="2%">{{$t('chaozuo')}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(item,index) in commodityEntityList"
+                                        v-if="!addTxBtn&&commodityEntityList&&!updateStatus">
+                                        <td><input type="text" class="form-control" maxlength="20"
+                                                   v-model="commodityEntityList[index].containerNo"></td>
+                                        <!--<td><input type="text" class="form-control" maxlength="20"-->
+                                                   <!--v-model="commodityEntityList[index].inspectionNo"></td>-->
+                                        <td><input type="text" class="form-control" maxlength="20"
+                                                   v-model="commodityEntityList[index].commodityName"></td>
+                                        <td>
+                                            <select type="text" class="form-control selectpicker"
+                                                    data-live-search="true" data-dropup-auto="false"
+                                                    v-model="commodityEntityList[index].commodityCountry">
+                                                <option :value="p.name" v-for="p in placeData">{{p.name}}</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control" maxlength="20"
+                                                   v-model="commodityEntityList[index].commodityFactoryNumber"></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].commodityPrice"></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].commodityCount"></td>
+                                        <td>
+                                            <select type="text" class="form-control"
+                                                    v-model="commodityEntityList[index].commodityUnit">
+                                                <option value="1">{{$t('ton')}}</option>
+                                                <option value="2">{{$t('kg')}}</option>
+                                            </select>
+                                        </td>
+                                        <!--包装-->
+                                        <td><input type="text" class="form-control" maxlength="20"
+                                                   v-model="commodityEntityList[index].commodityPacking"></td>
+                                        <td><input type="text" class="form-control select-box-input datetimepicker"
+                                                   name="productionDate"
+                                                   v-model="commodityEntityList[index].productionDate"
+                                                   data-date-format="yyyy-mm-dd" readonly></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].qualityTime"
+                                                   onblur="change(this)" :index="index"></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].expirationDate" readonly></td>
+                                        <td><a class="fa fa-trash-o" href="javascript:void(0)"
+                                               @click="removeGoods(index)" class=""></a></td>
+                                    </tr>
+                                    <tr v-for="(item,index) in commodityEntityList" v-if="addTxBtn&&!updateStatus">
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].containerNo"></td>
+                                        <!--<td><input type="text" class="form-control"-->
+                                                   <!--v-model="commodityEntityList[index].inspectionNo"></td>-->
+                                        <td>{{item.commodityName}}</td>
+                                        <td>
+                                           <!-- <select type="text" class="form-control"
+                                                    v-model="commodityEntityList[index].commodityCountry" disabled>
+                                                <option v-for="p in placeData" :value="p.code"
+                                                        v-if="p.code==commodityEntityList[index].commodityCountry">{{p.name}}
+                                                </option>
+                                                &lt;!&ndash;<option>{{item.commodityCountry}}</option>&ndash;&gt;
+                                                &lt;!&ndash;新增问题 查出来code 自己映射name 存还是存code&ndash;&gt;
+                                            </select>-->
+                                            {{item.commodityCountry}}
+                                        </td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <td>{{item.commodityPrice}}</td>
+                                        <td>{{item.commodityCount}}</td>
+                                        <td>
+                                            <select type="text" class="form-control"
+                                                    v-model="commodityEntityList[index].commodityUnit" disabled>
+                                                <option :value="p.code" v-for="p in unitList">{{p.name}}</option>
+                                            </select>
+                                        </td>
+                                        <td>{{item.commodityPacking}}</td>
+                                        <td><input type="text" class="form-control select-box-input datetimepicker"
+                                                   name="productionDate"
+                                                   v-model="commodityEntityList[index].productionDate"
+                                                   data-date-format="yyyy-mm-dd" readonly></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].qualityTime"
+                                                   onblur="change(this)" :index="index"></td>
+                                        <td><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].expirationDate" readonly></td>
+                                        <td v-if="!addTxBtn"></td>
+                                    </tr>
+                                    <tr v-for="(item,index) in commodityEntityList" v-if="updateStatus">
+                                        <td>{{item.containerNo}}</td>
+                                        <!--<td>{{item.inspectionNo}}</td>-->
+                                        <td>{{item.commodityName}}</td>
+                                        <td>{{item.commodityCountry}}</td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <td>{{item.commodityPrice}}</td>
+                                        <td>{{item.commodityCount}}</td>
+                                        <td v-for="p in unitList" v-if="p.code==item.commodityUnit">{{p.name}}</td>
+                                        <td>{{item.commodityPacking}}</td>
+                                        <td>{{item.productionDate}}</td>
+                                        <td>{{item.qualityTime}}</td>
+                                        <td>{{item.expirationDate}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <br/>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-sm-10">
+                                    <textarea name="remarks" class="form-control" cols="20" rows="3"
+                                              v-model="order.remarks"
+                                              :placeholder="$t('Remarks')"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"></div>
+                    <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--投诉-->
+    <div class="modal fade" id="complaintModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form class="form-horizontal" id="complaintForm" onkeydown="if(event.keyCode==13){return false;}">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="myModalLabel">{{$t('Complaint')}}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ComplaintReason')}}</div>
+                                <div class="col-sm-10">
+                            <textarea name="reason" class="form-control" rows="8"
+                                      v-model="complaint.reason"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                                <div class="col-sm-10">
+                                    <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                                         :image_list="complaint.images"></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" v-if="!complaint.id">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('cancel')}}</button>
+                        <button type="button" class="btn btn-primary" @click="saveComplaint">{{$t('submission')}}
+                        </button>
+                    </div>
+                    <div class="modal-footer" v-if="complaint.id">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!--售后-->
+    <div class="panel panel-default" v-show="showAfterSales" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal afterForm" :model="afterSale" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ServiceType')}}</div>
+                                <div class="col-sm-10">
+                                    <!--placeholder="服务类型 索赔"/>-->
+                                    <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio"
+                                           value="2" checked="checked"/>
+                                    {{$t('ClaimDemage')}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('RefundForm')}}</div>
+                                <div class="col-sm-8">
+                                    <select class="form-control" data-width="auto"
+                                            v-model="afterSale.refundForm" name="refundForm">
+                                        <option value="">{{$t('PleaseChooseTheRefundMethod')}}</option>
+                                        <option v-for="item in refundFormList" :value="item.value">
+                                            {{item.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ClaimReason')}}</div>
+                                <div class="col-sm-8">
+                                    <select class="form-control"
+                                            v-model="afterSale.reason" name="reason"
+                                            data-width="auto">
+                                        <option value="">{{$t('PleaseChooseTheReason')}}</option>
+                                        <option v-for="item in reasonList" :value="item.value">
+                                            {{item.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ProblemDescription')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea name="description" class="form-control" rows="5"
+                                              v-model="afterSale.description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('Pictures')}}</div>
+                            <div class="col-sm-3">
+                                <commodity-fileinput :this_maxFileCount="6" ref="afterFile" :files="afterImages"
+                                                     :image_list="afterSale.images"></commodity-fileinput>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <button type="button" class="btn btn-primary" @click="validate2">{{$t('sure')}}</button>
+                        &nbsp;&nbsp;<button type="button" class="btn btn-warning" @click="back">{{$t('cancel')}}
+                    </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--售后详情-->
+    <div v-show="afterSDetail" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="aftForm" :model="afterSale"
+                  onkeydown="if(event.keyCode==13){return false;}">
+                <div class="panel-body">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1">{{$t('status')}}：{{afterSale.status==0?'待处理':'已处理'}}</div>
+                        <div class="col-sm-4">{{$t('CodeId')}}：{{afterSale.code}}</div>
+                        <div class="col-sm-2">{{$t('OrderId')}}：{{afterSale.orderId}}</div>
+                        <div class="col-sm-2">{{$t('ApplicationDate')}}：{{afterSale.applicationDate}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">{{$t('Seller')}}：{{afterSale.seller}}</div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('ServiceType')}}：{{$t('ClaimDemage')}}</div>
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('RefundForm')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in refundFormList" v-if="p.value==afterSale.refundForm">
+                                {{p.label}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('ClaimReason')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in reasonList" v-if="p.value==afterSale.reason">
+                                {{p.label}}
+                            </div>
+                        </div>
+                        <div class="col-sm-4">{{$t('ProblemDescription')}}：{{afterSale.description}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('Pictures')}}：
+                            <commodity-fileinput :image_list="afterSale.images"
+                                                 :files="afterImages"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <!--已处理的信息展示-->
+                <div class="panel-body">
+                    <div class="row" v-show="afterSale.status==1">
+                        <div class="col-sm-4">{{$t('Result')}}：{{afterSale.result==0?'通过':'不通过'}}</div>
+                        <div class="col-sm-4">{{$t('Suggestion')}}：{{afterSale.suggestion}}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <button type="button" class="btn btn-warning" @click="back">{{$t('return')}}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<!--<script src="../../js/modules.js"></script>-->
+<script src="../../js/modules/storage/order_buy.js"></script>
+</body>
+</html>

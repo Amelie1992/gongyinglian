@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储出库</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-editable/css/bootstrap-editable.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.contact"
+                       :placeholder="$t('NameOfPickUpDriver')"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button v-if="hasPermission('storage:storageout:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('DriversName')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="contact" class="form-control" v-model="out.contact"
+                                   :placeholder="$t('NameOfPickUpDriver')" id="contact" disabled="disabled"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('DriversPhone')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="phone" class="form-control" v-model="out.phone"
+                                   :placeholder="$t('PickUpDriversCall')" id="phone" disabled="disabled"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('IDNumber')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="card" class="form-control" v-model="out.card"
+                                   :placeholder="$t('IDNumber')" id="card" disabled="disabled"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('LicensePlateNumber')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="vehicleNumber" class="form-control" v-model="out.vehicleNumber"
+                                   :placeholder="$t('LicensePlateNumber')" id="vehicleNumber" disabled="disabled"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('DeliveryTime')}}</div>
+                        <div class="col-sm-10">
+                            <input type="" name="takeTime" readonly class="form-control select-box-input form_datetime"
+                                   v-model="out.takeTime" id="datetimepicker" data-date-format="yyyy-mm-dd"
+                                   :placeholder="$t('PrePickUpTime')"  disabled="disabled"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('WhetherOrNotToEscortTheCar')}}</div>
+                        <div class="col-sm-10">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="escort" v-model="out.escort" value="0"
+                                           id="escort1" disabled="disabled"/>
+                                    {{$t('Escort')}}
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="escort" v-model="out.escort" value="1"
+                                           id="escort2" disabled="disabled"/>
+                                    {{$t('NoEscort')}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('WhetherOrNotToCopyTheCode')}}</div>
+                        <div class="col-sm-10">
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="copeCode" v-model="out.copeCode" value="0"
+                                           id="copeCode1" disabled="disabled"/>
+                                    {{$t('ToCopyTheCode')}}
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="copeCode" v-model="out.copeCode" value="1"
+                                           id="copeCode2" disabled="disabled"/>
+                                    {{$t('DoNotCopyCode')}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                        <div class="col-sm-10">
+                            <textarea name="remark" class="form-control" v-model="out.remark" cols="20" rows="3"
+                                      :placeholder="$t('Remarks')" id="remark" disabled="disabled"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <!--//货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('GoodsInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('company')}}</div>
+                                <div class="col-sm-10">
+                                    <vm-select :options="companyList" title="请选择公司" search="true"
+                                               v-model="out.companyId" name="companyId" :value="out.companyId"
+                                               :method="getStorageList">
+                                    </vm-select>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('warehouseName')}}</div>
+                                <div class="col-sm-10">
+                                    <vm-select :options="storageList" title="请选择仓库" search="true"
+                                               v-model="out.storageName" name="storageName" :value="out.storageName">
+                                    </vm-select>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-2" v-if="!isDetail">
+                                <!--<a href="javascript:void(0);" @click="showMModal">{{$t('AddGoods')}}</a>-->
+                                <input type="button" class="btn btn-primary pull-right" @click="showMModal" :value="$t('AddGoods')"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>{{$t('OrderNumber')}}</th>
+                                        <th>{{$t('ContainerNo')}}</th>
+                                        <th>{{$t('InspectionNo')}}</th>
+                                        <th>{{$t('NameOfGoods')}}</th>
+                                        <th>{{$t('place')}}</th>
+                                        <th>{{$t('FactoryNumber')}}</th>
+                                        <th>{{$t('UnitPrice')}}</th>
+                                        <th>{{$t('DateOfManufacture')}}</th>
+                                        <th>{{$t('ExpirationDate')}}</th>
+                                        <th>{{$t('ResidualWeight')}}</th>
+                                        <th>{{$t('OutgoingWeight')}}</th>
+                                        <th>{{$t('unit')}}</th>
+                                        <th>{{$t('ResidualQuantity')}}</th>
+                                        <th>{{$t('QuantityOfOutgoing')}}</th>
+                                        <th>{{$t('unit')}}</th>
+                                        <th v-if="!isDetail">{{$t('chaozuo')}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(item,index) in commodityEntityList">
+                                        <td>{{item.orderNumber}}</td>
+                                        <td>{{item.containerNo}}</td>
+                                        <td>{{item.inspectionNo}}</td>
+                                        <td>{{item.commodityName}}</td>
+                                        <td>{{item.countryName}}</td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <td>{{item.commodityPrice}}{{$t('Yuan')}}</td>
+                                        <td>{{item.productionDate}}</td>
+                                        <td>{{item.expirationDate}}</td>
+                                        <td>{{item.weight}}{{item.commodityUnitName}}</td>
+                                        <td v-if="isDetail">{{item.outWeight}}</td>
+                                        <td v-if="!isDetail"><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].outWeight"></td>
+                                        <td>{{item.commodityUnitName}}</td>
+                                        <td>{{item.weightNum}}{{item.unitName}}</td>
+                                        <td v-if="isDetail">{{item.outWeightNum}}</td>
+                                        <td v-if="!isDetail"><input type="text" class="form-control"
+                                                   v-model="commodityEntityList[index].outWeightNum"></td>
+                                        <td>{{item.unitName}}</td>
+                                        <td v-if="!isDetail"><a class="fa fa-trash-o" href="javascript:void(0)"
+                                                                @click="removeGoods(index)" class=""></a></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input v-if="!isDetail" type="button" class="btn btn-primary" @click="validate"
+                               :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        &nbsp;&nbsp;<input v-if="out.id" type="button" class="btn btn-primary" @click="showPrintTable"
+                                           :value="$t('CheckOutLibraryList')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog" role="document" style="width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('ChoiceOfGoods')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <table id="addGoodTable"></table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="addGood">{{$t('confirm')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="printModal">
+        <div class="modal-dialog" role="document" style="width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('OutboundOrder')}}</h4>
+                </div>
+                <div class="modal-body" id="printTable">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <p>{{$t('CustomerName')}}:{{out.merchantName}}</p>
+                            <p>{{$t('DriversName')}}:{{out.contact}}</p>
+                            <p>{{$t('DriversPhone')}}:{{out.phone}}</p>
+                            <p>{{$t('IDNumber')}}:{{out.card}}</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <p>{{$t('PrePickUpTime')}}:{{out.takeTime}}</p>
+                            <p>{{$t('LicensePlateNumber')}}:{{out.vehicleNumber}}</p>
+                            <p>{{$t('WhetherOrNotToEscortTheCar')}}:{{out.escort==0?'是':'否'}}</p>
+                            <p>{{$t('WhetherOrNotToCopyTheCode')}}:{{out.copeCode==0?'是':'否'}}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <p>{{$t('Remarks')}}:{{out.remark}}</p>
+                    </div>
+                    <!--客户名称	下单日期	报检号	集装箱号	品名	单位	数量	重量	车牌号	提货司机姓名	司机电话	证件号	预计提货时间	是否押车	是否抄码	备注-->
+                    <!--<table class="table table-bordered">
+                        &lt;!&ndash;<tr>
+                            <th>客户名称</th>
+                            <th>下单日期</th>
+                            <th>报检号</th>
+                            <th>集装箱号</th>
+                            <th>品名</th>
+                            <th>单位</th>
+                            <th>数量</th>
+                            <th>重量</th>
+                            <th>车牌号</th>
+                            <th>提货司机姓名</th>
+                            <th>司机电话</th>
+                            <th>证件号</th>
+                            <th>预计提货时间</th>
+                            <th>是否押车</th>
+                            <th>是否抄码</th>
+                            <th>备注</th>
+                        </tr>&ndash;&gt;
+                        <tr>
+                            <th>客户名称</th>
+                            <th>车牌号</th>
+                            <th>提货司机姓名</th>
+                            <th>司机电话</th>
+                            <th>证件号</th>
+                            <th>预计提货时间</th>
+                            <th>是否押车</th>
+                            <th>是否抄码</th>
+                            <th>备注</th>
+                        </tr>
+                        <tr>
+                            <td>{{out.merchantName}}</td>
+                            <td>{{out.vehicleNumber}}</td>
+                            <td>{{out.contact}}</td>
+                            <td>{{out.phone}}</td>
+                            <td>{{out.card}}</td>
+                            <td>{{out.takeTime}}</td>
+                            <td>{{out.escort==0?'是':'否'}}</td>
+                            <td>{{out.copeCode==0?'是':'否'}}</td>
+                            <td>{{out.remark}}</td>
+                        </tr>
+                    </table>-->
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>{{$t('StorageDate')}}</th>
+                            <th>{{$t('ContainerNo')}}</th>
+                            <th>{{$t('InspectionNo')}}</th>
+                            <th>{{$t('ProductName')}}</th>
+                            <th>{{$t('OutgoingWeight')}}</th>
+                            <th>{{$t('QuantityOfOutgoing')}}</th>
+                        </tr>
+                        <tr v-for="(item,index) in commodityEntityList">
+                            <td>{{item.orderTime}}</td>
+                            <td>{{item.containerNo}}</td>
+                            <td>{{item.inspectionNo}}</td>
+                            <td>{{item.commodityName}}</td>
+                            <td>{{item.outWeight}}{{item.commodityUnitName}}</td>
+                            <td>{{item.outWeightNum}}{{item.unitName}}</td>
+                        </tr>
+                    </table>
+                    <p>{{$t('Applicant')}}：</p>
+                    <p>{{$t('manager')}}：</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-warning" @click="toWord">{{$t('downLoad')}}</button>
+                    <button type="button" class="btn btn-primary" @click="print">{{$t('OnlinePrinting')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/jquery-migrate-1.2.1.min.js"></script>
+<script src="../../libs/jquery.jqprint-0.3.js"></script>
+<!--网页内容导出word文档jquery插件-->
+<script src="../../libs/FileSaver.js"></script>
+<script src="../../libs/jquery.wordexport.js"></script>
+
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/storage/out.js"></script>
+</body>
+</html>

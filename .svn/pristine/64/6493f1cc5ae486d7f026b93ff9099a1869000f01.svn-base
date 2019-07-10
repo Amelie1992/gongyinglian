@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.marketing.dao.MarketAuctionDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.marketing.entity.MarketAuctionEntity" id="marketAuctionMap">
+        <result property="id" column="id"/>
+        <result property="auctionNumber" column="auction_number"/>
+        <result property="auctionCommodityName" column="auction_commodity_name"/>
+        <result property="startingPrice" column="starting_price"/>
+        <result property="unit" column="unit"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="type" column="type"/>
+        <result property="status" column="status"/>
+        <result property="reservePrice" column="reserve_price"/>
+        <result property="amplitude" column="amplitude"/>
+        <result property="delayPeriod" column="delay_period"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="describe" column="describe"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="count" column="count"/>
+        <association property="companyEntity"
+                     javaType="com.wzlue.chain.company.entity.MerchantCompanyEntity"
+                     column="{userId=company_id}"
+                     select="com.wzlue.chain.company.dao.MerchantCompanyDao.queryObjectByUserId"/>
+        <collection property="file" ofType="com.wzlue.chain.agent.entity.ContractAnnexEntity"
+                    column="{contractId=id}" select="quertContractAnnex"/>
+    </resultMap>
+    <resultMap id="annexMap" type="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+        <id column="ax_id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_type" property="fileType"/>
+        <result column="file_url" property="url"/>
+        <result column="contract_type" property="contractType"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="marketAuctionMap">
+		SELECT
+            ma.*,
+            (SELECT count(*) FROM market_bid_record WHERE auction_id=ma.id) count
+		 FROM market_auction ma
+		 WHERE
+		  ma.id = #{id}
+	</select>
+    <select id="quertContractAnnex" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+        SELECT  * FROM contract_annex WHERE contract_id = #{contractId} AND contract_type = 6
+    </select>
+
+    <select id="queryList" resultMap="marketAuctionMap">
+        SELECT
+        DISTINCT(a.id) AS id,
+        a.auction_number,
+        a.auction_commodity_name,
+        a.starting_price,
+        a.amplitude,
+        a.reserve_price,
+        a.type,
+        a. STATUS,
+        a.start_time,
+        a.end_time,
+        (SELECT count(*) FROM market_bid_record r WHERE r.auction_id=a.id) count,
+        a.company_id
+        FROM
+        market_auction a
+        <where>
+            <if test="auctionNumber != null and auctionNumber.trim() !=''">
+                a.auction_number LIKE concat('%',#{auctionNumber},'%')
+            </if>
+            <if test="auctionCommodityName != null and auctionCommodityName.trim() !=''">
+                and a.auction_commodity_name like concat('%',#{auctionCommodityName},'%')
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and a.company_id = #{companyId}
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND a.status = #{status}
+            </if>
+            <if test="isStratEnd != null and isStratEnd == 1">
+                AND  <![CDATA[ start_time < now() and  end_time > now() ]]>
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT
+        count(*)
+        FROM
+        market_auction a
+        <where>
+            <if test="auctionNumber != null and auctionNumber.trim() !=''">
+                a.auction_number LIKE concat('%',#{auctionNumber},'%')
+            </if>
+            <if test="auctionCommodityName != null and auctionCommodityName.trim() !=''">
+                and a.auction_commodity_name like concat('%',#{auctionCommodityName},'%')
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and a.company_id = #{companyId}
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND a.status = #{status}
+            </if>
+            <if test="isStratEnd != null and isStratEnd == 1">
+                AND  <![CDATA[ start_time < now() and  end_time > now() ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO market_auction
+		(
+            `auction_number`,
+            `auction_commodity_name`,
+            `starting_price`,
+            `unit`,
+            `province`,
+            `city`,
+            `type`,
+            `status`,
+            `reserve_price`,
+            `amplitude`,
+            `delay_period`,
+            `start_time`,
+            `end_time`,
+            `describe`,
+            `company_id`,
+            `company_name`,
+            `dept_id`,
+            `create_by`,
+            `authorizes_id`,
+            `create_date`,
+            `update_by`,
+            `update_date`,
+            `del_flag`
+		)
+		VALUES
+		(
+        #{auctionNumber},
+        #{auctionCommodityName},
+        #{startingPrice},
+        #{unit},
+        #{province},
+        #{city},
+        #{type},
+        #{status},
+        #{reservePrice},
+        #{amplitude},
+        #{delayPeriod},
+        #{startTime},
+        #{endTime},
+        #{describe},
+        #{companyId},
+        #{companyName},
+        #{deptId},
+        #{createBy},
+        #{authorizesId},
+        #{createDate},
+        #{updateBy},
+        #{updateDate},
+        #{delFlag}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionEntity">
+        UPDATE market_auction
+        <set>
+            <if test="auctionNumber != null">`auction_number` = #{auctionNumber},</if>
+            <if test="auctionCommodityName != null">`auction_commodity_name` = #{auctionCommodityName},</if>
+            <if test="startingPrice != null">`starting_price` = #{startingPrice},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="province != null">`province` = #{province},</if>
+            <if test="city != null">`city` = #{city},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="reservePrice != null">`reserve_price` = #{reservePrice},</if>
+            <if test="amplitude != null">`amplitude` = #{amplitude},</if>
+            <if test="delayPeriod != null">`delay_period` = #{delayPeriod},</if>
+            <if test="startTime != null">`start_time` = #{startTime},</if>
+            <if test="endTime != null">`end_time` = #{endTime},</if>
+            <if test="describe != null">`describe` = #{describe},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="createDate != null">`create_date` = #{createDate},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateDate != null">`update_date` = #{updateDate},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM market_auction WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM market_auction WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 根据状态和时间查询集合 -->
+    <select id="queryListByStatusAndTime" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionEntity" resultType="com.wzlue.chain.marketing.entity.MarketAuctionEntity">
+        SELECT * FROM market_auction
+        <where>
+            <if test="status != null and status !=''">
+                <choose>
+                    <when test='status=="2"'>
+                        status = 2
+                        and DATE(start_time) = CURDATE()
+                    </when>
+                    <when test='status=="1"'>
+                        status = 0
+                        and DATE(end_time) = CURDATE()
+                    </when>
+                </choose>
+            </if>
+        </where>
+    </select>
+    <select id="getMarketAuctionListStartEnd" resultType="com.wzlue.chain.marketing.entity.MarketAuctionEntity">
+        SELECT
+
+        FROM
+         market_auction
+
+         WHERE
+    </select>
+
+    <!-- 根据id批量修改状态 -->
+    <update id="updateStatusByIds">
+    	UPDATE market_auction set status = #{status} WHERE id=#{id}
+    </update>
+
+    <update id="updateStatus" parameterType="map">
+        UPDATE market_auction
+        <set>
+            <if test="status == 0">
+                status=1,
+            </if>
+            <if test="status == 1">
+                status=0,
+            </if>
+            update_by = #{userId},
+            `update_date` = now()
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

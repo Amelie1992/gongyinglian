@@ -1,0 +1,213 @@
+
+package com.wzlue.chain.web.controller.huanxin;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import cn.hutool.core.util.RandomUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.wzlue.chain.chatMsg.service.api.IMUserAPI;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.chatMsg.entity.ChatMessageEntity;
+import com.wzlue.chain.chatMsg.service.ChatMessageService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-11 16:00:44
+ */
+@RestController
+@RequestMapping("/websocket/chatmessage")
+@Api(value="IM通信接口")
+public class ChatMessageController extends AbstractController{
+	@Autowired
+	private ChatMessageService chatMessageService;
+
+	@Autowired
+	private MerchantCompanyService merchantCompanyService;
+
+	@Autowired
+	private IMUserAPI easemobIMUsers;
+	/**
+	 * 临时会话列表
+	 */
+	@GetMapping("/temporaryConversation")
+	@ApiOperation(value="临时会话列表")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "fromUser", dataType = "string", value = "当前登录人", paramType = "query")
+	})
+	public R temporaryConversation(@ApiIgnore @RequestBody Map<String, Object> params){
+		//查询列表数据
+		Query query = new Query(params);
+		List<Map> list = chatMessageService.querytemporaryList(query);
+		int total = chatMessageService.querytemporaryTotal(query);
+		return R.page(list,total);
+	}
+
+
+	/**
+	 * 消息记录列表
+	 */
+	@GetMapping("/historyList")
+	@ApiOperation(value="消息记录列表")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+			@ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+			@ApiImplicitParam(name = "fromUser", dataType = "string", value = "当前登录人", paramType = "query"),
+			@ApiImplicitParam(name = "toUser", dataType = "string", value = "接收对象", paramType = "query"),
+			@ApiImplicitParam(name = "curAcceptMsgObjType", dataType = "string", value = "聊天类型（groupchat、chat）", paramType = "query")
+	})
+	public R historyList(@ApiIgnore @RequestParam Map<String, Object> params){
+		//查询列表数据
+        Query query = new Query(params);
+
+		List<ChatMessageEntity> chatMessageList = chatMessageService.queryList(query);
+		int total = chatMessageService.queryTotal(query);
+		
+		return R.page(chatMessageList,total);
+	}
+
+	/**
+	 * 列表
+	 */
+	@RequestMapping("/list")
+	public R list(@RequestBody Map<String, Object> params){
+		//查询列表数据
+		Query query = new Query(params);
+
+		List<ChatMessageEntity> chatMessageList = chatMessageService.queryList(query);
+		int total = chatMessageService.queryTotal(query);
+
+		return R.page(chatMessageList,total);
+	}
+
+	/**
+	 * 创建临时会话记录
+	 * @return
+	 */
+	@PostMapping("/buildChat")
+	@ApiOperation("创建临时会话")
+	public R buildInterimChat(@RequestBody ChatMessageEntity chat){
+		List<SysUserEntity> userEntity = merchantCompanyService.queryCustomerServicebyCompanyId(chat.getCompanyId());
+		SysUserEntity sortUser = null;
+		if (null != userEntity && userEntity.size() > 0){
+			sortUser = getSortUser(userEntity);
+			chat.setToUser(sortUser.getUsername());
+			chatMessageService.insertChat(chat);
+		}else{
+			return R.error("没有客服");
+		}
+		return R.ok();
+	}
+
+	/**
+	 * 先获取在线的客服（如果多个随机一个），没有在线的随机一个不线的
+	 *
+	 * @param userEntity 客服列表
+	 * @return
+	 */
+	private SysUserEntity getSortUser(List<SysUserEntity> userEntity) {
+		//  客服
+		SysUserEntity sysUserEntity = new SysUserEntity();
+		//  在线的客服
+		List<SysUserEntity> onLine = null;
+		// 随机数
+		int sortNum = 0;
+		if(userEntity.size() < 1){
+			return null;
+		}
+		for (SysUserEntity ss : userEntity) {
+			String state = easemobIMUsers.getIMUserStatus(ss.getUsername()).toString();
+			Map data = JSONObject.parseObject(state).getObject("data", Map.class);
+			if ("online".equals(data.get(ss.getUsername()))) {
+				onLine = new ArrayList<>();
+				onLine.add(ss);
+			}
+
+		}
+		//  在线
+		if (null != onLine && (sortNum = onLine.size()) > 0) {
+			if (sortNum == 1) {
+				return onLine.get(0);
+			} else {
+				return onLine.get(RandomUtil.randomInt(sortNum));
+			}
+		}
+		//  不在线
+		return userEntity.get(RandomUtil.randomInt(userEntity.size()));
+	}
+
+	/**
+	 * 信息
+	 */
+	@RequestMapping("/info/{id}")
+//	@RequiresPermissions("mapper.chatMsg:chatmessage:info")
+	public R info(@PathVariable("id") Integer id){
+		ChatMessageEntity chatMessage = chatMessageService.queryObject(id);
+		
+		return R.ok().put("chatMessage", chatMessage);
+	}
+	
+	/**
+	 * 保存消息
+	 */
+	@PostMapping("/saveNotes")
+	@ApiOperation(value="保存消息")
+//	@RequiresPermissions("mapper.chatMsg:chatmessage:save")
+	public R saveNotes(@RequestBody ChatMessageEntity chatMessage){
+		chatMessageService.save(chatMessage);
+		
+		return R.ok();
+	}
+	/**
+	 * 保存
+	 */
+	@RequestMapping("/save")
+//	@RequiresPermissions("mapper.chatMsg:chatmessage:save")
+	public R save(@RequestBody ChatMessageEntity chatMessage){
+		chatMessageService.save(chatMessage);
+
+		return R.ok();
+	}
+	
+	/**
+	 * 修改
+	 */
+	@RequestMapping("/update")
+//	@RequiresPermissions("mapper.chatMsg:chatmessage:update")
+	public R update(@RequestBody ChatMessageEntity chatMessage){
+		chatMessageService.update(chatMessage);
+		
+		return R.ok();
+	}
+
+	/**
+	 * 删除
+	 */
+	@RequestMapping("/delete")
+//	@RequiresPermissions("mapper.chatMsg:chatmessage:delete")
+	public R delete(@RequestBody Integer[] ids){
+		chatMessageService.deleteBatch(ids);
+
+		return R.ok();
+	}
+	
+}

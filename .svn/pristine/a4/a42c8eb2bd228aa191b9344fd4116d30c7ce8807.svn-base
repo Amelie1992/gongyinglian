@@ -1,0 +1,30 @@
+package com.wzlue.chain.highcharts.service;
+
+import com.wzlue.chain.highcharts.entity.HighchartsEntity;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 报表
+ * 
+ * @author 
+ * @email 
+ * @date 2019-01-14 11:21:59
+ */
+public interface HighchartsService {
+	
+	HighchartsEntity queryObject(Integer id);
+	
+	List<HighchartsEntity> queryList(Map<String, Object> map);
+	
+	int queryTotal(Map<String, Object> map);
+	
+	void save(HighchartsEntity highcharts);
+	
+	void update(HighchartsEntity highcharts);
+	
+	void delete(Integer id);
+	
+	void deleteBatch(Integer[] ids);
+}

@@ -1,0 +1,238 @@
+package com.wzlue.chain.storage.service.impl;
+
+import com.wzlue.chain.bill.dao.BillDao;
+import com.wzlue.chain.bill.dao.PaymentRecordDao;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.entity.PaymentRecordEntity;
+import com.wzlue.chain.common.utils.DateUtils;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.storage.dao.*;
+import com.wzlue.chain.storage.entity.*;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.storage.service.OrderService;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service("orderService")
+public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private OrderDao orderDao;
+    @Autowired
+    private OrderOfferDao orderOfferDao;
+    @Autowired
+    private OfferDao offerDao;
+    @Autowired
+    private OrderCommodityDao orderCommodityDao;
+    @Autowired
+    private OrderCostDao orderCostDao;
+    @Autowired
+    private StorageContractDao storageContractDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private PaymentRecordDao paymentRecordDao;
+    @Autowired
+    private BillDao billDao;
+
+    @Override
+    public OrderEntity queryObject(Long id) {
+        return orderDao.queryObject(id);
+    }
+
+    @Override
+    public List<OrderEntity> queryList(Map<String, Object> map) {
+        return orderDao.queryList(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return orderDao.queryTotal(map);
+    }
+
+    @Override
+    @Transactional
+    public void save(OrderEntity order) {
+        orderDao.save(order);
+        OrderOfferEntity orderOfferEntity = order.getOrderOfferEntity();
+        orderOfferEntity.setOrderId(order.getId());
+        orderOfferEntity.setOrderNumber(order.getOrderNumber());
+        OfferEntity offerEntity = offerDao.queryObject(orderOfferEntity.getOfferId());
+        Map<String, Object> map = new HashMap<>();
+        map.put("offerEntity", offerEntity);
+        map.put("orderOfferEntity", orderOfferEntity);
+        orderOfferDao.save(map);
+        List<OrderCommodityEntity> commodityEntityList = order.getCommodityEntityList();
+        for (OrderCommodityEntity orderCommodityEntity : commodityEntityList) {
+            orderCommodityEntity.setOrderId(order.getId());
+        }
+        orderCommodityDao.saveList(commodityEntityList);
+    }
+
+    @Override
+    public void update(OrderEntity order) {
+        orderDao.update(order);
+    }
+
+    @Override
+    public void delete(Long id) {
+        orderDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        orderDao.deleteBatch(ids);
+    }
+
+    //确认到货
+    @Override
+    public void arrival(OrderEntity order) {
+        orderDao.update(order);
+//        OrderCostEntity orderCost = order.getOrderCostEntity();
+//        //保存其他费用信息
+//        orderCostDao.save(orderCost);
+        List<OrderCommodityEntity> commodityEntityList = order.getCommodityEntityList();
+        //修改货物信息
+        orderCommodityDao.updateList(commodityEntityList);
+//        //生成付款（收款）记录
+//        PaymentRecordEntity paymentRecordEntity = new PaymentRecordEntity();
+//        OrderEntity order2 = orderDao.queryObject(order);
+//        BillEntity bill = billDao.queryByOrderNumber(order2.getOrderNumber());
+//        BigDecimal all = orderCost.getAll();    //仓储订单其他费用总和
+//        if (bill != null) {
+//            paymentRecordEntity.setBillId(bill.getId());
+//            paymentRecordEntity.setAmount(all);
+//            paymentRecordEntity.setDate(DateUtils.format(new Date(), "yyyy-MM-dd"));
+//            paymentRecordEntity.setPayStatus(0);//支付状态 0：待付款 1：已付款
+//            paymentRecordEntity.setStorageOrderCostId(orderCost.getId().intValue());
+//            paymentRecordEntity.setCreateBy(order.getUpdatedBy().intValue());
+//            paymentRecordEntity.setCreatedTime(new Date());
+//            paymentRecordDao.save(paymentRecordEntity);
+//            //仓储订单其他费用总和 计入 应收应付账单金额
+//            bill.setAmountReceivable(all);
+//            bill.setAmountPayable(all);
+//            bill.setRemainingAmountReceivable(all);
+//            bill.setRemainingAmountPayable(all);
+//            bill.setUpdateBy(order.getUpdatedBy().intValue());
+//            bill.setUpdateTime(new Date());
+//            billDao.update(bill);
+//        }
+    }
+
+    @Override
+    public void updateOrder(OrderEntity order) {
+        OrderCostEntity orderCost = order.getOrderCostEntity();
+        orderCostDao.update(orderCost);
+        List<OrderCommodityEntity> commodityEntityList = order.getCommodityEntityList();
+        orderCommodityDao.updateList(commodityEntityList);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> getCompanys(Long companyId) {
+        return orderDao.getCompanys(companyId);
+    }
+
+    //接单
+    @Override
+    public void receipt(OrderEntity order) {
+        orderDao.update(order);
+        //跟新成交数量和最新成交时间
+        offerDao.updateByOrderId(order.getId());
+        //生成订单合同
+        order = orderDao.queryObject(order.getId());
+        if (order.getContractNumber() == null) {    //合同由订单创建
+            //生成买家订单合同
+            StorageContractEntity storageContract = new StorageContractEntity();
+            storageContract.setContractNumber(sysNumberRuleService.getCodeNumber("number_contract_storage"));
+            order.setContractNumber(storageContract.getContractNumber());
+            orderDao.update(order);
+            storageContract.setOrderNumber(order.getOrderNumber());
+            storageContract.setDataSource(1);//合同创建来源 1.订单创建 2.自主录入
+            MerchantCompanyEntity cus = merchantCompanyDao.queryObject(order.getMerchantId());  //下单公司（买）
+            if (cus != null) {
+                storageContract.setCustomsCopName(cus.getCompanyName());
+                storageContract.setCusCompanyId(cus.getId());
+            }
+            MerchantCompanyEntity mer = merchantCompanyDao.queryObject(order.getReceiptMerchantId());  //报盘公司（卖）
+            if (mer != null) {
+                storageContract.setMerchantCopName(mer.getCompanyName());
+                storageContract.setMerCompanyId(mer.getId());
+            }
+            storageContract.setPayMethod(3);
+            storageContract.setSigningTime(new Date());
+            storageContract.setCreateTime(new Date());
+            storageContract.setCompanyId(order.getMerchantId());
+            storageContractDao.save(storageContract);
+            //生成卖家订单合同
+            storageContract.setId(null);
+            storageContract.setCompanyId(order.getReceiptMerchantId());
+            storageContractDao.save(storageContract);
+        } else {    //合同编号自主录入
+            List<StorageContractEntity> storageContracts = storageContractDao.queryByContractNumber(order.getContractNumber());
+            if (storageContracts.size()==1){
+                StorageContractEntity storageContract = storageContracts.get(0);
+                storageContract.setOrderNumber(order.getOrderNumber());
+                storageContractDao.update(storageContract);
+                Long companyId = storageContract.getCompanyId();
+                Long merchantId = order.getMerchantId();
+                Long receiptMerchantId = order.getReceiptMerchantId();
+                if (companyId.intValue()==merchantId.intValue()){
+                    storageContract.setCompanyId(receiptMerchantId);
+                }else {
+                    storageContract.setCompanyId(merchantId);
+                }
+                storageContract.setId(null);
+                storageContract.setDataSource(1);
+                storageContractDao.save(storageContract);
+            }
+            if (storageContracts.size()==2){
+                for (StorageContractEntity storageContract:storageContracts){
+                    storageContract.setOrderNumber(order.getOrderNumber());
+                    storageContractDao.update(storageContract);
+                }
+            }
+        }
+        //生成应收应付账单
+        BillEntity bill = new BillEntity();
+        bill.setBillType(0);
+        bill.setContractNumber(order.getContractNumber());
+        bill.setOrderNumber(order.getOrderNumber());
+        bill.setOrderType(3);
+        bill.setPayee(order.getSaleCompanyName());
+        bill.setPayer(order.getBuyCompanyName());
+        bill.setPayeeId(order.getReceiptMerchantId().intValue());
+        bill.setPayerId(order.getMerchantId().intValue());
+        bill.setAmountReceivable(BigDecimal.ZERO);     //*********total没有值
+        bill.setAmountPayable(BigDecimal.ZERO);
+        bill.setAmountReceived(BigDecimal.ZERO);
+        bill.setAmountPaid(BigDecimal.ZERO);
+        bill.setRemainingAmountReceivable(BigDecimal.ZERO);
+        bill.setRemainingAmountPayable(BigDecimal.ZERO);
+        bill.setReceivableStatus(0);
+        bill.setPayableStatus(0);
+        bill.setCreateBy(order.getUpdatedBy().intValue());
+        bill.setCreatedTime(order.getReceiptTime());
+        billDao.save(bill);
+    }
+
+    @Override
+    public String getBuyCompany(String companyId) {
+        return orderDao.getBuyCompany(companyId);
+    }
+
+    @Override
+    public  OrderEntity queryByOrderNumber(String orderNumber){
+        return orderDao.queryObjectByOrderNumber(orderNumber);
+    }
+}

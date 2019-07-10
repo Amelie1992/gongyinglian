@@ -1,0 +1,28 @@
+package com.wzlue.chain.chatMsg.dao;
+
+import com.wzlue.chain.chatMsg.entity.ChatMessageEntity;
+import com.wzlue.chain.common.base.BaseDao;
+import com.wzlue.chain.common.base.Query;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-11 16:00:44
+ */
+@Mapper
+public interface ChatMessageDao extends BaseDao<ChatMessageEntity> {
+    //查询我的最近联系人
+    List<Map> querytemporaryList(Map query);
+    //新 最近联系人列表
+    List<Map> queryRecentContacts(Map query);
+
+    List<Map> querytemporaryToUserList(Query query);
+
+    int insertChat(ChatMessageEntity chat);
+}

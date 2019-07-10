@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>企业管理列表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.companyName" placeholder="根据公司名称查询" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <vm-select :options="auditStatusOption" title="选择审核状态" v-model="params.auditStatus"></vm-select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <!--<button v-if="hasPermission('company:merchantusers:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>-->
+            <button v-if="hasPermission('company:merchantusers:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <!--  <button v-if="hasPermission('company:merchantusers:delete')" class="btn btn-danger"
+                      @click="del">
+                  <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}
+              </button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('CorporateName')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="companyname" class="form-control" v-model="merchantUsers.companyName" :placeholder="$t('type')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('EnterpriseLegalPerson')}}</label>
+                        <div class="col-sm-10">
+
+                            <input type="text" name="legalPersonName" class="form-control" v-model="userEntity.username" :placeholder="$t('LegalPersonName')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('UnifiedSocialCreditCode')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="unifiedsocialcreditcode" class="form-control" v-model="merchantUsers.unifiedSocialCreditCode" :placeholder="$t('UnifiedSocialCreditCode')"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('BusinessType')}}</label>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="companytype" class="form-control" v-model="merchantUsers.companyType" :placeholder="$t('BusinessType')"/>-->
+                            <vm-select :options="companyTypeOption" title="请选择公司类型" v-model="merchantUsers.companyType" id="companytype" name="companytype" disabled>
+                            </vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-6 required">
+                        <label class="col-sm-2 control-label">{{$t('ServiceType')}}</label>
+                        <div class="col-sm-10">
+                            <div class="checkbox">
+                                <template v-for="(item,key,idx) in serviceTypeList">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" v-bind:value="item.id" v-model="merchantUsers.serviceType" name="serviceType[]" @click="checkType(merchantUsers.serviceType)" disabled/>
+                                        {{item.serviceName}}
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('OpenBankAccount')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="bankaccount" class="form-control" v-model="merchantUsers.bankAccount" :placeholder="$t('OpenBankAccount')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('OpeningBank')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="openingbank" class="form-control" v-model="merchantUsers.openingBank" :placeholder="$t('OpeningBank')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('contact')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="contact" class="form-control" v-model="merchantUsers.contact" :placeholder="$t('contact')"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('MobilePhoneNo')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="mobile" class="form-control" v-model="merchantUsers.mobile" :placeholder="$t('MobilePhoneNo')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('CorporateLdentityCard')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="cardNo" class="form-control" v-model="merchantUsers.cardNo" :placeholder="$t('CorporateLdentityCard')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('CompanyTelephone')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="fixedtelephone" class="form-control" v-model="merchantUsers.fixedTelephone" :placeholder="$t('CompanyTelephone')"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('mailbox')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="mail" class="form-control" v-model="merchantUsers.email" :placeholder="$t('mailbox')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('LocationOfCompany')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="companylocation" class="form-control" v-model="merchantUsers.companylocation" :placeholder="$t('LocationOfCompany')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('Area')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="area" class="form-control" v-model="merchantUsers.area" :placeholder="$t('Area')"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('QualificationExaminationStatus')}}</label>
+                        <div class="col-sm-10">
+                            <vm-select :options="auditStatusOption" title="请选择" name="auditStatus" v-model="merchantUsers.auditStatus" :placeholder="$t('AccountStatus')" disabled></vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('Grade')}}</label>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="grade" class="form-control" v-model="merchantUsers.grade" :placeholder="$t('Grade')"/>-->
+                            <vm-select :options="levelList" title="请选择" v-model="merchantUsers.grade" id="grade" name="grade"></vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('CreditScore')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="creditScore" class="form-control" v-model="merchantUsers.creditScore" :placeholder="$t('CreditScore')"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!--公司简介-->
+                <div class="row">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{$t('CompanyProfile')}}</label>
+                        <div class="col-sm-8">
+                            <textarea class="form-control" rows="3" v-model="merchantUsers.companyProfile" :placeholder="$t('CompanyProfile')"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label">{{$t('ShopLOGO')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="shopLogos" :max_file_count="2"
+                                                 ref="shopLogoFile" :show_preview='true' :files="shopLogoFile"
+                                                 :drop_zone_enabled="false"
+                                                 :image_list="merchantUsers.shopLogos" :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-xs-4 required">
+                        <label class="col-sm-2 control-label">{{$t('BusinessLicense')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="businessLicense" :max_file_count="2"
+                                                 ref="businessLicenseFile" :show_preview='true' :files="businessLicenseFile"
+                                                 :drop_zone_enabled="false"
+                                                 :image_list="merchantUsers.businessLicense" :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                    <div class="form-group col-xs-4">
+                        <label class="col-sm-2 control-label">{{$t('FoodBusinessLicense')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="foodManagement" :max_file_count="2"
+                                                 ref="foodManagementFile" :show_preview='true' :files="foodManagementFile"
+                                                 :drop_zone_enabled="false"
+                                                 :image_list="merchantUsers.foodManagement" :multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-sm-4 required" v-show="$.inArray(1, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('CargoBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="businessOfGoods" :max_file_count="2"
+                                                 ref="businessOfGoodsFile" :show_preview='true' :files="businessOfGoodsFile"
+                                                 :drop_zone_enabled="false"
+                                                 :image_list="merchantUsers.businessOfGoods" :this_multiple="false"></commodity-fileinput>
+
+
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4" v-show="$.inArray(2, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('LogisticsBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="logisticsBusiness" :max_file_count="2" ref="logisticsBusinessFile"
+                                                 :show_preview='true' :files="logisticsBusinessFile" :image_list="merchantUsers.logisticsBusiness"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-sm-4" v-show="$.inArray(3, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('DeclarationBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="customsDeclaration" :max_file_count="2" ref="customsDeclarationFile"
+                                                 :show_preview='true' :files="customsDeclarationFile" :image_list="merchantUsers.customsDeclaration"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4" v-show="$.inArray(4, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('WarehousingBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="warehousingBusiness" :max_file_count="2" ref="warehousingBusinessFile"
+                                                 :show_preview='true' :files="warehousingBusinessFile" :image_list="merchantUsers.warehousingBusiness"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-sm-4" v-show="$.inArray(5, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('ActingBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="agencyBusiness" :max_file_count="2" ref="agencyBusinessFile" :show_preview='true'
+                                                 :drop_zone_enabled="false"
+                                                 :files="agencyBusinessFile" :image_list="merchantUsers.agencyBusiness" :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4" v-show="$.inArray(6, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('FinancialQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="financialBusiness" :max_file_count="2" ref="financialBusinessFile"
+                                                 :show_preview='true' :files="financialBusinessFile" :image_list="merchantUsers.financialBusiness"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-sm-4" v-show="$.inArray(7, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('InsuranceBusinessQualification')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="insuranceBusiness" :max_file_count="2" ref="insuranceBusinessFile"
+                                                 :show_preview='true' :files="insuranceBusinessFile" :image_list="merchantUsers.insuranceBusiness"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4" v-show="$.inArray(13, merchantUsers.serviceType) > -1">
+                        <label class="col-sm-2 control-label">{{$t('OtherQualifications')}}</label>
+                        <div class="col-sm-8">
+                            <commodity-fileinput name="otherQualifications" :max_file_count="2" ref="otherQualificationsFile"
+                                                 :show_preview='true' :files="otherQualificationsFile" :image_list="merchantUsers.otherQualifications"
+                                                 :drop_zone_enabled="false"
+                                                 :this_multiple="false"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="saveOrUpdate" :value="$t('save')" v-if="title == '修改'"/>
+                        <input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 审核框 -->
+    <div class="modal fade" id="shenh" tabindex="-1" role="dialog" aria-labelledby="shenh" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">模态框（Modal）标题</h4>
+                </div>
+                <div class="modal-body">在这里添加一些文本</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary">提交更改</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<!--文件上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/company/merchantusers.js"></script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>供应商资质附件</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('supplier:supplierattachment:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('supplier:supplierattachment:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-trash-o"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('supplier:supplierattachment:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">供应商id</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.supplierId"
+                                       placeholder="供应商id"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">序号</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.no"
+                                       placeholder="序号"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">资质名称</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.aptitudeName"
+                                       placeholder="资质名称"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">证件名称</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.certificatesName"
+                                       placeholder="证件名称"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">证件有效日期</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.effectiveDate"
+                                       placeholder="证件有效日期"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">证件上传时间</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplierAttachment.uploadDate"
+                                       placeholder="证件上传时间"/>
+                            </div>
+                        </div>
+                                                    <div class="form-group">
+                    <div class="col-sm-2 control-label"></div>
+                    <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
+                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/supplier/supplierattachment.js"></script>
+</body>
+</html>

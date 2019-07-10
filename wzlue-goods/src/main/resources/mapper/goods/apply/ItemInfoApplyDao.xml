@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.goods.dao.apply.ItemInfoApplyDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity" id="itemInfoApplyMap">
+        <result property="id" column="id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="factoryNo" column="factory_no"/>
+        <result property="pricingMethod" column="pricing_method"/>
+        <result property="pendingStatus" column="pending_status"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        SELECT * FROM item_info_apply WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        SELECT * FROM item_info_apply
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM item_info_apply
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        INSERT INTO item_info_apply
+        (
+        `id`,
+        `item_name`,
+        `factory_no`,
+        `pricing_method`,
+        `pending_status`,
+        `dept_id`,
+        `created_by`,
+        `created_time`,
+        `updated_by`,
+        `updated_time`
+        )
+        VALUES
+        (
+        #{id},
+        #{itemName},
+        #{factoryNo},
+        #{pricingMethod},
+        #{pendingStatus},
+        #{deptId},
+        #{createdBy},
+        #{createdTime},
+        #{updatedBy},
+        #{updatedTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        UPDATE item_info_apply
+        <set>
+            <if test="itemName != null">`item_name` = #{itemName}, </if>
+            <if test="factoryNo != null">`factory_no` = #{factoryNo}, </if>
+            <if test="pricingMethod != null">`pricing_method` = #{pricingMethod}, </if>
+            <if test="pendingStatus != null">`pending_status` = #{pendingStatus}, </if>
+            <if test="deptId != null">`dept_id` = #{deptId}, </if>
+            <if test="createdBy != null">`created_by` = #{createdBy}, </if>
+            <if test="createdTime != null">`created_time` = #{createdTime}, </if>
+            <if test="updatedBy != null">`updated_by` = #{updatedBy}, </if>
+            <if test="updatedTime != null">`updated_time` = #{updatedTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM item_info_apply WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM item_info_apply WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

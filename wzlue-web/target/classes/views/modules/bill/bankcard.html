@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>绑定银行卡</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+    <style>
+        .panel-default > .panel-heading {
+            background-color: rgba(255, 255, 255, .15)
+        }
+    </style>
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <!--<button v-if="hasPermission('bill:bankcard:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('bill:bankcard:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('bill:bankcard:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>-->
+        </div>
+        <!--<div class="col-xs-12">
+            <table id="table"></table>
+        </div>-->
+        <template v-for="(item,key,id) in cardList ">
+        <div class="row">
+            <div class="row col-xs-1"></div>
+            <div class="row col-xs-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            {{item.cardName}}
+                            <span class="pull-right">{{$t('lastNumber')}}{{item.cardNo}}</span>
+                        </h3>
+
+                    </div>
+                    <div class="panel-body">
+                        <div style="height: 100px;">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </template>
+        <div class="row">
+            <div class="row col-xs-1"></div>
+            <div class="row col-xs-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">&nbsp;</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div style="height: 100px; text-align:center;" data-toggle="modal" data-target="#myModal">
+                            <img src="/images/images/addcard.png" style="width:50px;height:50px;">
+                            <p></p>
+                            {{$t('AddBankCard')}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('AddBankCard')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addCardForm" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('RealName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="name" class="form-control" v-model="bankCard.name" placeholder="$t('RealName')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('IDNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="idcard" class="form-control" v-model="bankCard.idcard" placeholder="$t('IDNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('BankCardNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="bankCardNumber" class="form-control" v-model="bankCard.cardNo" placeholder="$t('BankCardNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('MobilePhoneNo')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phone" class="form-control" v-model="bankCard.phone" placeholder="$t('MobilePhoneNo')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="addCard">{{$t('save')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!--<div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">姓名</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="name" class="form-control" v-model="bankCard.name" placeholder="姓名"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">身份证</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="idcard" class="form-control" v-model="bankCard.idcard" placeholder="身份证"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">银行卡号</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="bankCardNumber" class="form-control" v-model="bankCard.bankCardNumber" placeholder="银行卡号"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">手机号码</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="phone" class="form-control" v-model="bankCard.phone" placeholder="手机号码"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">公司ID</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="companyId" class="form-control" v-model="bankCard.companyId" placeholder="公司ID"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">部门ID</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="deptId" class="form-control" v-model="bankCard.deptId" placeholder="部门ID"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">创建人ID</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="createBy" class="form-control" v-model="bankCard.createBy" placeholder="创建人ID"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">授权人ID</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="authorizesId" class="form-control" v-model="bankCard.authorizesId" placeholder="授权人ID"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">创建时间</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="createdTime" class="form-control" v-model="bankCard.createdTime" placeholder="创建时间"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">更新时间</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="updateTime" class="form-control" v-model="bankCard.updateTime" placeholder="更新时间"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">默认卡片 1:默认</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="defaultCard" class="form-control" v-model="bankCard.defaultCard" placeholder="默认卡片  1:默认"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">排序</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="sortNum" class="form-control" v-model="bankCard.sortNum" placeholder="排序"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">解绑</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="delFalg" class="form-control" v-model="bankCard.delFalg" placeholder="解绑"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" value="确定"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>-->
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/bill/bankcard.js"></script>
+<script src="../../js/modules/bill/bankCardAttribution.js"></script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentContractDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentContractEntity" id="agentContractMap">
+        <result property="id" column="id"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="dataSource" column="data_source"/>
+        <result property="customsCopName" column="customs_cop_name"/>
+        <result property="merchantCopName" column="merchant_cop_name"/>
+        <result property="payMethod" column="pay_method"/>
+        <result property="contractAmount" column="contract_amount"/>
+        <result property="customsStorageLocation" column="customs_storage_location"/>
+        <result property="merchantStorageLocation" column="merchant_storage_location"/>
+        <result property="signingTime" column="signing_time"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="cusDeptId" column="cus_dept_id"/>
+        <result property="merDeptId" column="mer_dept_id"/>
+        <result property="cusCompanyId" column="cus_company_id"/>
+        <result property="merCompanyId" column="mer_company_id"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="adscription" column="adscription"/>
+        <association property="agentOrder" javaType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+            <result property="id" column="id"/>
+            <result property="orderNumber" column="order_number"/>
+            <result property="contractNumber" column="contract_number"/>
+            <result property="currency" column="currency"/>
+        </association>
+        <collection property="annexs" resultMap="annexMap" columnPrefix="ax_"></collection>
+    </resultMap>
+
+    <resultMap id="annexMap" type="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+        <id column="id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_type" property="fileType"/>
+        <result column="url" property="url"/>
+        <result column="username" property="username"/>
+        <result column="create_time" property="createTime"/>
+        <result column="contract_type" property="contractType"/>
+        <result column="contract_id" property="contractId"/>
+        <result column="create_by" property="createBy"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentContractEntity">
+		SELECT * FROM agent_contract WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentContractEntity">
+        SELECT * FROM agent_contract
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_contract
+	</select>
+
+    <select id="pageList" resultMap="agentContractMap">
+        SELECT
+        DISTINCT(ct.id) AS id,
+        ct.contract_number,
+        ct.contract_name,
+        ct.order_number,
+        ct.data_source,
+        ct.customs_cop_name,
+        ct.merchant_cop_name,
+        ct.pay_method,
+        ct.contract_amount,
+        ct.customs_storage_location,
+        ct.merchant_storage_location,
+        ct.signing_time,
+        ct.expire_date,
+        ct.`remarks`,
+        ct.`cus_company_id`,
+        ct.`mer_company_id`,
+        ct.`cus_dept_id`,
+        ct.`mer_dept_id`,
+        ct.`create_by`,
+        ct.`create_time`,
+        ct.`update_by`,
+        ct.`update_time`,
+        ct.`adscription`,
+        ca.`id` AS ax_id,
+        ca.`file_name` AS ax_file_name,
+        ca.`file_type` AS ax_file_type,
+        ca.`url` AS ax_url,
+        ca.`contract_type` AS ax_contract_type,
+        ca.`create_time` AS ax_create_time,
+        su.username,
+        ao.*
+        FROM agent_contract ct
+        LEFT JOIN contract_annex ca ON ca.`contract_id` = ct.`id` AND ca.`contract_type` = 5
+        LEFT JOIN sys_user su ON ca.create_by = su.user_id
+        LEFT JOIN agent_order ao ON ao.order_number = ct.order_number
+        WHERE 1=1
+        <if test="companyId !=null and companyId !=''">
+            AND ct.company_id = #{companyId}
+        </if>
+        <if test="contractName !=null and contractName !=''">
+            AND ct.contract_name like concat('%',#{contractName},'%')
+        </if>
+        <if test="orderNumber !=null and orderNumber !=''">
+            AND ct.order_number like concat('%',#{orderNumber},'%')
+        </if>
+        <if test="contractNumber !=null and contractNumber !=''">
+            AND ct.contract_number like concat('%',#{contractNumber},'%')
+        </if>
+        <if test="companyName!=null and companyName!=''">
+            AND (ct.customs_cop_name = #{companyName} or ct.merchant_cop_name = #{companyName})
+        </if>
+        ORDER BY ct.create_time desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(DISTINCT(ct.id))
+        FROM agent_contract ct
+        WHERE 1=1
+        <if test="companyId !=null and companyId !=''">
+            AND ct.company_id = #{companyId}
+        </if>
+        <if test="contractName !=null and contractName !=''">
+            AND ct.contract_name like concat('%',#{contractName},'%')
+        </if>
+        <if test="orderNumber !=null and orderNumber !=''">
+            AND ct.order_number like concat('%',#{orderNumber},'%')
+        </if>
+        <if test="contractNumber !=null and contractNumber !=''">
+            AND ct.contract_number like concat('%',#{contractNumber},'%')
+        </if>
+        <if test="companyName!=null and companyName!=''">
+            AND (ct.customs_cop_name = #{companyName} or ct.merchant_cop_name = #{companyName})
+        </if>
+    </select>
+
+    <select id="queryInfo" resultMap="agentContractMap">
+		SELECT
+           DISTINCT(ct.id) AS id,
+           ct.contract_number,
+           ct.contract_name,
+           ct.order_number,
+           ct.data_source,
+           ct.customs_cop_name,
+           ct.merchant_cop_name,
+           ct.pay_method,
+           ct.contract_amount,
+           ct.customs_storage_location,
+           ct.merchant_storage_location,
+           ct.signing_time,
+           ct.expire_date,
+           ct.`remarks`,
+           ct.`cus_company_id`,
+           ct.`mer_company_id`,
+           ct.`cus_dept_id`,
+           ct.`mer_dept_id`,
+           ct.`create_by`,
+           ct.`create_time`,
+           ct.`update_by`,
+           ct.`update_time`,
+           ct.`adscription`,
+           ax.`id` AS ax_id,
+           ax.`file_name` AS ax_file_name,
+           ax.`file_type` AS ax_file_type,
+           ax.`url`  AS ax_url,
+           ax.`contract_type`  AS ax_contract_type,
+           ax.`contract_id`  AS ax_contract_id,
+           ax.`create_by`  AS ax_create_by,
+           ax.create_time  AS ax_create_time,
+		   su.username AS ax_username ,
+		   ao.*
+        FROM agent_contract ct
+        LEFT JOIN contract_annex ax ON ax.`contract_id` = ct.`id` and ax.contract_type = 5
+        LEFT JOIN sys_user su ON ax.create_by = su.user_id
+        LEFT JOIN agent_order ao ON ao.order_number = ct.order_number
+        WHERE 1=1
+        AND ct.id = #{id}
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentContractEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_contract
+		(
+			`contract_number`,
+			`order_number`,
+			`data_source`,
+			`customs_cop_name`,
+			`merchant_cop_name`,
+			`pay_method`,
+			`contract_amount`,
+			`customs_storage_location`,
+			`merchant_storage_location`,
+			`signing_time`,
+			`expire_date`,
+			`remarks`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`cus_dept_id`,
+			`mer_dept_id`,
+			`cus_company_id`,
+			`mer_company_id`,
+			`contract_name`,
+			`adscription`,
+			`company_id`
+		)
+		VALUES
+		(
+			#{contractNumber},
+			#{orderNumber},
+			#{dataSource},
+			#{customsCopName},
+			#{merchantCopName},
+			#{payMethod},
+			#{contractAmount},
+			#{customsStorageLocation},
+			#{merchantStorageLocation},
+			#{signingTime},
+			#{expireDate},
+			#{remarks},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{cusDeptId},
+			#{merDeptId},
+			#{cusCompanyId},
+			#{merCompanyId},
+			#{contractName},
+			#{adscription},
+			#{companyId}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.agent.entity.AgentContractEntity">
+        UPDATE agent_contract
+        <set>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="dataSource != null">`data_source` = #{dataSource},</if>
+            <if test="customsCopName != null">`customs_cop_name` = #{customsCopName},</if>
+            <if test="merchantCopName != null">`merchant_cop_name` = #{merchantCopName},</if>
+            <if test="payMethod != null">`pay_method` = #{payMethod},</if>
+            <if test="contractAmount != null">`contract_amount` = #{contractAmount},</if>
+            <if test="customsStorageLocation != null">`customs_storage_location` = #{customsStorageLocation},</if>
+            <if test="merchantStorageLocation != null">`merchant_storage_location` = #{merchantStorageLocation},</if>
+            <if test="signingTime != null">`signing_time` = #{signingTime},</if>
+            <if test="expireDate != null">`expire_date` = #{expireDate},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="cusDeptId != null">`cus_dept_id` = #{cusDeptId},</if>
+            <if test="merDeptId != null">`mer_dept_id` = #{merDeptId},</if>
+            <if test="cusCompanyId !=null">`cus_company_id` = #{cusCompanyId},</if>
+            <if test="merCompanyId !=null">`mer_company_id` = #{merCompanyId},</if>
+            <if test="contractName != null">`contract_name` = #{contractName},</if>
+            <if test="adscription !=null">`adscription` = #{adscription}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM agent_contract WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM agent_contract WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByOrderNumber">
+		DELETE FROM agent_contract
+		WHERE order_number = #{orderNumber}
+	</delete>
+</mapper>

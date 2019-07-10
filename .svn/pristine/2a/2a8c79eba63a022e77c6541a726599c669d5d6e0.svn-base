@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>我的账户</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div class="page-header">
+        <h3>{{title}}
+            <!--<small class="pull-right"><input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/></small>-->
+            <small class="pull-right"><input type="button" class="btn btn-primary" @click="zhuanZhang" :value="$t('TransferAccounts')"/></small>
+        </h3>
+    </div>
+    <div class="row" v-show="showList==1">
+        <!--<div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('bill:myaccount:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('bill:myaccount:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('bill:myaccount:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>-->
+        <!--<div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>-->
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="form-group col-xs-4">
+                    <div class="col-sm-2 control-label">{{$t('account')}}：</div>
+                    <div class="col-sm-10">
+                        {{myAccount.account}}
+                    </div>
+                </div>
+                <div class="form-group col-xs-3">
+                    <div class="col-sm-2 control-label">{{$t('UpdateTime')}}：</div>
+                    <div class="col-sm-10">
+                        {{myAccount.updateTime}}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-xs-4">
+                    <div class="col-sm-2 control-label">{{$t('AccountBalance')}}：</div>
+                    <div class="col-sm-10">
+                        {{myAccount.balance}}
+                    </div>
+                </div>
+                <div class="form-group col-xs-3">
+                    <button type="button" class="btn btn-link" @click="showDiv(6)">{{$t('LookAtTheDetails')}}</button>
+                    <button type="button" class="btn btn-link" @click="showDiv(4)">{{$t('BankCardManagement')}}</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <!--<div class="col-xs-1">
+                        <button type="button" class="btn btn-default" @click="showDiv(2)">{{$t('Recharge')}}</button>
+                    </div>
+                    <div class="col-xs-1">
+                        <button type="button" class="btn btn-default" @click="showDiv(3)">{{$t('PutForward')}}</button>
+                    </div>-->
+                    <div class="col-xs-1">
+                        <button type="button" class="btn btn-default" @click="showDiv(5)">{{$t('TransferAccounts')}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 银行卡管理 -->
+    <div class="row" v-show="showList==4">
+        <div class="panel panel-default" style="margin-top: 20px;">
+            <template v-for="(item,key,id) in cardList ">
+                <div class="row">
+                    <div class="row col-xs-1"></div>
+                    <div class="row col-xs-3">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">
+                                    <img v-bind:src="item.logo"/>
+                                    <span class="pull-right">{{$t('tail')}}{{item.cardNo}}</span>
+                                </h3>
+
+                            </div>
+                            <div class="panel-body">
+                                <div style="height: 100px;">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <!-- v-if="hasPermission('bill:myaccount:delete')"-->
+            <div class="row">
+                <div class="row col-xs-1"></div>
+                <div class="row col-xs-3">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">&nbsp;</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height: 100px; text-align:center;" data-toggle="modal" data-target="#myModal" id="myModalLabel">
+                                <img src="/images/images/addcard.png" style="width:50px;height:50px;">
+                                <p></p>
+                                {{$t('AddBankCard')}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" v-show="showList==6">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber"
+                       :placeholder="$t('PleaseInputOrderNumber')" maxlength="30"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="back"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 转账 -->
+    <div class="row" v-show="showList==5">
+        <div class="panel panel-default" style="margin-top: 20px;">
+            <form id="transferaccountsForm" class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">{{$t('AreAssociatedOrders')}}</label>
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label class="radio-inline">
+                                <input type="radio" value="0" name="istransferaccounts" v-model="transfer.type" checked>{{$t('no')}}
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" value="1" name="istransferaccounts" v-model="transfer.type">{{$t('yes')}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row" v-if="transfer.type==1">
+                    <label class="col-sm-2 control-label">{{$t('OrderId')}}</label>
+                    <div class="col-sm-4">
+                        <input type="text" name="orderno" class="form-control" v-model="transfer.orderno" :placeholder="$t('OrderId')"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">{{$t('Payee')}}</label>
+                    <div class="col-sm-4">
+                        <input type="text" name="payee" class="form-control" v-model="transfer.payee" :placeholder="$t('Payee')"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">{{$t('AmountOfPayment')}}</label>
+                    <div class="col-sm-4">
+                        <input type="text" name="money" class="form-control" v-model="transfer.money" :placeholder="$t('AmountOfPayment')"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">{{$t('StatementOfPayment')}}</label>
+                    <div class="col-sm-4">
+                        <input type="text" name="explain" class="form-control" v-model="transfer.explain" :placeholder="$t('StatementOfPayment')"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label" aria-label="下一步"></label>
+                    <div class="col-sm-4">
+                        <button type="button" class="btn btn-primary" @click="transferaccountsvalidate">{{$t('NextStep')}}</button>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--流水详情-->
+    <div v-show="showList==7" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div>
+                    <section class="content-header">
+                        <h1>
+                            <small v-if="title1!=''">{{title1}}</small>
+                        </h1>
+                    </section>
+                    <br><br>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AreAssociatedOrders')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="linkOrder" class="form-control"
+                                           v-model="detail.linkOrder" disabled/>
+                                    <!--<select class="form-control" v-model=detail.linkOrder" name="linkOrder" disabled>-->
+                                        <!--<option v-for="(item,index) in linkOrderList" :value="index">{{item}}</option>-->
+                                    <!--</select>-->
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('OrderNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderNumber" class="form-control"
+                                           v-model="detail.orderNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('PaymentMethod')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="paymentType" class="form-control" v-model="detail.paymentType"
+                                           disabled/>
+                                    <!--<select class="form-control" v-model="detail.paymentType" name="paymentType"-->
+                                            <!--disabled>-->
+                                        <!--<option v-for="(item,index) in paymentTypeList" :value="index">{{item}}</option>-->
+                                    <!--</select>-->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('FlowNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="serialNumber" class="form-control"
+                                           v-model="detail.serialNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('income')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="income" class="form-control"
+                                           v-model="detail.income" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('expenditure')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="expenditur" class="form-control"
+                                           v-model="detail.expenditur" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('PaymentAccount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payerNumber" class="form-control" v-model="detail.payerNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AccountsReceivableAccount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payeeNumber" class="form-control"
+                                           v-model="detail.payeeNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('Cashier')}}</div>
+                                <div class="col-sm-10">
+                                    <input name="payeeName" class="form-control"
+                                           v-model="detail.payeeName" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('MoneyMaker')}}</div>
+                                <div class="col-sm-10">
+                                    <input name="operator" class="form-control"
+                                           v-model="detail.operator" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('TimeForMakingMoney')}}</div>
+                                <div class="col-sm-10">
+                                    <input name="payTime" class="form-control"
+                                           v-model="detail.payTime" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('CreationTime')}}</div>
+                                <div class="col-sm-10">
+                                    <input name="createdTime" class="form-control"
+                                           v-model="detail.createdTime" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4" style="width: 81%">
+                                <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea name="remarks" class="form-control" rows="4"
+                                              v-model="detail.remarks" disabled></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <!--v-if="detail.paymentType=='线下支付'"-->
+                        <div class="row">
+                            <div class="form-group col-sm-4" style="width: 81%">
+                                <div class="col-sm-2 control-label">{{$t('PaymentVoucher')}}</div>
+                                <div class="col-sm-10">
+                                    <commodity-fileinput :files="images" :image_list="detail.images"></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br><br>
+                    <div class="row">
+                        <input type="button" class="btn btn-warning" @click="back"
+                               :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--添加银行卡  modal-->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('AddBankCard')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addCardForm" class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('RealName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="name" class="form-control" v-model="bankCard.name" :placeholder="$t('RealName')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('IDNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="idcard" class="form-control" v-model="bankCard.idcard" :placeholder="$t('IDNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('BankCardNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="bankCardNumber" class="form-control" v-model="bankCard.cardNo" :placeholder="$t('BankCardNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('MobilePhoneNo')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phone" class="form-control" v-model="bankCard.phone" :placeholder="$t('MobilePhoneNo')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="cardvalidate">{{$t('save')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- 转账信息 -->
+    <div class="modal fade" id="ztransferModal" tabindex="-1" role="dialog" aria-labelledby="zzModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('ConfirmYourTransferInformation')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="zziForm" class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('Payee')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="name" class="form-control" v-model="transfer.payee" :placeholder="$t('RealName')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('AmountOfPayment')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="idcard" class="form-control" v-model="transfer.money" :placeholder="$t('IDNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" v-if="transfer.type==1">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('OrderId')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="bankCardNumber" class="form-control" v-model="transfer.orderno" :placeholder="$t('OrderId')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('StatementOfPayment')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phone" class="form-control" v-model="transfer.explain" :placeholder="$t('MobilePhoneNo')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" >{{$t('ConfirmInformationAndPay')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!--<div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">账户</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="account" class="form-control" v-model="myAccount.account" placeholder="账户"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">余额</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="balance" class="form-control" v-model="myAccount.balance" placeholder="余额"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">用户ID</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="createBy" class="form-control" v-model="myAccount.createBy" placeholder="用户ID"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">更新时间</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="updateTime" class="form-control" v-model="myAccount.updateTime" placeholder="更新时间"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" value="确定"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>-->
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/bill/myaccount.js"></script>
+</body>
+</html>

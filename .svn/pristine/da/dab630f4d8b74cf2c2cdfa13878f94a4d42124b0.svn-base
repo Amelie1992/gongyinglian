@@ -1,0 +1,286 @@
+
+package com.wzlue.chain.web.controller.logistics;
+
+import java.util.*;
+
+import com.qiniu.util.StringUtils;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.logistics.entity.LogisticsOfferEntity;
+import com.wzlue.chain.logistics.entity.LogisticsOrderCommodityEntity;
+import com.wzlue.chain.logistics.entity.LogisticsOrderOfferEntity;
+import com.wzlue.chain.logistics.service.*;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.logistics.entity.LogisticsOrderEntity;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 物流订单
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-08-29 19:25:49
+ */
+@SuppressWarnings("ALL")
+@RestController
+@RequestMapping("/logistics/logisticsorder")
+public class LogisticsOrderController extends AbstractController {
+    @Autowired
+    private LogisticsOrderService logisticsOrderService;
+    @Autowired
+    private LogisticsOrderOfferService logisticsOrderOfferService;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private LogisticsOrderCommodityService logisticsOrderCommodityService;
+    @Autowired
+    private LogisticsContractService logisticsContractService;
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private LogisticsOfferService logisticsOfferService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        List<LogisticsOrderEntity> logisticsOrderList = logisticsOrderService.queryList(query);
+        int total = logisticsOrderService.queryTotal(query);
+
+        return R.page(logisticsOrderList, total);
+    }
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list2")
+    public R list2(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<LogisticsOrderEntity> logisticsOrderList = logisticsOrderService.queryList2(query);
+        int total = logisticsOrderService.queryTotal(query);
+
+        return R.page(logisticsOrderList, total);
+    }
+
+    /**
+     * 首页展示数据查询(物流订单成交统计)
+     * queryBy: year season month week days
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj = new HashMap();
+        List<Object> dataList = new ArrayList();
+        Long userId = getUserId();
+        map.put("userId", userId);
+        List<Map> logisticsOrder = logisticsOrderService.showList(map);
+        List<String> itemList = (List) map.get("itemList");
+        Map temp = new HashMap();
+        //循环时期节点Array 空值处理
+        for (String item : itemList) {
+            temp = new HashMap();
+            temp.put("time", item);
+            temp.put("data", null);
+            // 遍历对比数据库的日期节点,当节点有统计值则赋值,否则默认为null;
+            for (Map logisticsData : logisticsOrder) {
+                String val = (String) logisticsData.get("title");
+                if (val.equals(temp.get("time"))) {
+                    temp.put("data", logisticsData.get("total"));
+                }
+            }
+            dataList.add(temp);
+            //todo 循环其他订单的数据进行封装处理
+        }
+        Obj.put("name", "物流订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+    @RequiresPermissions("logistics:logisticsorder:info")
+    public R info(@PathVariable("id") Long id) {
+        //下单基本信息
+        LogisticsOrderEntity logisticsOrder = logisticsOrderService.queryObject(id);
+        //物流报盘信息
+        LogisticsOrderOfferEntity logisticsOrderOffer = null;
+        if (logisticsOrder.getId() != null) {
+            logisticsOrderOffer = logisticsOrderOfferService.queryByOrderId(logisticsOrder.getId());
+        }
+        Map<String,Object> map = new HashMap<>(16);
+        map.put("logisticsOrder",logisticsOrder);
+        return R.ok(map);
+    }
+
+    /**
+     * 订单待确认下基本查看详情
+     */
+    @RequestMapping("/detail/{id}")
+    @RequiresPermissions("logistics:logisticsorder:info")
+    public R detail(@PathVariable("id") Long id) {
+        //下单基本信息
+        LogisticsOrderEntity logisticsOrder = logisticsOrderService.queryObject(id);
+        //物流报盘备份信息
+        LogisticsOrderOfferEntity logisticsOrderOffer = null;
+        if (logisticsOrder.getId() != null) {
+            logisticsOrderOffer = logisticsOrderOfferService.queryByOrderId(logisticsOrder.getId());
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("orderId", id);
+        List<LogisticsOrderCommodityEntity> logisticsOrderCommodityList = logisticsOrderCommodityService.queryList(map);
+        Map<String,Object> map1 = new HashMap<>(16);
+        map1.put("logisticsOrder",logisticsOrder);
+        return R.ok(map1);
+    }
+
+    /**
+     * (下单)保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("logistics:logisticsorder:save")
+    public R save(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        SysUserEntity user = getUser();
+        logisticsOrder.setCompanyId(user.getCompanyId());
+        logisticsOrder.setCreateBy(user.getUserId());
+        logisticsOrder.setCreatedTime(new Date());
+        logisticsOrderService.save(logisticsOrder);
+
+        return R.ok();
+    }
+
+    /**
+     * 接单
+     *
+     * @param order
+     * @return
+     */
+    @RequestMapping("/receipt")
+    @RequiresPermissions("logistics:logisticsorder:update")
+    public R receipt(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        SysUserEntity user = getUser();
+        logisticsOrder.setReceiptDetpId(null);//接单人部门id
+        logisticsOrder.setReceiptTime(new Date());//接单时间
+        logisticsOrder.setOrderStatus(1);//0:待确认、1:已接单、
+        logisticsOrder.setUpdatedBy(user.getUserId());
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.receipt(logisticsOrder);
+        LogisticsOrderEntity logisticsOrder1 = logisticsOrderService.queryObject(logisticsOrder.getId());
+        //生成应收应付账单
+            BillEntity bill = new BillEntity();
+            bill.setBillType(0);
+            bill.setContractNumber(logisticsOrder1.getContractNumber());
+            bill.setOrderNumber(logisticsOrder1.getOrderNumber());
+            bill.setOrderType(2);
+            bill.setUnit(logisticsOrder1.getUnit());
+            billService.save(bill);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("logistics:logisticsorder:update")
+    public R update(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        logisticsOrder.setUpdatedBy(getUserId());
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.update(logisticsOrder);
+        if(logisticsOrder.getOrderStatus() == 7){//订单状态取消时，应收应付账单变为失效
+            LogisticsOrderEntity logisticsOrderEntity = logisticsOrderService.queryObject(logisticsOrder.getId());
+            BillEntity bill = billService.queryByOrderNumber(logisticsOrderEntity.getOrderNumber());
+            if(bill != null){
+                bill.setValidState(1);//改的是程序，
+                billService.update(bill);//最终修改表
+            }
+            //订单取消时，报盘数量-1
+            logisticsOfferService.updateByOrderId2(logisticsOrder.getId());
+        }
+        if(logisticsOrder.getOrderStatus() == 7 || logisticsOrder.getOrderStatus() == 8 || logisticsOrder.getOrderStatus() == 9){
+            //买家or卖家结束订单---扣减信用分数
+            MerchantCompanyEntity companyEntity = merchantCompanyService.queryByUserId(getUserId());
+            merchantCompanyService.updateCreditType(CreditType.ORDEREND,companyEntity);
+        }
+        if(logisticsOrder.getOrderStatus() == 6){
+            //买家确认收货---加信用分数30
+            MerchantCompanyEntity companyEntity = merchantCompanyService.queryByUserId(getUserId());
+            merchantCompanyService.updateCreditType(CreditType.COMPLETEORDER,companyEntity);
+        }
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("logistics:logisticsorder:delete")
+    public R delete(@RequestBody Long[] ids) {
+        logisticsOrderService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+    /**
+     * 获取物流报盘的公司
+     *
+     * @return
+     */
+    @RequestMapping("/getCompanys")
+    public R getCompanys() {
+        SysUserEntity user = getUser();
+        List<MerchantCompanyEntity> company = logisticsOrderService.getCompanys(user.getCompanyId());
+        return R.ok().put("companys", company);
+    }
+
+    /**
+     * 查询是否存在相同编号
+     *
+     * @param contractNumber
+     * @return
+     */
+    @RequestMapping("/checkName")
+    @RequiresPermissions("declare:declarecontract:info")
+    public R checkName(@RequestBody String contractNumber) {
+        int count = logisticsContractService.checkName(contractNumber);
+        return R.ok().put("count", count);
+    }
+
+    /**
+     * 改价
+     */
+    @RequestMapping("/updatePrice")
+    @RequiresPermissions("logistics:logisticsorder:update")
+    public R updatePrice(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.updatePrice(logisticsOrder);
+
+        return R.ok();
+    }
+}

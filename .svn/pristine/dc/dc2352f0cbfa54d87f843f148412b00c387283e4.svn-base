@@ -1,0 +1,32 @@
+package com.wzlue.chain.storage.service;
+
+import com.wzlue.chain.storage.entity.StorageContractEntity;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 仓库合同信息表
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-28 15:02:40
+ */
+public interface StorageContractService {
+	
+	StorageContractEntity queryObject(Long id);
+	
+	List<StorageContractEntity> queryList(Map<String, Object> map);
+	
+	int queryTotal(Map<String, Object> map);
+	
+	void save(StorageContractEntity storageContract);
+	
+	void update(StorageContractEntity storageContract);
+	
+	void delete(Long id);
+	
+	void deleteBatch(Long[] ids);
+
+    StorageContractEntity queryContract(StorageContractEntity storageContract);
+}

@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.offer.dao.GoodsBuyingDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.offer.entity.GoodsBuyingEntity" id="goodsBuyingMap">
+        <result property="id" column="id"/>
+        <result property="titleName" column="title_name"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="buyingType" column="buying_type"/>
+        <result property="buyingStatus" column="buying_status"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityCountryName" column="commodity_country_name"/>
+        <result property="commodityCount" column="commodity_count"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityUnitZh" column="commodity_unit_zh"/>
+        <result property="goodsSailingTime" column="goods_sailing_time"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <result property="goodsPodProvince" column="goods_pod_province"/>
+        <result property="goodsPodCity" column="goods_pod_city"/>
+        <result property="goodsDescribe" column="goods_describe"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="goodsCompanyId" column="goods_company_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="shopLogo" column="shop_logo"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="contact" column="contact"/>
+        <result property="contactWay" column="contact_way"/>
+        <result property="mobile" column="mobile"/>
+        <result property="provinceName" column="province"/>
+        <result property="cityName" column="city"/>
+        <result property="companyProfile" column="company_profile"/>
+        <collection property="images"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    column="{code=id,picType=dcode}"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryList"
+        ></collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="goodsBuyingMap">
+		SELECT
+            b.*,
+            dic.CODE dcode,
+            mc.company_name,
+            si.pic_url AS shop_logo,
+            mc.credit_score,
+            mc.contact,
+            mc.contact_way,
+            mc.mobile,
+            mc.company_profile,
+            t2.province,
+            t3.city,
+            dic2.`name` as commodity_country_name,
+            dic3.`name` as commodity_unit_zh
+        FROM
+            goods_buying b
+        LEFT JOIN sys_dict dic ON dic.type = 'image_type_goods_buying'
+        LEFT JOIN merchant_company mc ON b.goods_company_id = mc.id
+        LEFT JOIN sys_provinces t2 ON b.goods_pod_province = t2.provinceid
+        LEFT JOIN sys_cities t3 ON b.goods_pod_city = t3.id
+        LEFT JOIN sys_dict dic2 ON b.commodity_country = dic2.value
+        LEFT JOIN sys_dict dic3 ON b.commodity_unit = dic3.code
+        AND dic3.type = '货物重量单位' AND dic3.del_flag = '0'
+        LEFT JOIN sys_image si ON mc.user_id = si.create_by
+        AND si. CODE = '-1'
+		 WHERE b.id = #{value}
+	</select>
+
+    <!--查询现货期货的求购商品图片 -->
+    <select id="getGoodsBuyImage" resultType="com.wzlue.chain.sys.entity.ImageEntity">
+        SELECT * FROM sys_image WHERE code = #{id} and pic_type='image_type_goods_buying'
+    </select>
+
+    <select id="queryList" resultMap="goodsBuyingMap">
+        SELECT
+        t1.*, t2.province,
+        t3.city,
+        t4.`name` as commodity_country_name,
+        t5.`name` as commodity_unit_zh,
+        'image_type_goods_buying' as dcode
+        FROM
+        goods_buying t1
+        LEFT JOIN sys_provinces t2 ON t1.goods_pod_province = t2.provinceid
+        LEFT JOIN sys_cities t3 ON t1.goods_pod_city = t3.id
+        LEFT JOIN sys_dict t4 ON t1.commodity_country = t4.value
+        LEFT JOIN sys_dict t5 ON t1.commodity_unit = t5.code
+        AND t5.type = '货物重量单位' AND t5.del_flag = '0'
+        <where>
+            1=1
+            <if test="buyingStatus != null and buyingStatus != ''">
+                and t1.buying_status = #{buyingStatus}
+            </if>
+            <if test="commodityName != null and commodityName != ''">
+                and t1.`commodity_name` LIKE concat('%',#{commodityName},'%')
+            </if>
+            <if test="buyingType != null and buyingType != ''">
+                and t1.buying_type = #{buyingType}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and t1.category_id IN
+                <foreach item="categoryIdList" collection="categoryIdList" open="(" separator="," close=")">
+                    #{categoryIdList}
+                </foreach>
+            </if>
+            <if test="placeName != null and placeName != ''">
+                and t1.commodity_country IN
+                <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                    #{placeList}
+                </foreach>
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and t1.goods_company_id = #{companyId}
+            </if>
+            <if test="titleName != null and titleName != ''">
+                and t1.`title_name` LIKE concat('%',#{titleName},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <when test="priceSort !=null and priceSort != ''">
+                ORDER BY t1.commodity_price ${priceSort}
+            </when>
+            <when test="timeSort !=null and timeSort != ''">
+                ORDER BY t1.create_time ${timeSort}
+            </when>
+            <otherwise>
+                ORDER BY t1.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 求购列表-->
+    <select id="getBuyingOffer" resultType="com.wzlue.chain.offer.entity.GoodsBuyingEntity">
+        SELECT
+        t1.*, t2.province as provinceName,
+        t3.city as cityName
+        FROM
+        goods_buying t1
+        LEFT JOIN sys_provinces t2 ON t1.goods_pod_province = t2.provinceid
+        LEFT JOIN sys_cities t3 ON t1.goods_pod_city = t3.id
+        <where>
+            1=1
+            <if test="commodityName != null and commodityName != ''">
+                and t1.`commodity_name` LIKE concat('%',#{commodityName},'%')
+            </if>
+            <if test="buyingType != null and buyingType != ''">
+                and t1.buying_type = #{buyingType}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and t1.category_id IN
+                <foreach item="categoryIdList" collection="categoryIdList" open="(" separator="," close=")">
+                    #{categoryIdList}
+                </foreach>
+            </if>
+            <if test="placeName != null and placeName != ''">
+                and t1.commodity_country IN
+                <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                    #{placeList}
+                </foreach>
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and t1.goods_company_id = #{companyId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <when test="priceSort !=null and priceSort != ''">
+                ORDER BY t1.commodity_price ${priceSort}
+            </when>
+            <when test="timeSort !=null and timeSort != ''">
+                ORDER BY t1.create_time ${timeSort}
+            </when>
+            <otherwise>
+                ORDER BY t1.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM goods_buying
+        <where>
+            <if test="titleName != null and titleName != ''">
+                `title_name` LIKE concat('%',#{titleName},'%')
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and goods_company_id = #{companyId}
+            </if>
+            <if test="commodityName != null and commodityName != ''">
+                and `commodity_name` LIKE concat('%',#{commodityName},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.offer.entity.GoodsBuyingEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_buying
+        (
+        `title_name`,
+        `category_id`,
+        `category_name`,
+        `buying_type`,
+        `buying_status`,
+        `commodity_name`,
+        `commodity_country`,
+        `commodity_count`,
+        `commodity_unit`,
+        `goods_sailing_time`,
+        `commodity_factory_number`,
+        `commodity_price`,
+        `commodity_packing`,
+        `goods_pod_province`,
+        `goods_pod_city`,
+        `goods_describe`,
+        `create_by`,
+        `create_time`,
+        `modify_by`,
+        `modify_time`,
+        `remarks`,
+        `goods_company_id`,
+        company_id
+        )
+        VALUES
+        (
+        #{titleName},
+        #{categoryId},
+        #{categoryName},
+        #{buyingType},
+        #{buyingStatus},
+        #{commodityName},
+        #{commodityCountry},
+        #{commodityCount},
+        #{commodityUnit},
+        #{goodsSailingTime},
+        #{commodityFactoryNumber},
+        #{commodityPrice},
+        #{commodityPacking},
+        #{goodsPodProvince},
+        #{goodsPodCity},
+        #{goodsDescribe},
+        #{createBy},
+        #{createTime},
+        #{modifyBy},
+        #{modifyTime},
+        #{remarks},
+        #{goodsCompanyId},
+        #{companyId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.offer.entity.GoodsBuyingEntity">
+        UPDATE goods_buying
+        <set>
+            <if test="titleName != null">`title_name` = #{titleName},</if>
+            <if test="categoryId != null">`category_id` = #{categoryId},</if>
+            <if test="categoryName != null">`category_name` = #{categoryName},</if>
+            <if test="buyingType != null">`buying_type` = #{buyingType},</if>
+            <if test="buyingStatus != null">`buying_status` = #{buyingStatus},</if>
+            <if test="commodityName != null">`commodity_name` = #{commodityName},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="commodityCount != null">`commodity_count` = #{commodityCount},</if>
+            <if test="commodityUnit != null">`commodity_unit` = #{commodityUnit},</if>
+            <if test="goodsSailingTime != null">`goods_sailing_time` = #{goodsSailingTime},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodityPrice != null">`commodity_price` = #{commodityPrice},</if>
+            <if test="commodityPacking != null">`commodity_packing` = #{commodityPacking},</if>
+            <if test="goodsPodProvince != null">`goods_pod_province` = #{goodsPodProvince},</if>
+            <if test="goodsPodCity != null">`goods_pod_city` = #{goodsPodCity},</if>
+            <if test="goodsDescribe != null">`goods_describe` = #{goodsDescribe},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modifyBy != null">`modify_by` = #{modifyBy},</if>
+            <if test="modifyTime != null">`modify_time` = #{modifyTime},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="goodsCompanyId != null">`goods_company_id` = #{goodsCompanyId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <update id="updateUnsold">
+        update goods_buying
+        set
+        <if test="buyingStatus==1">
+            buying_status=0
+        </if>
+        <if test="buyingStatus==0">
+            buying_status=1
+        </if>
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <delete id="delete">
+		DELETE FROM goods_buying WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_buying WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="queryBuyingList" resultMap="goodsBuyingMap">
+        SELECT
+        t1.*,
+        'image_type_goods_buying' dcode
+        FROM
+        recommend_goods t
+        JOIN goods_buying t1 ON t.goods_offer_no = t1.title_name
+        <where>
+            1=1
+            <if test="position != null and position != ''">
+                and t.position = #{position}
+            </if>
+            <if test="type != null and type != ''">
+                and t.type = #{type}
+            </if>
+            <if test="commodityName != null and commodityName != ''">
+                and t1.`commodity_name` LIKE concat('%',#{commodityName},'%')
+            </if>
+            <if test="buyingType != null and buyingType != ''">
+                and t1.buying_type = #{buyingType}
+            </if>
+            <if test="categoryId != null and categoryId != ''">
+                and t1.category_id IN
+                <foreach item="categoryIdList" collection="categoryIdList" open="(" separator="," close=")">
+                    #{categoryIdList}
+                </foreach>
+            </if>
+            <if test="placeName != null and placeName != ''">
+                and t1.commodity_country IN
+                <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                    #{placeList}
+                </foreach>
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and t1.goods_company_id = #{companyId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <when test="priceSort !=null and priceSort != ''">
+                ORDER BY t1.commodity_price ${priceSort}
+            </when>
+            <when test="timeSort !=null and timeSort != ''">
+                ORDER BY t1.create_time ${timeSort}
+            </when>
+            <otherwise>
+                ORDER BY t1.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+</mapper>

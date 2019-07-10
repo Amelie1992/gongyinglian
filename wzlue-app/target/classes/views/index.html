@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{$t('wzl')}}</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/AdminLTE.min.css">
+    <link rel="stylesheet" href="plugins/liMarquee/css/liMarquee.css">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="css/all-skins.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <![endif]-->
+    <style>
+        .dowebok { width: 800px; font-size: 14px;}
+        .dowebok a { margin: 0 15px; color: #f4f4f4; text-decoration: none;}
+        .dowebok a:hover { text-decoration: underline;}
+    </style>
+</head>
+<!-- ADD THE CLASS layout-boxed TO GET A BOXED LAYOUT -->
+<body class="hold-transition skin-blue sidebar-mini">
+<!-- Site wrapper -->
+<div class="wrapper" id="rrapp" v-cloak>
+    <header class="main-header">
+        <a href="javascript:;" class="logo">
+            <!-- mini logo for sidebar mini 50x50 pixels -->
+            <span class="logo-mini"><b>{{$t('wzl')}}</b></span>
+            <!-- logo for regular state and mobile devices -->
+            <span class="logo-lg"><b>{{$t('wzl')}}</b></span>
+        </a>
+        <!-- Header Navbar: style can be found in header.less -->
+        <nav class="navbar navbar-static-top" role="navigation">
+            <!-- Sidebar toggle button-->
+            <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                <span class="sr-only">Toggle navigation</span>
+            </a>
+            <div style="float:left;color:#fff;padding:15px 10px;">{{$t('hello')}} {{user.username}}
+
+                <!--<input type="hidden" id="message" value="zh">-->
+                <span>{{$t('notice')}}:</span>
+                <div class="dowebok" style="display: inline-block;">
+                    <!--<a v-for="item in pushMsgs">{{item.noticeContent}}</a>-->
+                    <!--<a href="http://www.dowebok.com/187.html">Smoothslides – 可平移的jQuery幻灯片插件</a>
+                    <a href="http://www.dowebok.com/77.html">jQuery全屏滚动插件fullPage.js</a>
+                    <a href="http://www.dowebok.com/131.html">WOW.js – 让页面滚动更有趣</a>
+                    <a href="http://www.dowebok.com/139.html">让IE7 IE8支持CSS3 background-size属性</a>
+                    <a href="http://www.dowebok.com/117.html">shCircleLoader – jQuery Loading效果插件</a>-->
+                </div>
+            </div>
+            <div class="navbar-custom-menu">
+                <ul class="nav navbar-nav">
+                    <!--<li><a href="javascript:;" @click="wechat"><i class="fa fa-lock"></i> &nbsp;融云</a></li>-->
+                    <li><a href="javascript:;" @click="kefu"><i class="fa fa-lock"></i> &nbsp;{{$t('ContactCustomerService')}}</a></li>
+                    <li><a href="javascript:;" @click="huanxin"><i class="fa fa-lock"></i> &nbsp;{{$t('chatRoom')}}</a></li>
+                    <li><a href="javascript:;" @click="changeen"><i class="fa fa-lock"></i> &nbsp;English</a></li>
+                    <li><a href="javascript:;" @click="changezh"><i class="fa fa-lock"></i> &nbsp;{{$t('Chinese')}}</a></li>
+                    <li><a href="javascript:;" @click="updatePassword"><i class="fa fa-lock"></i> &nbsp;{{$t('changePassword')}}</a>
+                    </li>
+                    <li><a href="javascript:;" @click="logout"><i class="fa fa-sign-out"></i> &nbsp;{{$t('exit')}}</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- =============================================== -->
+
+    <!-- Left side column. contains the sidebar -->
+    <aside class="main-sidebar">
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+            <!-- /.search form -->
+            <!-- sidebar menu: : style can be found in sidebar.less -->
+            <ul class="sidebar-menu">
+                <li class="header">{{$t('navigationMenu')}}</li>
+
+                <!-- vue生成的菜单 -->
+                <menu-item :item="item" :index="index" v-for="(item, index) in menuList"></menu-item>
+
+            </ul>
+        </section>
+        <!-- /.sidebar -->
+    </aside>
+    <!-- =============================================== -->
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper" style="height: 100%; position: relative;">
+        <!-- Content Header (Page header) -->
+        <!--<section class="content-header">-->
+        <!--<ol class="breadcrumb" id="nav_title" style="position:static;float:none;">-->
+        <!--<li class="active"><i class="fa fa-home" style="font-size:20px;position:relative;top:2px;left:-3px;"></i> &nbsp; 首页</li>-->
+        <!--<li class="active">{{navTitle}}</li>-->
+        <!--</ol>-->
+        <!--</section>-->
+
+        <!-- Main content -->
+        <section class="wzl-content postion_iframe" style="background:#fff;">
+            <iframe scrolling="no" frameborder="0" style="overflow:visible;background:#fff;" :src="main"
+                    ref="ss"></iframe>
+        </section>
+        <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+
+    <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+            Version 1.0.1
+        </div>
+        Copyright &copy; 2018 <a href="http://www.wzlue.com" target="_blank">wzlue.com</a> All Rights Reserved
+    </footer>
+
+    <!-- Add the sidebar's background. This div must be placed
+         immediately after the control sidebar -->
+    <div class="control-sidebar-bg"></div>
+
+    <!-- 修改密码 -->
+    <div id="passwordLayer" style="display: none;">
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"> {{$t('account')}}</div>
+                    <span class="label label-success" style="vertical-align: bottom;">{{user.username}}</span>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"> {{$t('oldPassword')}}</div>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" v-model="form.password"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"> {{$t('newPassword')}}</div>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" v-model="form.newPassword"/>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+<!-- ./wrapper -->
+
+
+<script src="libs/jquery.min.js"></script>
+<script src="libs/base64.js"></script>
+<script src="plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="libs/bootstrap.min.js"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/router.js"></script>
+<script src="libs/app.js"></script>
+
+<script src="plugins/layer/layer.js"></script>
+<script src="plugins/liMarquee/js/jquery.liMarquee.js"></script>
+
+<script src="messages/zh.js"></script>
+<script src="messages/en.js"></script>
+<!--<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>-->
+<script src="plugins/vue-i18n/vue-i18n.min.js"></script>
+<!--获取访问人信息-->
+<script src="http://pv.sohu.com/cityjson?ie=utf-8"></script>
+
+<script src="js/common.js"></script>
+<script src="js/index.js"></script>
+
+
+</body>
+</html>

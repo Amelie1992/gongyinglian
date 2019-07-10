@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>货物订单表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-editable/css/bootstrap-editable.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/kdniao/css/KDNWidget.css"/>
+    <link rel="stylesheet" href="../../css/main.css">
+    <style>
+        .table {
+            table-layout: fixed !important;
+        }
+    </style>
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h3>
+            {{$t('GoodsOrderList')}}{{$t('Sell')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h3>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <!-- <div class="row">
+             <button class="btn btn-default m-left-5" @click="searchButton('1')"><i class="fa fa-search"></i>&nbsp;{{$t('FullOrder')}}</button>
+             <button class="btn btn-default m-left-5" @click="searchButton('2')"><i class="fa fa-search"></i>&nbsp;{{$t('PendingPayment')}}</button>
+             <button class="btn btn-default m-left-5" @click="searchButton('3')"><i class="fa fa-search"></i>&nbsp;{{$t('PendingReceipt')}}</button>
+
+         </div>-->
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" placeholder="根据订单编号"
+                       maxlength="25"/>
+            </div>
+            <div class="col-xs-2">
+                <vm-select :options="statusSelect" title="选择订单状态" search="true"
+                           name="merchants" @input="merchantsChange" v-model="params.orderStatus"></vm-select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <!--<button class="btn btn-danger m-left-5" @click="del"><i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}-->
+            <!--</button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table class="table table-striped table_list" id="table">
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!--详情页-->
+    <div v-show="!showList && addOrder !=true" style="margin-top: 20px;">
+        <!--       <section class="content-header">
+                   <h1>
+                       {{$t('OrderDetails')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+                   </h1>
+               </section>
+               <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                   <div class="row" style="border:1px solid #ddd;">
+                       <div class="text-center col-sm-4">
+                           <div>{{$t('ContractNumber')}}：{{goodsOrder.agreementId}}</div>
+                           <div>{{$t('OrderId')}}：{{goodsOrder.orderNumber}}</div>
+                           <h1>{{getOrderStatus()}}</h1>
+                           &lt;!&ndash;<button v-if="goodsOrder.orderStatus == 'tbp'">{{$t('ImmediatePayment')}}</button>&ndash;&gt;
+                       </div>
+                       <div class="col-sm-1">
+                           <hr style="width:1px;height:100px; background-color: #0a0a0a "></hr>
+                       </div>
+                       <div class="col-sm-3 text-center">
+                           <div>{{$t('ConsigneeInformation')}}</div>
+                           <div>{{$t('consignee')}}：{{address.consigneeName}}</div>
+                           <div>{{$t('address')}}：{{address.consigneeAddress}}</div>
+                           <div>{{$t('phone')}}：{{address.consigneePhone}}</div>
+                       </div>
+                       <div class="col-sm-1">
+                           <hr style="width:1px;height:100px; background-color: #0a0a0a "></hr>
+                       </div>
+                       <div class="col-sm-3 text-center">
+                           &lt;!&ndash;<div>{{$t('PaymentMethod')}}：{{getPaymentMethod()}}</div>&ndash;&gt;
+                           <div>{{$t('PaymentMethod')}}：{{getTransactionMode()}}</div>
+                           <div>{{$t('DistributionMode')}}：{{goodsOrder.distributionMode ==0?'商家安排':'自行安排'}}</div>
+                           <div>{{$t('StorageMode')}}：{{goodsOrder.storageMode ==0?'商家安排':'自行安排'}}</div>
+                           <div>{{$t('CargoParticipation')}}：{{goodsOrder.insuranceMethod ==0?'商家安排':'自行安排'}}</div>
+                       </div>
+                   </div>
+               </form>
+               <br>
+               &lt;!&ndash;仓储信息&ndash;&gt;
+               <div class="panel panel-default" v-show="showDepot">
+                   <div class="panel panel-default">
+                       <div class="panel-heading">
+                           <h3 class="panel-title">
+                               {{$t('WarehousingInformation')}}
+                           </h3>
+                       </div>
+                       <div class="panel-body">
+                           <div class="row">
+                               <div class="col-sm-4">{{$t('warehouseName')}}：{{depot.storageName}}</div>
+                               <div class="col-sm-4">{{$t('contact')}}：{{depot.contact}}</div>
+                               <div class="col-sm-4">{{$t('phone')}}：{{depot.phone}}</div>
+                           </div>
+                           <div class="row">
+                               &lt;!&ndash;<div class="col-sm-4">{{$t('WarehouseChargingUnit')}}：&nbsp;{{depot.unit==0?'元/吨/天':'元/托/天'}}</div>&ndash;&gt;
+                               <div class="col-sm-4">{{$t('address')}}：{{depot.address}}</div>
+                               <div class="col-sm-4">{{$t('mailbox')}}:{{depot.email}}</div>
+                           </div>
+                           &lt;!&ndash;<div class="row">&ndash;&gt;
+                               &lt;!&ndash;<div style="color: red;">{{$t('StorageChargesAccordingToThe')}}{{depot.money1}}&nbsp;{{depot.unit==0?'元/吨/天':'元/托/天'}}{{$t('Collect')}}，{{$t('OtherFeesChargedAtOnce')}}。</div>&ndash;&gt;
+                               &lt;!&ndash;<table class="table table-bordered">&ndash;&gt;
+                                   &lt;!&ndash;<tr>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('WarehousingFee')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('HandlingCharge')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('DisposalCharge')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('RepeatUpAndDown')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('SortingFee')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('TallyFee')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('CopyTheCodeFor')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('AfterFrozenFee')}}</td>&ndash;&gt;
+                                   &lt;!&ndash;</tr>&ndash;&gt;
+                                   &lt;!&ndash;<tr>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money1}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money2}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money3}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money4}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money5}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money6}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money7}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money8}}</td>&ndash;&gt;
+                                   &lt;!&ndash;</tr>&ndash;&gt;
+                                   &lt;!&ndash;<tr>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('InspectionOfTransferFare')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('CheckTheCostOfDigging')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('CheckSwitchBoxDoorChargesAndLeadSeals')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('DoorToDoorInspectionFee')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('EntryAndExitFee')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('WrappingFilm')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('BoxCarOpposite')}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{$t('PreCoolingFee')}}</td>&ndash;&gt;
+                                   &lt;!&ndash;</tr>&ndash;&gt;
+                                   &lt;!&ndash;<tr>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money9}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money10}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money11}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money12}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money13}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money14}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money15}}</td>&ndash;&gt;
+                                       &lt;!&ndash;<td>{{depot.money16}}</td>&ndash;&gt;
+                                   &lt;!&ndash;</tr>&ndash;&gt;
+                               &lt;!&ndash;</table>&ndash;&gt;
+                           &lt;!&ndash;</div>&ndash;&gt;
+                       </div>
+                   </div>
+               </div>
+               <div class="panel panel-default">
+                   <div class="panel-heading">
+                       <div class="panel-title text-left"><span>&nbsp;&nbsp;{{$t('Buyer')}}：{{goodsOrder.purchaserCompanyName}}
+                           &nbsp;&nbsp;&nbsp;&nbsp;{{$t('ContactInformation')}}：{{address.consigneePhone}}</span>
+                       </div>
+                   </div>
+                   <div class="panel-body">
+                       <div>{{$t('OrderInformation')}}</div>
+                       <span>{{$t('CreationTime')}}：{{goodsOrder.createTime}}</span>
+                       <table class="table table-striped table_list" id="contenTable"></table>
+                       <table class="table table-striped table_list" id="commondityTable"
+                       ></table>&lt;!&ndash;v-show="goodsOrder.goodsCsc==0 || goodsOrder.goodsCsc == null"&ndash;&gt;
+                       <div class="panel panel-default" v-show="priceVersionShow">
+                           <div class="panel-heading">
+                               改价记录
+                           </div>
+                           <div class="panel-body" id="priceVersion">
+                           </div>
+                       </div>
+                       <div class="row">
+                           <div class="col-sm-1 text-right"><span>{{$t('Remarks')}}</span></div>
+                           <div class="col-sm-8"><input type="text" class="form-control" v-model="goodsOrder.remarks"
+                                                        :placeholder="$t('Remarks')"/></div>
+                       </div>
+
+                       <div class="text-right">
+                           &lt;!&ndash;<div>{{$t('TotalPrice')}}：￥{{goodsOrder.totalPrice}}</div>&ndash;&gt;
+                           &lt;!&ndash;<div>{{$t('freight')}}：￥{{goodsOrder.transportationExpenses}}</div>&ndash;&gt;
+                           &lt;!&ndash;<div>{{$t('RealPayment')}}：￥{{goodsOrder.actualPayment==null?0:goodsOrder.actualPayment}}</div>&ndash;&gt;
+                           <div>{{$t('TotalPrice')}}：{{goodsOrder.actualPayment==null?0:goodsOrder.actualPayment}}&nbsp;&nbsp;
+                               {{goodsOrder.currency==2?"美元":"元"}}</div>
+                       </div>
+                   </div>
+               </div>
+               <div class="panel panel-default" v-show="viewStatus==1">
+                   <div class="panel-heading">
+                       <div class="panel-title">
+                           {{$t('ShippingInformation')}}
+                       </div>
+                   </div>
+                   <div class="panel-body">
+                       <form class="form-horizontal" id="shipForm" onkeydown="if(event.keyCode==13){return false;}">
+                           <div class="form-group row">
+                               <label for="logisticsCode" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+                               <div class="col-md-2">
+                                   &lt;!&ndash;<vm-select :options="logisticsOptions" title="选择快递" search="true"&ndash;&gt;
+                                              &lt;!&ndash;v-model="goodsOrderShip.logisticsCode"&ndash;&gt;
+                                              &lt;!&ndash;:value="goodsOrderShip.logisticsCode"&ndash;&gt;
+                                              &lt;!&ndash;name="logisticsOptions"></vm-select>&ndash;&gt;
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="logisticsCode"
+                                          v-model="goodsOrderShip.logisticsCode" name="logisticsCode"/>
+
+                               </div>
+                               <label for="singleNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+                               <div class="col-md-2">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="singleNumber"
+                                          v-model="goodsOrderShip.singleNumber" name="singleNumber"/>
+                               </div>
+                               <label for="numberPlate" style="width: 120px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+                               <div class="col-md-2">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="numberPlate"
+                                          v-model="goodsOrderShip.numberPlate" name="numberPlate"/>
+                               </div>
+                           </div>
+                           <div class="form-group row">
+                               <label for="driverName" style="width: 120px"
+                                      class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+                               <div class="col-md-2">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverName"
+                                          v-model="goodsOrderShip.driverName" name="driverName"/>
+                               </div>
+                               <label for="driverNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+                               <div class="col-md-2">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverNumber"
+                                          v-model="goodsOrderShip.driverNumber" name="driverNumber"/>
+                               </div>
+                               <label for="driverIdNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+                               <div class="col-md-2">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverIdNumber"
+                                          v-model="goodsOrderShip.driverIdNumber" name="driverIdNumber"/>
+                               </div>
+                           </div>
+                           <div class="form-group row">
+                               <label for="remark" style="width: 120px"
+                                      class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                               <div class="col-md-5">
+                                   <input class="form-control" type="text" :disabled="viewStatus != 1" id="remark"
+                                          v-model="goodsOrderShip.remark"/>
+                               </div>
+                           </div>
+                       </form>
+                   </div>
+               </div>
+               <div class="panel panel-default" v-show="viewStatus==2">
+                   <div class="panel-heading">
+                       <div class="panel-title">
+                           {{$t('LookAtTheLogistics')}}
+                       </div>
+                   </div>
+                   <div class="panel-body">
+                       <div id="shipElement"></div>
+                   </div>
+               </div>
+               <div class="panel panel-default" v-show="viewStatus==3">
+                   <div class="panel-heading">
+                       <h3 class="panel-title">
+                           {{$t('customsInformation')}}
+                       </h3>
+                   </div>
+                   <div class="panel-body">
+                       <div class="row">
+                           <div class="col-sm-12">
+                               <div class="col-sm-6">
+                                   <div class="form-group">
+                                       <div class="col-sm-2 control-label">{{$t('DeclarationForm')}}:</div>
+                                       <div class="col-sm-10">
+                                           <commodity-fileinput :this_maxFileCount="6" ref="file1" :show_preview='false'
+                                                                :files="file1" :image_list="files.file1"
+                                                                :multiple="false"></commodity-fileinput>
+                                       </div>
+                                   </div>
+                               </div>
+                               <div class="col-sm-6">
+                                   <div class="form-group">
+                                       <div class="col-sm-2 control-label">{{$t('paymentSheet')}}:</div>
+                                       <div class="col-sm-10">
+                                           <commodity-fileinput :this_maxFileCount="6" ref="file2" :show_preview='false'
+                                                                :image_list="files.file2" :multiple="false"
+                                                                :files="file2"></commodity-fileinput>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                       <div class="row">
+                           <div class="col-sm-12">
+                               <div class="col-sm-6">
+                                   <div class="form-group">
+                                       <div class="col-sm-2 control-label">{{$t('QuarantineCertificate')}}:</div>
+                                       <div class="col-sm-10">
+                                           <commodity-fileinput :this_maxFileCount="6" ref="file3" :show_preview='false'
+                                                                :image_list="files.file3" :multiple="false"
+                                                                :files="file3"></commodity-fileinput>
+                                       </div>
+                                   </div>
+                               </div>
+                               <div class="col-sm-6">
+                                   <div class="form-group">
+                                       <div class="col-sm-2 control-label">{{$t('CheckList')}}:</div>
+                                       <div class="col-sm-10">
+                                           <commodity-fileinput :this_maxFileCount="6" ref="file4" :show_preview='false'
+                                                                :image_list="files.file4" :multiple="false"
+                                                                :files="file4"></commodity-fileinput>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                       <div class="row">
+                           <div class="col-sm-12">
+                               <div class="col-sm-6">
+                                   <div class="form-group">
+                                       <div class="col-sm-2 control-label">{{$t('Other')}}:</div>
+                                       <div class="col-sm-10">
+                                           <commodity-fileinput :this_maxFileCount="6" ref="file5" :show_preview='false'
+                                                                :image_list="files.file5" :multiple="false"
+                                                                :files="file5"></commodity-fileinput>
+                                       </div>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+
+               <button class="btn btn-warning m-left-5" @click="returnReload"/>
+               <i class="fa"></i>&nbsp;{{$t('return')}}
+               <button class="btn btn-danger" style="float: right;margin-left: 10px;" v-show="complaintShow" v-show="viewStatus == 0" @click="addComplaint"/>
+               <i class="fa"></i>&nbsp;{{$t('Complaint')}}
+               <button class="btn btn-primary" style="float: right;margin-left: 10px;" v-show="viewStatus == 1" @click="validateShip"/>
+               <i class="fa"></i>&nbsp;{{$t('PreservingLogisticsInformation')}}
+               <button class="btn btn-primary" style="float: right;margin-left: 10px;"
+                       v-show="viewStatus == 3 && (JSON.stringify(files) == '{}' || files == null)" @click="saveFiles"/>
+               <i class="fa"></i>&nbsp;{{$t('KeepingCustomsDeclarationInformation')}}
+               &lt;!&ndash;<button class="btn btn-default m-left-5" @click="addAftersale"/>
+               <i class="fa"></i>&nbsp;售后&ndash;&gt;-->
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="panel-title"><span>{{$t('OrderDetails')}}</span></div>
+            </div>
+            <div class="panel-body">
+                <!--订单详情-->
+                <br>
+                <div class="row">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('Seller')}}：</label>
+                                    {{goodsOrder.sellerName}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('address')}}：</label>
+                                    {{goodsOrder.sellerAddress}}
+                                </div>
+                            </td>
+                            <td rowspan="2">
+                                <div style="margin-left: 120px"><h1>{{getOrderStatus()}}</h1></div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('OrderNumber')}}：</label>
+                                    {{goodsOrder.orderNumber}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('CreationTime')}}：</label>
+                                    {{goodsOrder.createTime}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('agentOrder')}}：</label>
+                                    {{goodsOrder.agentOrderNumber}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('ContractNumber')}}：</label>
+                                    {{goodsOrder.agreementId}}
+                                </div>
+                                <!-- <div class="row" v-show="goodsOrder.orderGoodsType==0">
+                                     <label class="col-lg-1 control-label">{{$t('TransactionMode')}}：</label>
+                                     <div>
+                                         <label class="radio-inline" v-for="item in transactionManners">
+                                             <input type="radio" v-model="goodsOrder.transactionManner"
+                                                    name="transactionManner" :value="item" disabled>{{item}}
+                                         </label>
+                                     </div>
+                                 </div>-->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('Buyer')}}：</label>
+                                    {{goodsOrder.purchaserCompanyName}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('address')}}：</label>
+                                    {{goodsOrder.buyerAddress}}
+                                </div>
+                                <!--收货地址信息-->
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('contact')}}：</label>
+                                    {{address.consigneeName}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('phone')}}：</label>
+                                    {{address.consigneePhone}}
+                                </div>
+                                <div class="row">
+                                    <label class="col-lg-1 control-label">{{$t('Area')}}：</label>
+                                    {{address.consigneeAddress}}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <br>
+                <!--货物信息-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div class="panel-title"><span>{{$t('GoodsInformation')}}</span></div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row" v-show="goodsOrder.goodsUnit==1">
+                            <table class="table table-striped" id="contenTable"></table>
+                        </div>
+                        <div class="row" v-show="goodsOrder.goodsUnit==2||goodsOrder.goodsUnit==3">
+                            <table class="table table-striped" id="contenTable2"></table>
+                        </div>
+                        <div class="panel panel-default" v-show="priceVersionShow">
+                            <div class="panel-heading">改价记录</div>
+                            <div class="panel-body" id="priceVersion"></div>
+                        </div>
+                    </div>
+                </div>
+                <!--约定条款-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div class="panel-title"><span>{{$t('AgreedTerms')}}</span></div>
+                    </div>
+                    <div class="panel-body">
+                        <div v-show="goodsOrder.orderGoodsType==0">
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('Schedule')}}：</label>
+                                {{goodsOrder.time}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('LoadingPort')}}：</label>
+                                {{goodsOrder.place}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('DestinationPort')}}：</label>
+                                {{goodsOrder.destination}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('Clause')}}：</label>
+                                {{goodsOrder.clause}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('TransactionMode')}}：</label>
+                                <div>
+                                    <label class="radio-inline" v-for="item in transactionManners">
+                                        <input type="radio" v-model="goodsOrder.transactionManner"
+                                               name="transactionManner" :value="item" disabled>{{item}}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="goodsOrder.orderGoodsType==1">
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('DeliveryTime')}}：</label>
+                                {{goodsOrder.time}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('PlaceOfDelivery')}}：</label>
+                                {{goodsOrder.place}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('DateOfManufacture')}}：</label>
+                                {{goodsOrder.productionDate}}
+                            </div>
+                            <div class="row">
+                                <label class="col-lg-1 control-label">{{$t('ShelfLifeM')}}：</label>
+                                {{goodsOrder.shelfLife}}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-1 control-label">{{$t('DocumentsRequired')}}：</label>
+                            {{goodsOrder.documentsRequired}}
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-1 control-label">{{$t('PaymentTerm')}}：</label>
+                            {{goodsOrder.paymentTerm}}
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-1 control-label" style="width: 9%">{{$t('Buyer')}}{{$t('BankCardNumber')}}：</label>
+                            {{goodsOrder.buyerBankCard}}
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-1 control-label" style="width: 9%">{{$t('Seller')}}{{$t('BankCardNumber')}}：</label>
+                            {{goodsOrder.sellerBankCard}}
+                        </div>
+                        <div class="row">
+                            <label class="col-lg-1 control-label">{{$t('Remarks')}}：</label>
+                            {{goodsOrder.remarks}}
+                        </div>
+                    </div>
+                </div>
+                <!--发货-->
+                <div class="panel panel-default" v-show="viewStatus==1">
+                    <div class="panel-heading">
+                        <div class="panel-title">
+                            {{$t('ShippingInformation')}}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form class="form-horizontal" id="shipForm" onkeydown="if(event.keyCode==13){return false;}">
+                            <div class="form-group row">
+                                <label for="logisticsCode" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+                                <div class="col-md-2">
+                                    <!--<vm-select :options="logisticsOptions" title="选择快递" search="true"
+                                               v-model="goodsOrderShip.logisticsCode"
+                                               value="goodsOrderShip.logisticsCode"
+                                               name="logisticsCode"></vm-select>-->
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           id="logisticsCode"
+                                           v-model="goodsOrderShip.logisticsCode" name="logisticsCode"/>
+                                </div>
+                                <label for="singleNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           id="singleNumber"
+                                           v-model="goodsOrderShip.singleNumber" name="singleNumber"/>
+                                </div>
+                                <label for="numberPlate" style="width: 120px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="numberPlate"
+                                           v-model="goodsOrderShip.numberPlate" name="numberPlate"/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="driverName" style="width: 120px"
+                                       class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverName"
+                                           v-model="goodsOrderShip.driverName" name="driverName"/>
+                                </div>
+                                <label for="driverNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           id="driverNumber"
+                                           v-model="goodsOrderShip.driverNumber" name="driverNumber"/>
+                                </div>
+                                <label for="driverIdNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           id="driverIdNumber"
+                                           v-model="goodsOrderShip.driverIdNumber" name="driverIdNumber"/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="remark" style="width: 120px"
+                                       class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-md-5">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="remark"
+                                           v-model="goodsOrderShip.remark"/>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel panel-default" v-show="viewStatus==2">
+                    <div class="panel-heading">
+                        <div class="panel-title">
+                            {{$t('LogisticsInformation')}}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="shipElement"></div>
+                        <form class="form-horizontal">
+                            <div class="form-group row">
+                                <label for="logisticsCode" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.logisticsCode" name="logisticsCode"/>
+                                </div>
+                                <label for="singleNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.singleNumber" name="singleNumber"/>
+                                </div>
+                                <label for="numberPlate" style="width: 120px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.numberPlate" name="numberPlate"/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="driverName" style="width: 120px"
+                                       class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.driverName" name="driverName"/>
+                                </div>
+                                <label for="driverNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.driverNumber" name="driverNumber"/>
+                                </div>
+                                <label for="driverIdNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+                                <div class="col-md-2">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.driverIdNumber" name="driverIdNumber"/>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="remark" style="width: 120px"
+                                       class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-md-5">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                           v-model="goodsOrderShip.remark"/>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="panel panel-default" v-show="viewStatus==3">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            {{$t('customsInformation')}}
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('DeclarationForm')}}:</div>
+                                        <div class="col-sm-10">
+                                            <commodity-fileinput :this_maxFileCount="6" ref="file1" :show_preview='false'
+                                                                 :files="file1" :image_list="files.file1"
+                                                                 :multiple="false"></commodity-fileinput>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('paymentSheet')}}:</div>
+                                        <div class="col-sm-10">
+                                            <commodity-fileinput :this_maxFileCount="6" ref="file2" :show_preview='false'
+                                                                 :image_list="files.file2" :multiple="false"
+                                                                 :files="file2"></commodity-fileinput>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('QuarantineCertificate')}}:</div>
+                                        <div class="col-sm-10">
+                                            <commodity-fileinput :this_maxFileCount="6" ref="file3" :show_preview='false'
+                                                                 :image_list="files.file3" :multiple="false"
+                                                                 :files="file3"></commodity-fileinput>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('CheckList')}}:</div>
+                                        <div class="col-sm-10">
+                                            <commodity-fileinput :this_maxFileCount="6" ref="file4" :show_preview='false'
+                                                                 :image_list="files.file4" :multiple="false"
+                                                                 :files="file4"></commodity-fileinput>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('Other')}}:</div>
+                                        <div class="col-sm-10">
+                                            <commodity-fileinput :this_maxFileCount="6" ref="file5" :show_preview='false'
+                                                                 :image_list="files.file5" :multiple="false"
+                                                                 :files="file5"></commodity-fileinput>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer" style="text-align: right;">
+                <button class="btn btn-warning m-left-5" @click="reload">
+                    <i class="fa"></i>&nbsp;{{$t('return')}}
+                </button>
+                <button class="btn btn-danger" style="float: right;margin-left: 10px;"  v-show="viewStatus == 0" @click="addComplaint"/>
+                <i class="fa"></i>&nbsp;{{$t('Complaint')}}
+                <button class="btn btn-primary" style="float: right;margin-left: 10px;" v-show="viewStatus == 1" @click="validateShip"/>
+                <i class="fa"></i>&nbsp;{{$t('PreservingLogisticsInformation')}}
+                <!--<button v-show="complaintShow" class="btn btn-danger" style="float: right;margin-left: 10px;"-->
+                        <!--@click="addComplaint">-->
+                    <!--<i class="fa"></i>&nbsp;{{$t('Complaint')}}-->
+                <!--</button>-->
+            </div>
+        </div>
+        <!--投诉-->
+        <div class="modal fade" tabindex="-1" role="dialog" id="complaintModal">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">{{$t('Complaint')}}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form class="form-horizontal" id="complaintForm"
+                              onkeydown="if(event.keyCode==13){return false;}">
+                            <div class="row">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('ComplaintReason')}}</div>
+                                    <div class="col-sm-10">
+                            <textarea name="reason" class="form-control" rows="8"
+                                      v-model="complaint.reason"></textarea>
+                                        <!--style="width: 167%;height: 100px"-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                                    <div class="col-sm-10">
+                                        <commodity-fileinput :this_maxFileCount="6" ref="complaintFile" :files="images"
+                                                             :image_list="complaint.images"></commodity-fileinput>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                        <button type="button" class="btn btn-primary" v-if="complaint.id == null"
+                                @click="complaintValidate">{{$t('confirm')}}
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div>
+    </div>
+
+    <!--改价-->
+    <div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel"
+         id="changePriceModal">
+        <div class="modal-dialog" role="document" style="width: 45%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('ReviseThePrice')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="panel-body">
+                        <form class="form-horizontal" role="form" id="changePriceForm"
+                              onkeydown="if(event.keyCode==13){return false;}">
+                            <div class="form-group">
+                                <!--for="totalPrice"-->
+                                <label class="col-sm-2 control-label">{{$t('OriginalPrice')}}</label>
+                                <div class="col-sm-3">
+                                    <!--<input class="form-control" id="totalPrice" type="text" disabled-->
+                                    <!--v-model="totalPrice"/>-->
+                                    <input class="form-control" id="actualPayment" type="text" disabled
+                                           v-model="actualPayment"/>
+                                </div>
+                                <label class="col-sm-2 control-label"
+                                       for="newTotalPrice">{{$t('PostDiscountPrice')}}</label>
+                                <div class="col-sm-3">
+                                    <input class="form-control" id="newTotalPrice" type="text" name="newTotalPrice"
+                                           v-model="newTotalPrice" :placeholder="$t('PleaseEnterTheDiscountPrice')"/>
+                                </div>
+                            </div>
+                            <!--<div class="form-group">-->
+                            <!--<label class="col-sm-2 control-label" for="transportationExpenses">{{$t('OriginalFreight')}}</label>-->
+                            <!--<div class="col-sm-3">-->
+                            <!--<input class="form-control" id="transportationExpenses" type="text" disabled-->
+                            <!--v-model="transportationExpenses"/>-->
+                            <!--</div>-->
+                            <!--<label class="col-sm-2 control-label" for="newTransportationExpenses">{{$t('ChangePrice')}}</label>-->
+                            <!--<div class="col-sm-3">-->
+                            <!--<input class="form-control" id="newTransportationExpenses" type="text"-->
+                            <!--:placeholder="$t('PleaseEnterTheDiscountPrice')"-->
+                            <!--v-model="newTransportationExpenses"/>-->
+                            <!--</div>-->
+                            <!--</div>-->
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" @click="reload">
+                        {{$t('return')}}
+                    </button>
+                    <button type="button" class="btn btn-primary" @click="changePriceValidate">{{$t('sure')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--拒单-->
+    <div class="modal fade" id="refuseModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="modal-title">{{$t('refuse')}}</h3>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="refuseForm" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('refuseReason')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea type="text" name="remarks" class="form-control" rows="7"
+                                              v-model="goodsOrder.remarks"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="validate3">{{$t('refuse')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--接单-->
+    <div class="modal fade" id="receiptModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="modal-title">{{$t('accept')}}</h3>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="receiptForm" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group required">
+                                <label class="col-lg-3 control-label">{{$t('ContractNumber')}}</label>
+                                <div class="col-lg-6">
+                                    <input type="text" class="form-control" v-model="goodsOrder.agreementId"
+                                           name="agreementId" :placeholder="$t('ContractNumber')"/>
+                                    <!-- @change="isRepeat(this)"-->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-lg-3 control-label">{{$t('BankCardNumber')}}</label>
+                                <div class="col-lg-6">
+                                    <input type="text" class="form-control" v-model="goodsOrder.sellerBankCard"
+                                           name="sellerBankCard" :placeholder="$t('BankCardNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="receiptValidate">{{$t('submit')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--<div class="modal fade" tabindex="-1" role="dialog" id="transactionMannerModal">
+        <div class="modal-dialog" role="document" style="width: 60%">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="modal-title">{{$t('WarehousingInformation')}}</span>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="depotform" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="col-sm-4">{{$t('warehouseName')}}：
+                                <input type="text" :disabled="LookStorage" class="form-control" v-model="depot.storageName"
+                                       name="storageName"/>
+                            </div>
+                            <div class="col-sm-4">{{$t('WarehouseAddress')}}：
+                                <input type="text" :disabled="LookStorage" class="form-control" v-model="depot.address"
+                                       placeholder="请输入详细地址" name="address"/>
+                            </div>
+                            <div class="col-sm-4">{{$t('contact')}}：
+                                <input type="text" :disabled="LookStorage" class="form-control" v-model="depot.contact"
+                                       name="contact"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">{{$t('phone')}}：
+                                <input type="text" :disabled="LookStorage" class="form-control" v-model="depot.phone"
+                                       name="phone"/>
+                            </div>
+                            <div class="col-sm-4">{{$t('ContactMailbox')}}：
+                                <input type="text" :disabled="LookStorage" class="form-control" v-model="depot.email"
+                                       name="email"/></div>
+                            &lt;!&ndash;<div class="col-sm-4">{{$t('WarehouseChargingUnit')}}：&ndash;&gt;
+                                &lt;!&ndash;<select name="" id="" :disabled="LookStorage" v-model="depot.unit" class="form-control">&ndash;&gt;
+                                    &lt;!&ndash;<option value="0">{{$t('Yuan')}}/{{$t('ton')}}/{{$t('day')}}</option>&ndash;&gt;
+                                    &lt;!&ndash;<option value="1">{{$t('Yuan')}}/{{$t('Support')}}/{{$t('day')}}</option>&ndash;&gt;
+                                &lt;!&ndash;</select>&ndash;&gt;
+                            &lt;!&ndash;</div>&ndash;&gt;
+                        </div>
+                        &lt;!&ndash;<div class="row">&ndash;&gt;
+                            &lt;!&ndash;<div style="color: red;">&ndash;&gt;
+                                &lt;!&ndash;{{$t('WarehousingChargesAreChargedPerTonOrDayAndOtherChargesAreChargedAtOnce')}}。&ndash;&gt;
+                            &lt;!&ndash;</div>&ndash;&gt;
+                            &lt;!&ndash;<table class="table table-bordered">&ndash;&gt;
+                                &lt;!&ndash;<tr>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('WarehousingFee')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('HandlingCharge')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('DisposalCharge')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('RepeatUpAndDown')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('SortingFee')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('TallyFee')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('CopyTheCodeFor')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('AfterFrozenFee')}}</td>&ndash;&gt;
+                                &lt;!&ndash;</tr>&ndash;&gt;
+                                &lt;!&ndash;<tr>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" disabled="disabled" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money1" placeholder="自动结算"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money2"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money3"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money4"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money5"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money6"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money7"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money8"/></td>&ndash;&gt;
+                                &lt;!&ndash;</tr>&ndash;&gt;
+                                &lt;!&ndash;<tr>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('InspectionOfTransferFare')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('CheckTheCostOfDigging')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('CheckSwitchBoxDoorChargesAndLeadSeals')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('DoorToDoorInspectionFee')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('EntryAndExitFee')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('WrappingFilm')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('BoxCarOpposite')}}</td>&ndash;&gt;
+                                    &lt;!&ndash;<td>{{$t('PreCoolingFee')}}</td>&ndash;&gt;
+                                &lt;!&ndash;</tr>&ndash;&gt;
+                                &lt;!&ndash;<tr>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money9"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money10"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money11"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money12"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money13"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money14"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money15"/></td>&ndash;&gt;
+                                    &lt;!&ndash;<td><input type="text" :disabled="LookStorage" class="form-control"&ndash;&gt;
+                                               &lt;!&ndash;v-model="depot.money16"/></td>&ndash;&gt;
+                                &lt;!&ndash;</tr>&ndash;&gt;
+                            &lt;!&ndash;</table>&ndash;&gt;
+                        &lt;!&ndash;</div>&ndash;&gt;
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" v-show="depot.id == null" @click="validateDepot">
+                        {{$t('confirm')}}
+                    </button>
+                </div>
+            </div>&lt;!&ndash; /.modal-content &ndash;&gt;
+        </div>&lt;!&ndash; /.modal-dialog &ndash;&gt;
+    </div>-->
+
+    <!--<div class="modal fade" tabindex="-1" role="dialog" id="complaintModal">-->
+    <!--<div class="modal-dialog" role="document">-->
+    <!--<div class="modal-content">-->
+    <!--<div class="modal-header">-->
+    <!--<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span-->
+    <!--aria-hidden="true">&times;</span></button>-->
+    <!--<h4 class="modal-title">{{$t('Complaint')}}</h4>-->
+    <!--</div>-->
+    <!--<div class="modal-body">-->
+    <!--<form class="form-horizontal" id="complaintForm" onkeydown="if(event.keyCode==13){return false;}">-->
+    <!--<div class="row">-->
+    <!--<div class="form-group">-->
+    <!--<div class="col-sm-2 control-label">{{$t('ComplaintReason')}}</div>-->
+    <!--<div class="col-sm-10">-->
+    <!--<textarea name="reason" class="form-control" rows="8"-->
+    <!--v-model="complaint.reason"></textarea>-->
+    <!--&lt;!&ndash;style="width: 167%;height: 100px"&ndash;&gt;-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--<div class="row">-->
+    <!--<div class="form-group">-->
+    <!--<div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>-->
+    <!--<div class="col-sm-10">-->
+    <!--<commodity-fileinput :this_maxFileCount="6" ref="complaintFile" :files="images"-->
+    <!--:image_list="complaint.images"></commodity-fileinput>-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--</div>-->
+    <!--</form>-->
+    <!--</div>-->
+    <!--<div class="modal-footer">-->
+    <!--<button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>-->
+    <!--<button type="button" class="btn btn-primary" @click="complaintValidate">{{$t('confirm')}}</button>-->
+    <!--</div>-->
+    <!--</div>&lt;!&ndash; /.modal-content &ndash;&gt;-->
+    <!--</div>&lt;!&ndash; /.modal-dialog &ndash;&gt;-->
+    <!--</div>-->
+
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+<script src="../../plugins/bootstrap-editable/js/bootstrap-table-editable.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/validator.min.js"></script>
+<script src="../../plugins/vue-i18n/vue-i18n.min.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/order/outgoodsorder.js"></script>
+</body>
+</html>

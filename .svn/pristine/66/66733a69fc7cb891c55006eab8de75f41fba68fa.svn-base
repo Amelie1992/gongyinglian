@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储出库</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-editable/css/bootstrap-editable.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('WarehouseDeliveryList')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <!--<input type="text" class="form-control" v-model="params.contact"-->
+                       <!--:placeholder="$t('NameOfPickUpDriver')"/>-->
+                <select class="form-control" data-width="auto" v-model="params.status">
+                    <option value="">{{$t('ShelfState')}}</option>
+                    <option value="0">{{$t('ToBeOutOfStock')}}</option>
+                    <option value="1">{{$t('OutOfStock')}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <div class="row">
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('DriversName')}}</div>
+                    <div class="col-sm-10">
+                        <input type="text" name="contact" class="form-control" v-model="out.contact" readonly
+                               :placeholder="$t('NameOfPickUpDriver')"/>
+                    </div>
+                </div>
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('DriversPhone')}}</div>
+                    <div class="col-sm-10">
+                        <input type="text" name="phone" class="form-control" v-model="out.phone" readonly
+                               :placeholder="$t('PickUpDriversCall')"/>
+                    </div>
+                </div>
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('IDNumber')}}</div>
+                    <div class="col-sm-10">
+                        <input type="text" name="card" class="form-control" v-model="out.card"
+                               :placeholder="$t('IDNumber')" readonly/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('LicensePlateNumber')}}</div>
+                    <div class="col-sm-10">
+                        <input type="text" name="vehicleNumber" class="form-control" v-model="out.vehicleNumber"
+                               readonly
+                               :placeholder="$t('LicensePlateNumber')"/>
+                    </div>
+                </div>
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('DeliveryTime')}}</div>
+                    <div class="col-sm-10">
+                        <input type="" name="takeTime" class="form-control select-box-input form_datetime"
+                               v-model="out.takeTime" id="datetimepicker" data-date-format="yyyy-mm-dd"
+                               :placeholder="$t('PrePickUpTime')" disabled/>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('WhetherOrNotToEscortTheCar')}}</div>
+                    <div class="col-sm-10">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="escort" v-model="out.escort" value="0" disabled/>{{$t('Escort')}}
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="escort" v-model="out.escort" value="1" disabled/>{{$t('NoEscort')}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col-sm-4">
+                    <div class="col-sm-2 control-label">{{$t('WhetherOrNotToCopyTheCode')}}</div>
+                    <div class="col-sm-10">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="copeCode" v-model="out.copeCode" value="0" disabled/>{{$t('ToCopyTheCode')}}
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="copeCode" v-model="out.copeCode" value="1" disabled/>{{$t('DoNotCopyCode')}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-sm-12">
+                    <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                    <div class="col-sm-10">
+                            <textarea name="remark" class="form-control" v-model="out.remark" cols="20" rows="3"
+                                      readonly
+                                      :placeholder="$t('Remarks')"></textarea>
+                    </div>
+                </div>
+            </div>
+            <!--//货物信息-->
+            <div class="panel panel-default m-top-10">
+                <div class="panel-heading">
+                    <span>{{$t('GoodsInformation')}}</span>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('Warehouse')}}：&nbsp;&nbsp;&nbsp;&nbsp;{{out.storageName}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>{{$t('OrderNumber')}}</th>
+                                    <th>{{$t('ContainerNo')}}</th>
+                                    <th>{{$t('InspectionNo')}}</th>
+                                    <th>{{$t('NameOfGoods')}}</th>
+                                    <th>{{$t('place')}}</th>
+                                    <th>{{$t('FactoryNumber')}}</th>
+                                    <th>{{$t('UnitPrice')}}</th>
+                                    <th>{{$t('DateOfManufacture')}}</th>
+                                    <th>{{$t('ExpirationDate')}}</th>
+                                    <th>{{$t('ResidualWeight')}}</th>
+                                    <th>{{$t('OutgoingWeight')}}</th>
+                                    <th>{{$t('unit')}}</th>
+                                    <!--<th>{{$t('ResidualQuantity')}}</th>-->
+                                    <!--<th>{{$t('QuantityOfOutgoing')}}</th>-->
+                                    <!--<th>{{$t('unit')}}</th>-->
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(item,index) in commodityEntityList">
+                                    <td>{{item.orderNumber}}</td>
+                                    <td>{{item.containerNo}}</td>
+                                    <td>{{item.inspectionNo}}</td>
+                                    <td>{{item.commodityName}}</td>
+                                    <td>{{item.countryName}}</td>
+                                    <td>{{item.commodityFactoryNumber}}</td>
+                                    <td>{{item.commodityPrice}}</td>
+                                    <td>{{item.productionDate}}</td>
+                                    <td>{{item.expirationDate}}</td>
+                                    <td>{{item.weight}}{{item.unitName}}</td>
+                                    <td><input type="text" class="form-control"
+                                               v-model="commodityEntityList[index].outWeight"></td>
+                                    <td>{{item.unitName}}</td>
+                                    <!--<td>{{item.weightNum}}{{item.unitName}}</td>-->
+                                    <!--<td><input type="text" class="form-control"-->
+                                               <!--v-model="commodityEntityList[index].outWeightNum"></td>-->
+                                    <!--<td>{{item.unitName}}</td>-->
+                                <!--</tr>-->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--//其他费用-->
+            <div class="panel panel-default m-top-10">
+                <div class="panel-heading">
+                    <span>{{$t('OtherExpenses')}}</span>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" id="costForm" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('HandlingCharge')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money1" class="form-control" v-model="orderCost.money1"
+                                           :placeholder="$t('HandlingCharge')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('DisposalCharge')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money2" class="form-control" v-model="orderCost.money2"
+                                           :placeholder="$t('DisposalCharge')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('RepeatUpAndDown')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money3" class="form-control" v-model="orderCost.money3"
+                                           :placeholder="$t('RepeatUpAndDown')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('SortingFee')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money4" class="form-control" v-model="orderCost.money4"
+                                           :placeholder="$t('SortingFee')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('TallyFee')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money5" class="form-control" v-model="orderCost.money5"
+                                           :placeholder="$t('TallyFee')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('CopyTheCodeFor')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money6" class="form-control" v-model="orderCost.money6"
+                                           :placeholder="$t('CopyTheCodeFor')" id="money6" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('AfterFrozenFee')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money7" class="form-control" v-model="orderCost.money7"
+                                           :placeholder="$t('AfterFrozenFee')"/>
+                                </div>
+                            </div>
+                            <!--<div class="form-group col-sm-4">-->
+                                <!--<div class="col-sm-6 control-label">{{$t('InspectionOfTransferFare')}}</div>-->
+                                <!--<div class="col-sm-6">-->
+                                    <!--<input type="text" name="money8" class="form-control" v-model="orderCost.money8"-->
+                                           <!--:placeholder="$t('InspectionOfTransferFare')"/>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('CheckTheCostOfDigging')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money9" class="form-control" v-model="orderCost.money9"
+                                           :placeholder="$t('CheckTheCostOfDigging')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('WrappingFilm')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money13" class="form-control" v-model="orderCost.money13"
+                                           :placeholder="$t('WrappingFilm')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="row">-->
+                            <!--<div class="form-group col-sm-4">-->
+                                <!--<div class="col-sm-6 control-label">{{$t('CheckSwitchBoxDoorChargesAndLeadSeals')}}</div>-->
+                                <!--<div class="col-sm-6">-->
+                                    <!--<input type="text" name="money10" class="form-control" v-model="orderCost.money10"-->
+                                           <!--:placeholder="$t('CheckSwitchBoxDoorChargesAndLeadSeals')"/>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="form-group col-sm-4">-->
+                                <!--<div class="col-sm-6 control-label">{{$t('DoorToDoorInspectionFee')}}</div>-->
+                                <!--<div class="col-sm-6">-->
+                                    <!--<input type="text" name="money11" class="form-control" v-model="orderCost.money11"-->
+                                           <!--:placeholder="$t('DoorToDoorInspectionFee')"/>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="form-group col-sm-4">-->
+                                <!--<div class="col-sm-6 control-label">{{$t('EntryAndExitFee')}}</div>-->
+                                <!--<div class="col-sm-6">-->
+                                    <!--<input type="text" name="money12" class="form-control" v-model="orderCost.money12"-->
+                                           <!--:placeholder="$t('EntryAndExitFee')"/>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('BoxCarOpposite')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money14" class="form-control" v-model="orderCost.money14"
+                                           :placeholder="$t('BoxCarOpposite')"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-6 control-label">{{$t('PreCoolingFee')}}</div>
+                                <div class="col-sm-6">
+                                    <input type="text" name="money15" class="form-control" v-model="orderCost.money15"
+                                           :placeholder="$t('PreCoolingFee')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <div class="col-sm-3 control-label">
+                                    <input type="button" class="btn btn-success" @click="addFee" :value="$t('More')"/>
+                                </div>
+                                <div class="col-sm-8">
+                                    <div class="table-responsive" style="max-height: 550px;">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                            <tr>
+                                                <th>{{$t('cost')}}{{$t('name')}}</th><!--费用名称-->
+                                                <th>{{$t('Charge')}}</th><!--收费-->
+                                                <th v-if="out.status==0">{{$t('chaozuo')}}</th><!--操作-->
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr v-for="(item,index) in feeList">
+                                                <td><input type="text" class="form-control"
+                                                           v-model="feeList[index].name"></td>
+                                                <td><input type="text" class="form-control"
+                                                           v-model="feeList[index].fee"></td>
+                                                <td v-if="out.status==0"><a class="fa fa-trash-o" href="javascript:void(0)"
+                                                       @click="remove(index)"></a></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"></div>
+                    <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')" v-if="out.status==0"/>
+                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog" role="document" style="width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('ChoiceOfGoods')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <table id="addGoodTable"></table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="addGood">{{$t('confirm')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/storage/storageout.js"></script>
+</body>
+</html>

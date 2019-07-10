@@ -1,0 +1,55 @@
+package com.wzlue.chain.highcharts.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.highcharts.dao.HighchartsDao;
+import com.wzlue.chain.highcharts.entity.HighchartsEntity;
+import com.wzlue.chain.highcharts.service.HighchartsService;
+
+
+
+@Service("highchartsService")
+public class HighchartsServiceImpl implements HighchartsService {
+	@Autowired
+	private HighchartsDao highchartsDao;
+	
+	@Override
+	public HighchartsEntity queryObject(Integer id){
+		return highchartsDao.queryObject(id);
+	}
+	
+	@Override
+	public List<HighchartsEntity> queryList(Map<String, Object> map){
+		return highchartsDao.queryList(map);
+	}
+	
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return highchartsDao.queryTotal(map);
+	}
+	
+	@Override
+	public void save(HighchartsEntity highcharts){
+		highchartsDao.save(highcharts);
+	}
+	
+	@Override
+	public void update(HighchartsEntity highcharts){
+		highchartsDao.update(highcharts);
+	}
+	
+	@Override
+	public void delete(Integer id){
+		highchartsDao.delete(id);
+	}
+	
+	@Override
+	public void deleteBatch(Integer[] ids){
+		highchartsDao.deleteBatch(ids);
+	}
+	
+}

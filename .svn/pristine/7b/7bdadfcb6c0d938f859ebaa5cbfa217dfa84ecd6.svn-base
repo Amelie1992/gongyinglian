@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>报关报盘信息</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link href="../../plugins/bootstrap-fileinput-master/css/fileinput.min.css" media="all" rel="stylesheet"
+          type="text/css"/>
+    <link rel="stylesheet" href="../../css/main.css">
+
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('CommodityWarehouseDeclaration')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.title" :placeholder="$t('title')" maxlength="20"/>
+            </div>
+            <div class="col-xs-2">
+                    <select class="form-control" data-width="auto"
+                            v-model="params.declareType">
+                        <option value="">{{$t('xuanzefenlei')}}</option>
+                        <option v-for="item in declareList" :value="item.value">
+                            {{item.label}}
+                        </option>
+                    </select>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" v-model="params.groundingState" name="status" >
+                    <option value="">{{$t('ShelfState')}}</option>
+                    <option value="0">{{$t('UpperShelves')}}</option>
+                    <option value="1">{{$t('LowerShelves')}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <button v-if="hasPermission('declare:declareoffer:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('declare:declareoffer:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="hasPermission('declare:declareoffer:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o">&nbsp;{{$t('delete')}}</i>
+            </button>
+            <button class="btn btn-success" id="offer"  @click="offer">
+                <i class="fa">&nbsp;{{$t('UpperShelves')}}</i>
+            </button>
+            <button class="btn btn-success" id="disOffer" @click="disOffer">
+                <i class="fa">&nbsp;{{$t('LowerShelves')}}</i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table" class="table text-nowrap"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" style="margin-top: 20px;">
+        <!--<div class="panel panel-default m-top-5">-->
+            <!--<div class="panel-heading">-->
+                <!--<span>{{$t('CompanyDetails')}}</span>-->
+            <!--</div>-->
+            <!--<form class="form-horizontal">-->
+                <!--<div class="row">-->
+                    <!--<div class="form-group col-lg-3 row">-->
+                        <!--<div class="col-lg-4 ">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('CompanyProfile')}}</div>-->
+                        <!--</div>-->
+                        <!--<div class="col-lg-8">-->
+                            <!--<textarea type="text" name="companyInfo" class="form-control"-->
+                                      <!--v-model="declareOffer.companyInfo" placeholder="公司简介"></textarea>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                    <!--<div class="form-group col-lg-3 row">-->
+                        <!--<div class="col-lg-4 ">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('Province')}}</div>-->
+                        <!--</div>-->
+                        <!--<div class="col-lg-8">-->
+                            <!--<vm-select class="form-control" :method="cityChange" :options="options.provincesList"-->
+                                       <!--title="省" search="true"-->
+                                       <!--id="province" name="province" :value="declareOffer.province"-->
+                                       <!--v-model="declareOffer.province">-->
+                            <!--</vm-select>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="form-group col-lg-3 row">-->
+                        <!--<div class="col-lg-4 ">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('City')}}</div>-->
+                        <!--</div>-->
+                        <!--<div class="col-lg-8">-->
+                            <!--<vm-select class="form-control " :options="options.cityList" title="市" search="true"-->
+                                       <!--:method="countryChange"-->
+                                       <!--id="city" name="city" :value="declareOffer.city" v-model="declareOffer.city">-->
+                            <!--</vm-select>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="form-group col-lg-3 row">-->
+                        <!--<div class="col-lg-4 ">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('Country')}}</div>-->
+                        <!--</div>-->
+                        <!--<div class="col-lg-8">-->
+                            <!--<vm-select class="form-control" :options="options.countryList" title="区/县" search="true"-->
+                                       <!--id="country" name="country" :value="declareOffer.country"-->
+                                       <!--v-model="declareOffer.country">-->
+                            <!--</vm-select>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="form-group col-lg-3 row">-->
+                        <!--<div class="col-lg-4 ">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('Area')}}</div>-->
+                        <!--</div>-->
+                        <!--<div class="col-lg-8">-->
+                            <!--<input type="text" name="area" class="form-control" v-model="declareOffer.area"-->
+                                   <!--placeholder="详细地址（公司地址）"/>-->
+                        <!--</div>-->
+                    <!--</div>-->
+
+                <!--</div>-->
+
+            <!--</form>-->
+        <!--</div>-->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span>{{$t('CustomsDeclarationGoods')}}</span>
+                <div class="panel-title pull-right">
+
+                </div>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" id="form">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('commodityCode')}}</div>
+                                    <div class="col-sm-10" >
+                                        <input  type="text" name="commodityCode" id="commodityCode" class="form-control" onblur="checkCode(this.value)"
+                                                v-model="declareOffer.commodityCode" :placeholder="$t('commodityCode')" disabled="disabled" />
+                                        <div v-show="false">
+                                            <input type="radio" name="auto" id="auto" value="0" checked="checked"/>{{$t('AutomaticGeneration')}}&nbsp;&nbsp;
+                                            <input type="radio" name="auto" id="manual" value="1"/>{{$t('ManualInput')}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('title')}}</div>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="title" class="form-control"
+                                               v-model="declareOffer.title"
+                                               :placeholder="$t('title')"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('DeclareType')}}</div>
+                                    <div class="col-sm-10">
+                                        <select class="form-control col-sm-10" style="width:100%"
+                                                v-model="declareOffer.declareType" name="declareType"
+                                                :placeholder="$t('DeclareType one:ImportDeclaration two:ExportDeclaration')">
+                                            <option
+                                                    v-for="item in declareList"
+                                                    :label="item.label"
+                                                    :value="item.value"
+                                            >
+                                                {{item.name}}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-5">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('ChargeRules')}}</div>
+                                    <div class="col-sm-10 input-group">
+                                        <input style="width: 66%" type="text" name="chargeRules" class="form-control"
+                                               v-model="declareOffer.chargeRules" :placeholder="$t('ChargeRules')"/>
+                                        <select style="width: 33%" class="form-control" v-model="declareOffer.unit" name="unit">
+                                            <option value="0">{{$t('Yuan')}}/{{$t('ton')}}</option>
+                                            <option value="1">{{$t('Yuan')}}/{{$t('kg')}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="row">
+                        <div class="col-sm-12">
+&lt;!&ndash;                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('ShelfState')}}</div>
+                                    <div class="col-sm-10">
+                                        <select class="form-control col-sm-10" style="width: 100%"
+                                                v-model="declareOffer.groundingState"
+                                                :placeholder="$t('ShelfState')">
+                                            <option
+                                                    v-for="item in stateList"
+                                                    :label="item.label"
+                                                    :value="item.value"
+                                            >{{item.name}}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>&ndash;&gt;
+
+                        </div>
+                    </div>-->
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('contact')}}</div>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="contacts" class="form-control" v-model="declareOffer.contacts"
+                                               :placeholder="$t('contact')"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label">{{$t('phone')}}</div>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="contactWay" class="form-control"
+                                               v-model="declareOffer.contactWay"
+                                               :placeholder="$t('ContactInformation')"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-6" >
+                                <div class="form-group" v-for="(item,index) in declareOffer.customsList">
+                                    <div class="col-sm-2 control-label">{{$t('Customs')}}</div>
+                                    <button v-if="index==0" type="button" @click="rowAdd">{{$t('added')}}</button>
+                                    <button  type="button" @click='rowDel(index)'>{{$t('delete')}}</button>
+                                    <div class="col-sm-10" >
+                                        <input type="text" name="customs" id="customs" class="form-control"
+                                               v-model="item.customsName" :placeholder="$t('DeclarableCustoms')"/>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+
+                            <div class="col-sm-2 control-label">{{$t('businessIntroduction')}}</div>
+
+                            <div class="col-sm-10" style="width:70%">
+                                <el-textarea id="myEditor" name="businessInfo"
+                                             v-model="declareOffer.businessInfo"
+                                ></el-textarea>
+                            </div>
+                            <!--<textarea type="text" name="businessInfo" class="form-control"-->
+                            <!--v-model="declareOffer.businessInfo" placeholder="业务详情"></textarea>-->
+
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input v-if="showSure" type="button" class="btn btn-primary" @click="validate" :value="$t('sure')" :disabled="isAdd"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js" type="text/javascript"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+
+
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+
+<script src="../../js/modules/declare/declareoffer.js"></script>
+</body>
+</html>

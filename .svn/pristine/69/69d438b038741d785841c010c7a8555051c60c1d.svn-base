@@ -1,0 +1,23 @@
+package com.wzlue.chain.order.dao;
+
+import com.wzlue.chain.order.entity.GoodsOrderCommodityEntity;
+import com.wzlue.chain.common.base.BaseDao;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+/**
+ * 货物商品表
+ * 
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-09-10 10:59:51
+ */
+@Mapper
+public interface GoodsOrderCommodityDao extends BaseDao<GoodsOrderCommodityEntity> {
+
+    void deleteByOrderId(String orderId);
+
+    List listByOrderNumber(@Param("orderNumber") String orderNum);
+}

@@ -1,0 +1,4 @@
+com\wzlue\chain\promotion\service\impl\PromotionServiceImpl.class
+com\wzlue\chain\promotion\service\PromotionService.class
+com\wzlue\chain\promotion\dao\PromotionDao.class
+com\wzlue\chain\promotion\entity\PromotionEntity.class

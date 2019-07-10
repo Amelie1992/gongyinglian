@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.offer.dao.GoodsOfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.offer.entity.GoodsOfferEntity" id="goodsOfferMap">
+        <result property="id" column="id"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="goodsPromotionPrice" column="goods_promotion_price"/>
+        <result property="goodsPrice" column="goods_price"/>
+        <result property="goodsType" column="goods_type"/>
+        <result property="goodsNumber" column="goods_number"/>
+        <result property="goodsCount" column="goods_count"/>
+        <result property="goodsUnit" column="goods_unit"/>
+        <result property="goodsUnitName" column="goods_unit_name"/>
+        <result property="goodsPodProvince" column="province"/>
+        <result property="goodsPodCity" column="city"/>
+        <result property="provinceCode" column="goods_pod_province"/>
+        <result property="cityCode" column="goods_pod_city"/>
+        <result property="goodsSname" column="goods_sname"/>
+        <result property="goodsSailingTime" column="goods_sailing_time"/>
+        <result property="goodsCsc" column="goods_csc"/>
+        <result property="goodsDescribe" column="goods_describe"/>
+        <result property="goodsCompanyId" column="goods_company_id"/>
+        <result property="goodsTransactionCount" column="goods_transaction_count"/>
+        <result property="goodsState" column="goods_state"/>
+        <result property="goodsPromotionId" column="goods_promotion_id"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="countryName" column="country_name"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <result property="commodityClassification" column="commodity_classification"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="shopLogo" column="shop_logo"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="contact" column="contact"/>
+        <result property="mobile" column="mobile"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="companyProfile" column="company_profile"/>
+        <result property="currency" column="currency"/>
+        <result property="countryName" column="country_name"/>
+        <result property="stock" column="stock"/>
+        <result property="priceUnit" column="price_unit"/>
+        <result property="time" column="time"/>
+        <result property="place" column="place"/>
+        <result property="paymentTerm" column="payment_term"/>
+        <result property="productionDate" column="production_date"/>
+        <result property="shelfLife" column="shelf_life"/>
+        <result property="expirationDate" column="expiration_date"/>
+        <result property="clause" column="clause"/>
+        <result property="transactionManner" column="transaction_manner"/>
+        <collection property="images"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    column="{code=id,picType=dcode}"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryList"
+        ></collection>
+        <collection property="commoditys"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity"
+                    column="{goodsOfferId=id}"
+                    select="com.wzlue.chain.offer.dao.GoodsOfferCommodityDao.queryList"
+        ></collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="goodsOfferMap">
+		SELECT
+            o.*, dic. CODE dcode,
+            mc.company_name,
+            si.pic_url AS shop_logo,
+            mc.credit_score,
+            mc.contact,
+            mc.mobile,
+            mc.company_profile,
+            sp.province,
+            sc.city,
+            dic2. NAME AS country_name,
+            dic3. NAME AS goods_unit_name
+        FROM
+            goods_offer o
+        LEFT JOIN sys_dict dic ON dic.type = 'image_type_goods'
+        LEFT JOIN merchant_company mc ON o.company_id = mc.id
+        LEFT JOIN sys_provinces sp ON o.goods_pod_province = sp.provinceid
+        LEFT JOIN sys_cities sc ON o.goods_pod_city = sc.id
+        LEFT JOIN sys_dict dic2 ON o.commodity_country = dic2. CODE
+        LEFT JOIN sys_dict dic3 ON o.goods_unit = dic3. CODE
+        AND dic3.type = '货物重量单位'
+        LEFT JOIN sys_image si ON mc.user_id = si.create_by
+        AND si. CODE = '-1'
+		WHERE o.id = #{value}
+	</select>
+
+    <select id="queryListBuy" resultMap="goodsOfferMap">
+        SELECT
+        g.*, dic. CODE dcode,
+        sp.province,
+        sc.city,
+        dic2. NAME AS country_name,
+        dic3. NAME AS goods_unit_name,
+        dic4.value AS category_name
+        FROM
+        goods_offer g
+        LEFT JOIN sys_dict dic ON dic.type = 'image_type_goods'
+        LEFT JOIN sys_dict dic2 ON g.commodity_country = dic2. CODE
+        LEFT JOIN sys_dict dic3 ON g.goods_unit = dic3. CODE
+        AND dic3.type = '货物重量单位'
+        LEFT JOIN sys_provinces sp ON g.goods_pod_province = sp.provinceid
+        LEFT JOIN sys_cities sc ON g.goods_pod_city = sc.id
+        LEFT JOIN item_category ic ON g.commodity_classification = ic.id
+        AND ic.now_status = '1'
+        LEFT JOIN sys_dict dic4 ON ic.parent_id = dic4.CODE AND dic4.name = '商品分类'
+        <where>
+            <if test="companyId !=null and companyId != ''">
+                g.company_id = #{companyId}
+            </if>
+            <if test="goodsType != null and goodsType != ''">
+                and g.goods_type=#{goodsType}
+            </if>
+            <if test="goodsCsc != null and goodsCsc != ''">
+                and g.goods_csc = #{goodsCsc}
+            </if>
+            <if test="currency != null and currency != ''">
+                and g.currency = #{currency}
+            </if>
+            <if test="goodsState != null and goodsState != ''">
+                and goods_state=#{goodsState}
+            </if>
+            <if test="goodsNumber != null and goodsNumber.trim() != ''">
+                goods_number like concat('%',#{goodsNumber},'%')
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and goods_name like concat('%',#{name},'%')
+            </if>
+            <if test="offerId != null and offerId != ''">
+                and g.id IN
+                <foreach item="offerId" collection="offerId" open="(" separator="," close=")">
+                    #{offerId}
+                </foreach>
+            </if>
+            <if test="placeCode != null and placeCode != ''">
+                AND dic2.code IN
+                <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                    #{placeList}
+                </foreach>
+            </if>
+            <if test="placeNames != null and placeNames != ''">
+                AND dic2.code IN (
+                SELECT code FROM sys_dict sd WHERE sd.remark IN
+                <foreach item="item" collection="placeNames" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+            <if test="expire != null and expire != ''">
+                AND IFNULL(expiration_date,(CURDATE() + INTERVAL 1 DAY)) > CURDATE()
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <when test="priceSort !=null and priceSort != ''">
+                ORDER BY g.goods_price ${priceSort}
+            </when>
+            <when test="timeSort !=null and timeSort != ''">
+                ORDER BY g.create_time ${timeSort}
+            </when>
+            <otherwise>
+                ORDER BY g.modify_time desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="getOfferId" resultType="string">
+        SELECT
+        DISTINCT t1.goods_offer_id
+        FROM
+        goods_offer_commodity t1
+        LEFT JOIN item_category t2 ON t1.category_id = t2.id AND t2.now_status = '1'
+        WHERE
+        1=1
+        <if test="categoryId != null and categoryId != ''">
+            and t2.parent_id IN
+            <foreach item="categoryIdList" collection="categoryIdList" open="(" separator="," close=")">
+                #{categoryIdList}
+            </foreach>
+        </if>
+        <if test="placeCode != null and placeCode != ''">
+            and t1.commodity_country IN
+            <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                #{placeList}
+            </foreach>
+        </if>
+        <if test="placeNames != null and placeNames != ''">
+            and t1.commodity_country IN (
+            SELECT code FROM sys_dict sd WHERE sd.remark IN
+            <foreach item="item" collection="placeNames" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
+        </if>
+    </select>
+
+    <select id="queryRecommendList" resultMap="goodsOfferMap">
+        SELECT
+        g.*, dic. CODE dcode,
+        t4.`value` AS category_name
+        FROM
+        recommend_goods t1
+        LEFT JOIN goods_offer g ON t1.goods_offer_no = g.goods_number
+        LEFT JOIN sys_dict dic ON dic.type = 'image_type_goods'
+        LEFT JOIN item_category t3 ON g.commodity_classification = t3.id
+        LEFT JOIN sys_dict t4 ON t3.parent_id = t4. CODE
+        AND t4. NAME = '商品分类'
+        WHERE 1=1
+        <if test="position !='' and position != null">
+            and t1.position = #{position}
+        </if>
+        <if test="type != '' and type != null">
+            and t1.type = #{type}
+        </if>
+    </select>
+
+    <select id="queryListBuyTotal" resultType="int">
+        SELECT
+        count(1)
+        FROM
+        goods_offer g
+        LEFT JOIN sys_dict dic ON dic.type = 'image_type_goods'
+        LEFT JOIN sys_dict dic2 ON g.commodity_country = dic2. CODE
+        LEFT JOIN sys_dict dic3 ON g.goods_unit = dic3. CODE
+        AND dic3.type = '货物重量单位'
+        LEFT JOIN sys_provinces sp ON g.goods_pod_province = sp.provinceid
+        LEFT JOIN sys_cities sc ON g.goods_pod_city = sc.id
+        LEFT JOIN item_category ic ON g.commodity_classification = ic.id
+        AND ic.now_status = '1'
+        LEFT JOIN sys_dict dic4 ON ic.parent_id = dic4.CODE AND dic4.name = '商品分类'
+        <where>
+            1=1
+            <if test="companyId !=null and companyId != ''">
+                and g.company_id = #{companyId}
+            </if>
+            <if test="goodsType != null and goodsType.trim() != ''">
+                and g.goods_type=#{goodsType}
+            </if>
+            <if test="goodsCsc != null and goodsCsc != ''">
+                and g.goods_csc = #{goodsCsc}
+            </if>
+            <if test="currency != null and currency != ''">
+                and g.currency = #{currency}
+            </if>
+            <if test="goodsState != null and goodsState != ''">
+                and goods_state=#{goodsState}
+            </if>
+            <if test="goodsNumber != null and goodsNumber.trim() != ''">
+                and goods_number like concat('%',#{goodsNumber},'%')
+            </if>
+            <if test="name != null and name.trim() != ''">
+                and goods_name like concat('%',#{name},'%')
+            </if>
+
+            <if test="offerId != null and offerId != ''">
+                and g.id IN
+                <foreach item="offerId" collection="offerId" open="(" separator="," close=")">
+                    #{offerId}
+                </foreach>
+            </if>
+            <if test="placeCode != null and placeCode != ''">
+                AND dic2.code IN
+                <foreach item="placeList" collection="placeList" open="(" separator="," close=")">
+                    #{placeList}
+                </foreach>
+            </if>
+            <if test="placeNames != null and placeNames != ''">
+                AND dic2.code IN (
+                SELECT code FROM sys_dict sd WHERE sd.remark IN
+                <foreach item="item" collection="placeNames" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+                )
+            </if>
+            <if test="expire != null and expire != ''">
+                AND IFNULL(expiration_date,(CURDATE() + INTERVAL 1 DAY)) > CURDATE()
+            </if>
+        </where>
+    </select>
+    <!--过滤掉过期的报盘-->
+
+    <insert id="save" parameterType="com.wzlue.chain.offer.entity.GoodsOfferEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_offer
+        (
+        `goods_name`,
+        `dept_id`,
+        `company_id`,
+        `authorizes_id`,
+        `goods_promotion_price`,
+        `goods_promotion_id`,
+        `goods_price`,
+        `goods_type`,
+        `goods_number`,
+        `goods_count`,
+        `goods_unit`,
+        `goods_pod_province`,
+        `goods_pod_city`,
+        `goods_sname`,
+        `goods_sailing_time`,
+        `goods_csc`,
+        `goods_describe`,
+        `goods_company_id`,
+        `goods_transaction_count`,
+        `goods_state`,
+        `commodity_country`,
+        `commodity_factory_number`,
+        `commodity_packing`,
+        `commodity_classification`,
+        `create_by`,
+        `create_time`,
+        `modify_by`,
+        `modify_time`,
+        `remarks`,
+        `currency`,
+        `stock`,
+        `price_unit`,
+        `time`,
+        `place`,
+        `payment_term`,
+        `production_date`,
+        `shelf_life`,
+        `expiration_date`,
+        `clause`,
+        `transaction_manner`
+        )
+        VALUES
+        (
+        #{goodsName},
+        #{deptId},
+        #{companyId},
+        #{authorizesId},
+        #{goodsPromotionPrice},
+        #{goodsPromotionId},
+        #{goodsPrice},
+        #{goodsType},
+        #{goodsNumber},
+        #{goodsCount},
+        #{goodsUnit},
+        #{goodsPodProvince},
+        #{goodsPodCity},
+        #{goodsSname},
+        #{goodsSailingTime},
+        #{goodsCsc},
+        #{goodsDescribe},
+        #{goodsCompanyId},
+        #{goodsTransactionCount},
+        #{goodsState},
+        #{commodityCountry},
+        #{commodityFactoryNumber},
+        #{commodityPacking},
+        #{commodityClassification},
+        #{createBy},
+        #{createTime},
+        #{modifyBy},
+        #{modifyTime},
+        #{remarks},
+        #{currency},
+        #{stock},
+        #{priceUnit},
+        #{time},
+        #{place},
+        #{paymentTerm},
+        #{productionDate},
+        #{shelfLife},
+        #{expirationDate},
+        #{clause},
+        #{transactionManner}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.offer.entity.GoodsOfferEntity">
+        UPDATE goods_offer
+        <set>
+            <if test="goodsName != null">`goods_name` = #{goodsName},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="goodsPromotionId != null">`goods_promotion_id` = #{goodsPromotionId},</if>
+            <if test="goodsPromotionPrice != null">`goods_promotion_price` = #{goodsPromotionPrice},</if>
+            <if test="goodsPrice != null">`goods_price` = #{goodsPrice},</if>
+            <if test="goodsType != null">`goods_type` = #{goodsType},</if>
+            <if test="goodsCount != null">`goods_count` = #{goodsCount},</if>
+            <if test="goodsUnit != null">`goods_unit` = #{goodsUnit},</if>
+            <if test="goodsPodProvince != null">`goods_pod_province` = #{goodsPodProvince},</if>
+            <if test="goodsPodCity != null">`goods_pod_city` = #{goodsPodCity},</if>
+            <if test="goodsSname != null">`goods_sname` = #{goodsSname},</if>
+            <if test="goodsSailingTime != null">`goods_sailing_time` = #{goodsSailingTime},</if>
+            <if test="goodsCsc != null">`goods_csc` = #{goodsCsc},</if>
+            <if test="goodsDescribe != null">`goods_describe` = #{goodsDescribe},</if>
+            <if test="goodsCompanyId != null">`goods_company_id` = #{goodsCompanyId},</if>
+            <if test="goodsTransactionCount != null">`goods_transaction_count` = #{goodsTransactionCount},</if>
+            <if test="goodsState != null">`goods_state` = #{goodsState},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodityPacking != null">`commodity_packing` = #{commodityPacking},</if>
+            <if test="commodityClassification != null">`commodity_classification` = #{commodityClassification},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modifyBy != null">`modify_by` = #{modifyBy},</if>
+            <if test="modifyTime != null">`modify_time` = #{modifyTime},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="currency != null">`currency` = #{currency},</if>
+            <if test="stock != null">`stock` = #{stock},</if>
+            <if test="priceUnit != null">`price_unit` = #{priceUnit},</if>
+            <if test="time != null">`time` = #{time},</if>
+            <if test="place != null">`place` = #{place},</if>
+            <if test="paymentTerm != null">`payment_term` = #{paymentTerm},</if>
+            <if test="productionDate != null">`production_date` = #{productionDate},</if>
+            <if test="shelfLife != null">`shelf_life` = #{shelfLife},</if>
+            <if test="expirationDate != null">`expiration_date` = #{expirationDate},</if>
+            <if test="clause != null">`clause` = #{clause},</if>
+            <if test="transactionManner != null">`transaction_manner` = #{transactionManner}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <update id="updateStatue">
+        UPDATE goods_offer SET
+        <if test="goodsState == 1">
+            goods_state=0
+        </if>
+        <if test="goodsState == 0">
+            goods_state=1
+        </if>
+        where id in
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_offer WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_offer WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getOverallOfferId" parameterType="string" resultType="com.wzlue.chain.offer.entity.GoodsOfferEntity">
+        SELECT
+            t1.goods_offer_id as id
+        FROM
+            goods_offer_commodity t1
+        LEFT JOIN sys_dict t2 ON t1.commodity_country = t2.`code`
+        WHERE
+            t1.commodity_name LIKE '%${_parameter}%'
+        OR t1.commodity_factory_number LIKE '%${_parameter}%'
+        OR t2.`name` LIKE '%${_parameter}%'
+    </select>
+
+    <select id="queryOfferByNumber" resultType="com.wzlue.chain.offer.entity.GoodsOfferEntity">
+        SELECT * FROM goods_offer WHERE goods_number = #{value}
+    </select>
+
+    <select id="getHistoryPriceTrend" resultType="java.util.Map">
+        SELECT
+          DATE_FORMAT(create_time, '%Y-%m-%d') AS date,
+          CONVERT(avg(commodity_price),DECIMAL(10,2)) AS price
+        FROM
+          goods_offer_commodity
+        WHERE
+        create_time <![CDATA[<=]]> #{date}
+        AND commodity_name = #{goodsName}
+        GROUP BY
+        DATE_FORMAT(create_time, '%Y-%m-%d')
+        ORDER BY
+        create_time asc
+        LIMIT 0,${day}
+    </select>
+
+    <select id="getMarketIndex" resultType="java.util.Map">
+        SELECT
+          DATE_FORMAT(t1.create_time, '%Y-%m-%d') AS date,
+          CONVERT(avg(t1.commodity_price),DECIMAL(10,2)) AS price
+        FROM
+          goods_offer_commodity t1
+        LEFT JOIN item_category t2 ON t1.category_id = t2.id
+        WHERE
+          t1.create_time <![CDATA[<=]]> #{date}
+        AND t2.parent_id = #{categoryId}
+        GROUP BY
+          DATE_FORMAT(t1.create_time, '%Y-%m-%d')
+        ORDER BY
+          t1.create_time asc
+          LIMIT 0,${day}
+    </select>
+</mapper>

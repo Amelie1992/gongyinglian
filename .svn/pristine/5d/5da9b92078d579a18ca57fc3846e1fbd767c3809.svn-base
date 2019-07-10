@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html xmlns:c="http://www.w3.org/1999/html">
+<head>
+    <title>物流订单</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../plugins/kdniao/css/KDNWidget.css"/>
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+    <style>
+        font {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('LogisticsOrderList')}}{{$t('Buy')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" @keyup.enter="query"
+                       :placeholder="$t('EnterOrderNumber')" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <vm-select :options="statusSelect" title="选择订单状态" search="true"
+                           name="statusSelect" @input="" v-model="params.orderStatus"></vm-select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <!--<button v-if="hasPermission('logistics:logisticsorder:update')" class="btn btn-warning"-->
+            <!--@click="update">-->
+            <!--<i class="fa fa-edit"></i>&nbsp;修改-->
+            <!--</button>-->
+            <!--<button v-if="hasPermission('logistics:logisticsorder:delete')" class="btn btn-danger"-->
+            <!--@click="del">-->
+            <!--<i class="fa fa-trash-o"></i>&nbsp;删除-->
+            <!--</button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!--详情-->
+    <div v-show="show1" style="margin-top: 20px;">
+        <section class="content-header">
+            <h1>
+                {{$t('OrderDetails')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+            </h1>
+        </section>
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="panel panel-default col-sm-6 text-center" style="height: 200px">
+                    <div class="panel-body text-center" style="height: 300px">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="pull-right">{{$t('ContractNumber')}}：</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="pull-left">{{logisticsOrder.contractNumber}}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="pull-right">{{$t('OrderId')}}：</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="pull-left">{{logisticsOrder.orderNumber}}</div>
+                            </div>
+                        </div>
+                        <template v-if="logisticsOrder.orderStatus==0">
+                            <h1 style="color: red;">{{$t('WaitForPayment')}}</h1>
+                            <!--<button class="btn btn-primary btn-sm">{{$t('ClickOnPayment')}}</button>-->
+                            <!--<button class="btn btn-primary btn-sm" onclick="cancel('+row.id+')">-->
+                            <!--{{$t('CancellationOfOrder')}}-->
+                            <!--</button>-->
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==1">
+                            <h1 style="color: red;">{{$t('PendingPayment')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==2">
+                            <h1 style="color: green;">{{$t('PendingShip')}}</h1>
+                        </template>
+                        <!--<template v-if="logisticsOrder.orderStatus==1">-->
+                        <!--<h1 v-if="logisticsOrder.passStatus==0">物流费未结清</h1>-->
+                        <!--<button v-if="logisticsOrder.passStatus==0">立即付款</button>-->
+                        <!--<h1 v-if="logisticsOrder.passStatus==1">物流费已结清</h1>-->
+                        <!--</template>-->
+                        <template v-if="logisticsOrder.orderStatus==3">
+                            <h1 style="color: green;">{{$t('PendingShip')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==5">
+                            <h1 style="color: green;">{{$t('PendingReceipt')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==6">
+                            <h1 style="color: green;">{{$t('TransactionCompletion')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==7">
+                            <h1 style="color: green;">{{$t('OrderCancelled')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==8">
+                            <h1 style="color: red;">{{$t('OrderBuyCancelled')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==9">
+                            <h1 style="color: red;">{{$t('OrderCancelled')}}</h1>
+                        </template>
+                        <!--<template v-if="logisticsOrder.passStatus==1">-->
+                        <!--<h1 style="color: green;">{{$t('OrderPaid')}}</h1>-->
+                        <!--</template>-->
+                    </div>
+                </div>
+                <div class="panel panel-default col-sm-6" style="height: 200px">
+                    <!--v-if="logisticsOrder.passStatus==0">-->
+                    <div class="panel-body">
+                        <div class="col-sm-6">
+                            <h4><b>{{$t('OriginInformation')}}</b></h4><br>
+                            <div>{{$t('contact')}}：{{logisticsOrder.buyContact}}</div>
+                            <div>{{$t('phone')}}：{{logisticsOrder.buyPhone}}</div>
+                            <div>{{$t('StartingAddress')}}：{{logisticsOrder.buyAddress}}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <h4><b>{{$t('ReceiptInformation')}}</b></h4><br>
+                            <div>{{$t('contact')}}：{{logisticsOrder.contact}}</div>
+                            <div>{{$t('phone')}}：{{logisticsOrder.phone}}</div>
+                            <div>{{$t('ReceivingAddress')}}：{{logisticsOrder.address}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--下单信息-->
+            <div class="panel panel-default">
+                <div class="panel-title text-left"><span>&nbsp;&nbsp;&nbsp;&nbsp;{{$t('business')}}：{{logisticsOrder.merchantCompanyName}}&nbsp;&nbsp;&nbsp;&nbsp;{{$t('ContactInformation')}}：{{logisticsOrder.merchantPhone}}</span>
+                </div>
+                <div class="panel-body">
+                    <div>
+                        {{$t('OrderInformation')}}
+                    </div>
+                    <div>{{$t('OrderTime')}}：{{logisticsOrder.createdTime}}</div>
+
+                    <table class="table table-striped table_list contentTables" id="contentTables"></table>
+
+                    <table class="table table-striped table_list contentTable" id="contentTable"></table>
+
+                    <div class="row">
+                        <div class="col-sm-1 text-right"><span>{{$t('Remarks')}}</span></div>
+                        <div class="col-sm-8"><textarea type="text" class="form-control"
+                                                        v-model="logisticsOrder.remarks"
+                                                        :placeholder="$t('Remarks')"></textarea></div>
+                    </div>
+                    <div class="text-right">
+                        <div>{{$t('TotalPrice')}}：{{logisticsOrder.total}}{{logisticsOrder.unit == 0 ?'元':'美元'}}</div>
+                        <!--<div>{{$t('freight')}}：￥0.00</div>-->
+                        <!--<div>{{$t('RealPayment')}}：￥{{logisticsOrder.total}}</div>-->
+                    </div>
+                </div>
+            </div>
+            <!--物流信息-->
+            <div class="row">
+                <div class="form-group">
+                    <div class="panel panel-default" v-show="viewStatus==1">
+                        <div class="panel-heading">
+                            <div class="panel-title">
+                                {{$t('ShippingInformation')}}
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <!--<div id="shipElement"></div>-->
+                            <div v-if="logisticsOrderShip.id != null">
+                                <iframe :src="ship1" width="800" height="500" frameborder="0" scrolling="yes"></iframe>
+                            </div>
+                            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                                <div class="form-group row">
+                                    <label for="logisticsCode" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+                                    <div class="col-md-2">
+                                        <!--<vm-select :options="logisticsOptions" title="选择快递" search="true"-->
+                                        <!--v-model="logisticsOrderShip.logisticsCode"-->
+                                        <!--:value="logisticsOrderShip.logisticsCode"-->
+                                        <!--name="logisticsOptions"></vm-select>-->
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="logisticsCode" v-model="logisticsOrderShip.logisticsCode"/>
+
+                                    </div>
+                                    <label for="logisticsNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+                                    <div class="col-md-2">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="logisticsNumber"
+                                               v-model="logisticsOrderShip.logisticsNumber"/>
+                                    </div>
+                                    <label for="numberPlate" style="width: 120px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+                                    <div class="col-md-2">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="numberPlate"
+                                               v-model="logisticsOrderShip.numberPlate"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="driverName" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+                                    <div class="col-md-2">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="driverName"
+                                               v-model="logisticsOrderShip.driverName"/>
+                                    </div>
+                                    <label for="driverNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+                                    <div class="col-md-2">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="driverNumber"
+                                               v-model="logisticsOrderShip.driverNumber"/>
+                                    </div>
+                                    <label for="driverIdNumber" style="width: 120px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+                                    <div class="col-md-2">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1"
+                                               id="driverIdNumber"
+                                               v-model="logisticsOrderShip.driverIdNumber"/>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="remark" style="width: 120px" class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                                    <div class="col-md-5">
+                                        <input class="form-control" type="text" :disabled="viewStatus != 1" id="remark"
+                                               v-model="logisticsOrderShip.remark"/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <input type="button" class="btn btn-warning m-left-5" @click="reload" :value="$t('return')"/>
+                    <input type="button" class="btn btn-danger" style="float: right;margin-left: 10px;"
+                           v-if="logisticsOrder.buyStatus == 0 && logisticsOrder.orderStatus >0" @click="toushu"
+                           :value="$t('Complaint')"/>
+                    <input type="button" class="btn btn-primary" style="float: right"
+                           v-if="logisticsOrder.orderStatus >3 && logisticsOrder.alterSale==0" @click="afterSaleApply"
+                           :value="$t('AfterSale')"/>
+                    <input type="button" class="btn btn-danger" style="float: right;margin-left: 10px;"
+                           v-if="logisticsOrder.buyStatus==1" @click="complaintDetail"
+                           :value="$t('DetailsOfComplaint')"/>
+                    <input type="button" class="btn btn-primary" style="float: right"
+                           v-if="logisticsOrder.alterSale == 1 || logisticsOrder.alterSale== 2" @click="afterSaleDetail"
+                           :value="$t('DetailsOfAfterSaleService')"/>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!--新增页-->
+    <div v-show="show2" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="addForm" onkeydown="if(event.keyCode==13){return false;}">
+                <!--合同信息-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span>{{$t('ContractInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('ContractNumber')}}</label>
+                                        <div class="col-lg-6">
+                                            <input id="contractNumber" type="text" name="contractNumber"
+                                                   class="form-control" onblur="checkCode(this.value)"
+                                                   v-model="logisticsOrder.contractNumber"
+                                                   :placeholder="$t('ContractNumber')" disabled/>
+                                            <input type="radio" name="contractNumber" value="1" checked="checked"
+                                                   onchange="change2(this)"/>{{$t('AutomaticGeneration')}}
+                                            &nbsp;&nbsp;<input type="radio" name="contractNumber" value="0"
+                                                               onchange="change2(this)"/>{{$t('ManualInput')}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--起运信息-->
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <span>{{$t('OriginInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('contact')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control" name="buyContact"
+                                                   v-model="logisticsOrder.buyContact"
+                                                   :placeholder="$t('contact')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('phone')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control" name="buyPhone"
+                                                   v-model="logisticsOrder.buyPhone"
+                                                   :placeholder="$t('phone')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-12">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('StartingAddress')}}</label>
+                                        <div class="col-lg-4">
+                                            <textarea type="text" class="form-control" name="buyAddress" maxlength="100"
+                                                      v-model="logisticsOrder.buyAddress"
+                                                      :placeholder="$t('StartingAddress')"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--收货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('ReceiptInformation')}}</span>
+                        <a href="javascript:void(0);" class="pull-right m-right-5" @click="openAddressCheck">{{$t('ChooseReceiptAddress')}}</a>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('contact')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control" name="contact"
+                                                   v-model="logisticsOrder.contact"
+                                                   :placeholder="$t('contact')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('phone')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control" name="phone"
+                                                   v-model="logisticsOrder.phone"
+                                                   :placeholder="$t('phone')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-12">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('ReceivingAddress')}}</label>
+                                        <div class="col-lg-4">
+                                            <textarea type="text" class="form-control" name="address"
+                                                      v-model="logisticsOrder.address"
+                                                      :placeholder="$t('ReceivingAddress')"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--商家信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('BusinessInformation')}}</span>
+                        <!--<a href="javascript:void(0);" class="pull-right m-right-5" @click="openLogisticsCheck">选择商家</a>-->
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('SellerCompany')}}</label>
+                                        <div class="col-lg-8" v-show="!updateStatus">
+                                            <vm-select :options="companys" title="请选择卖家公司" search="true"
+                                                       v-model="logisticsOfferEntity.companyId" name="companyId"
+                                                       @input="getOffers"></vm-select>
+                                        </div><!--:value="logisticsOfferEntity.companyId"-->
+                                        <div class="col-lg-8" v-show="updateStatus">
+                                            <input style="width: 50%" type="text" class="form-control"
+                                                   v-model="logisticsOfferEntity.companyName" readonly
+                                                   :placeholder="$t('SellerCompany')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group required">
+                                        <label class="col-lg-3 control-label">{{$t('OfferInformation')}}</label>
+                                        <div class="col-lg-8" v-show="!updateStatus">
+                                            <vm-select :options="offers" title="请选择报盘标题" search="true"
+                                                       v-model="logisticsOfferEntity.offerId" name="offerId"
+                                                       :value="logisticsOfferEntity.offerId"
+                                                       :method="getOffer"></vm-select>
+                                        </div>
+                                        <div class="col-lg-8" v-show="updateStatus">
+                                            <input style="width: 50%" type="text" name="offerId" class="form-control"
+                                                   v-model="logisticsOfferEntity.title" readonly
+                                                   :placeholder="$t('Headlines')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('contact')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control"
+                                                   v-model="logisticsOfferEntity.contact" :disabled="true"
+                                                   :placeholder="$t('contact')"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('phone')}}</label>
+                                        <div class="col-lg-6">
+                                            <input type="text" class="form-control"
+                                                   v-model="logisticsOfferEntity.phone"
+                                                   :placeholder="$t('phone')" :disabled="true"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('PurchaseInformation')}}</label>
+                                        <div class="col-lg-6">
+                                            <input class="form-control"
+                                                   type="text"
+                                                   v-model="logisticsOfferEntity.price"
+                                                   :placeholder="$t('UnitPrice')" :readonly="true">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('num')}}</label>
+                                        <div class="col-lg-8">
+                                            <div class="input-group">
+                                            <input class="form-control" style="width: 51%"
+                                                   type="number" step="1" min="1"
+                                                   v-model="logisticsOfferEntity.quantityNew"
+                                                   :placeholder="$t('num')" @change="quantityC" maxlength="10"/>
+                                            <!--数量单位-->
+                                            <select v-model="logisticsOfferEntity.unit" style="width: 35%"
+                                                    class="form-control" :disabled="true">
+                                                <option value="0">m³</option>
+                                                <option value="1">m³</option>
+                                                <option value="2">柜</option>
+                                                <option value="3">车</option>
+                                                <option value="4">票</option>
+                                            </select>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('hundredweight')}}</label>
+                                        <div class="col-lg-8">
+                                            <select v-model="logisticsOfferEntity.unit" style="width: 73%"
+                                                    class="form-control" :disabled="true">
+                                                <option value="0">{{$t('Yuan')}}/m³</option>
+                                                <option value="1">{{$t('Dollar')}}/m³</option>
+                                                <option value="2">{{$t('Yuan')}}/柜</option>
+                                                <option value="3">{{$t('Yuan')}}/车</option>
+                                                <option value="4">{{$t('Dollar')}}/票</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--<div class="col-sm-5">
+                                    <div class="form-group">
+                                        <label class="col-lg-3 control-label">{{$t('Remarks')}}</label>
+                                        <div class="col-lg-8">
+                                                <textarea style="width: 80%" class="form-control"
+                                                          v-model="logisticsOrder.remarks" maxlength="50"
+                                                          :placeholder="$t('PleaseInputNoteInformation')"></textarea>
+                                        </div>
+                                    </div>
+                                </div>-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--//货物信息-->
+                <div class="panel panel-default m-top-10">
+                    <div class="panel-heading">
+                        <span>{{$t('GoodsInformation')}}</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <input id="orderNum" type="text" class="form-control" @change="addGoods('orderNum')"
+                                       v-model="logisticsOrder.numberCode" :placeholder="$t('OrderNumber')"/>
+                            </div>
+                            <input v-if="!addTxBtn&&!updateStatus" type="button" :value="$t('NewGoods')"
+                                   class="btn btn-sm btn-primary pull-right" @click="addGoods('txtBtn')"/>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 table-responsive" style="height: 400px;">
+                                <table class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th style="width: 10%">{{$t('ProductName')}}</th>
+                                        <th style="width: 12%">{{$t('place')}}</th>
+                                        <th style="width: 10%">{{$t('ProducerOrNumber')}}</th>
+                                        <!--<th style="width: 10%">{{$t('UnitPrice')}}</th>-->
+                                        <th style="width: 10%">{{$t('height')}}</th>
+                                        <th style="width: 10%">{{$t('unit')}}</th>
+                                        <th style="width: 10%">{{$t('pack')}}</th>   <!--包装-->
+                                        <th v-if="!addTxBtn&&!updateStatus" style="width: 10%">{{$t('chaozuo')}}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr v-for="(item,index) in logisticsOrderCommodityList"
+                                        v-if="!addTxBtn&&logisticsOrderCommodityList&&!updateStatus">
+
+                                        <td><input type="text" class="form-control" maxlength="25"
+                                                   v-model="item.commodityName">{{item.commodityCountryIsName}}
+                                        </td>
+                                        <td v-if="item.commodityCountryIsName">
+                                            <input type="text" class="form-control"
+                                                   v-model="logisticsOrderCommodityList[index].commodityCountry">
+                                        </td>
+                                        <td v-if="!item.commodityCountryIsName">
+                                            <select class="form-control selectpicker" data-live-search="true" data-dropup-auto="false"
+                                                    v-model="logisticsOrderCommodityList[index].commodityCountry">
+                                                <option :value="p.code" v-for="p in placeData">{{p.name}}</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="text" class="form-control" maxlength="25"
+                                                   v-model="logisticsOrderCommodityList[index].commodityFactoryNumber">
+                                        </td>
+                                        <!--<td><input type="text" class="form-control"-->
+                                                   <!--v-model="logisticsOrderCommodityList[index].commodityPrice"></td>-->
+                                        <td><input type="text" class="form-control"
+                                                   v-model="logisticsOrderCommodityList[index].commodityCount"></td>
+                                        <td>
+                                            <select type="text" class="form-control"
+                                                    v-model="logisticsOrderCommodityList[index].commodityUnit">
+                                                <option :value="p.code" v-for="p in unitList">{{p.name}}</option>
+                                            </select>
+                                        </td>
+                                        <!--<td><input type="text" class="form-control"-->
+                                                   <!--v-model="logisticsOrderCommodityList[index].commodityUnit"></td>-->
+                                        <!--买入物流订单的包装-->
+                                        <td><input type="text" class="form-control"
+                                                   v-model="logisticsOrderCommodityList[index].commodityPacking"></td>
+
+                                        <td><a class="fa fa-trash-o" href="javascript:void(0)"
+                                               @click="removeGoods(index)"
+                                               class=""></a></td>
+                                    </tr>
+
+                                    <tr v-for="(item,index) in logisticsOrderCommodityList"
+                                        v-if="addTxBtn&&!updateStatus">
+                                        <td>{{item.commodityName}}</td>
+                                        <!--<td v-if="item.commodityCountryIsName">-->
+                                            <!--<input type="text" class="form-control" disabled-->
+                                                   <!--v-model="logisticsOrderCommodityList[index].commodityCountryName">-->
+                                        <!--</td>-->
+                                        <!--<td v-if="!item.commodityCountryIsName">-->
+                                            <!--<select type="text" class="form-control" disabled-->
+                                                    <!--v-model="logisticsOrderCommodityList[index].commodityCountry">-->
+                                                <!--<option :value="p.code" v-for="p in placeData">{{p.name}}</option>-->
+                                            <!--</select>-->
+                                        <!--</td>-->
+                                        <td>{{item.commodityCountry}}</td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <!--<td>{{item.commodityPrice}}</td>-->
+                                        <td>{{item.commodityCount}}</td>
+
+                                            <!--<select type="text" class="form-control"-->
+                                                    <!--v-model="logisticsOrderCommodityList[index].commodityUnit" disabled>-->
+                                                <!--<option :value="p.code" v-for="p in unitList">{{p.name}}</option>-->
+                                            <!--</select>-->
+                                        <td>{{item.commodityUnit}}</td>
+                                        <td>{{item.commodityPacking}}</td>
+                                        <td v-if="!addTxBtn"></td>
+                                    </tr>
+                                    <tr v-for="(item,index) in logisticsOrderCommodityList" v-if="updateStatus">
+                                        <td>{{item.commodityName}}</td>
+                                        <!--<td>{{getCommodityCountry(item.commodityCountry)}}</td>-->
+                                        <td>{{item.commodityCountry}}</td>
+                                        <td>{{item.commodityFactoryNumber}}</td>
+                                        <!--<td>{{item.commodityPrice}}</td>-->
+                                        <td>{{item.commodityCount}}</td>
+                                        <td>{{item.commodityUnit}}</td>
+                                        <td>{{item.commodityPacking}}</td>
+                                        <!--<td v-for="p in unitList" v-if="p.code==item.commodityUnit">{{p.name}}</td>-->
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="describe" class="form-control"
+                                           v-model="logisticsOrder.describe"
+                                           :placeholder="$t('SupplementaryInformationOnGoods')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('TotalPrice')}}</label>
+                                <div class="col-sm-10 input-group">
+                                    <input style="width: 20%" type="text" name="total" class="form-control"
+                                           step="0.01" min="0.01"
+                                           v-model="logisticsOrder.total"
+                                           :placeholder="$t('OrderTotalAmount')">
+
+                                    <select style="width: 12%" class="form-control"
+                                            v-model="logisticsOrder.unit"
+                                            name="unit">
+                                        <option value="0">{{$t('Yuan')}}</option>
+                                        <option value="1">{{$t('Dollar')}}</option>
+                                        <!--<option value="2">{{$t('Yuan')}}</option>-->
+                                        <!--<option value="3">{{$t('Yuan')}}</option>-->
+                                        <!--<option value="4">{{$t('Dollar')}}</option>-->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--售后-->
+    <div class="panel panel-default" v-show="showAfterSales" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="afterForm" :model="afterSale"
+                  onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ServiceType')}}</div>
+                                <div class="col-sm-10">
+                                    <!--placeholder="服务类型 索赔"/>-->
+                                    <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio"
+                                           value="2" checked="checked"/>
+                                    {{$t('ClaimDemage')}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('RefundForm')}}</div>
+                                <div class="col-sm-8">
+                                    <select class="form-control" data-width="auto"
+                                            v-model="afterSale.refundForm" name="refundForm">
+                                        <option value="">{{$t('PleaseChooseTheRefundMethod')}}</option>
+                                        <option v-for="item in refundFormList" :value="item.value">
+                                            {{item.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ClaimReason')}}</div>
+                                <div class="col-sm-8">
+                                    <select class="form-control"
+                                            v-model="afterSale.reason" name="reason"
+                                            data-width="auto">
+                                        <option value="">{{$t('PleaseChooseTheReason')}}</option>
+                                        <option v-for="item in reasonList" :value="item.value">
+                                            {{item.label}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="col-lg-12">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ProblemDescription')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea name="description" class="form-control" rows="5"
+                                              v-model="afterSale.description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('Pictures')}}</div>
+                            <div class="col-sm-3">
+                                <commodity-fileinput :this_maxFileCount="6" ref="afterFile" :files="afterImages"
+                                                     :image_list="afterSale.images"></commodity-fileinput>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <button type="button" class="btn btn-primary" @click="afterValidate">{{$t('sure')}}</button>
+                        &nbsp;&nbsp;<button type="button" class="btn btn-warning" @click="back">{{$t('cancel')}}
+                    </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--售后详情-->
+    <div v-show="afterSDetail" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="aftForm" :model="afterSale"
+                  onkeydown="if(event.keyCode==13){return false;}">
+                <div class="panel-body">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1">{{$t('status')}}：{{afterSale.status==0?'待处理':'已处理'}}</div>
+                        <div class="col-sm-4">{{$t('CodeId')}}：{{afterSale.code}}</div>
+                        <div class="col-sm-2">{{$t('OrderId')}}：{{afterSale.orderId}}</div>
+                        <div class="col-sm-2">{{$t('ApplicationDate')}}：{{afterSale.applicationDate}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">{{$t('Seller')}}：{{afterSale.seller}}</div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('ServiceType')}}：{{$t('ClaimDemage')}}</div>
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('RefundForm')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in refundFormList" v-if="p.value==afterSale.refundForm">
+                                {{p.label}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('ClaimReason')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in reasonList" v-if="p.value==afterSale.reason">
+                                {{p.label}}
+                            </div>
+                        </div>
+                        <div class="col-sm-4">{{$t('ProblemDescription')}}：{{afterSale.description}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('Pictures')}}：
+                            <commodity-fileinput :image_list="afterSale.images"
+                                                 :files="afterImages"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <!--已处理的信息展示-->
+                <div class="panel-body">
+                    <div class="row" v-show="afterSale.status==1">
+                        <div class="col-sm-4">{{$t('Result')}}：{{afterSale.result==0?'通过':'不通过'}}</div>
+                        <div class="col-sm-4">{{$t('Suggestion')}}：{{afterSale.suggestion}}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <button type="button" class="btn btn-warning" @click="back">{{$t('return')}}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!--投诉框-->
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('Complaint')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">
+                                <div class="control-label">{{$t('ComplaintReason')}}</div>
+                            </div>
+                            <div class="col-sm-10">
+                                <textarea type="text" class="form-control" rows="6" name="reason"
+                                          v-model="complaint.reason"
+                                          :placeholder="$t('ComplaintReason')"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                            <div class="col-sm-10">
+                                <commodity-fileinput :this_maxFileCount="6" ref="file1" :files="images"
+                                                     :image_list="complaint.images"></commodity-fileinput>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer" v-if="!complaint.id">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('cancel')}}</button>
+                    <button type="button" class="btn btn-primary" @click="saveTouSu">{{$t('submission')}}</button>
+                </div>
+                <div class="modal-footer" v-if="complaint.id">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <!--收货信息框-->
+    <div class="modal fade" id="addressModel" role="addressModel" aria-labelledby="addressLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">{{$t('ChooseReceiptAddress')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <input class="form-control" v-model="params.addressTitle" @keyup.enter="addressQuery"
+                                       @blur="addressQuery" :placeholder="$t('PleaseEnterTheTitleName')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table id="addressTab"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="getAddressDate">{{$t('sure')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--商家信息框-->
+    <div class="modal fade" id="logisticsModel" role="logisticsModel" aria-labelledby="merchantLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">{{$t('ChoosingBusinessEnterprises')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="col-sm-2" style="padding-left: 0px;">
+                                <input class="form-control" v-model="params.companyName" @keyup.enter="logisticsQuery"
+                                       @blur="logisticsQuery" :placeholder="$t('PleaseEnterEnterpriseName')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table id="merTab"></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="getLogisticDate">{{$t('sure')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--支付页-->
+    <div v-show="payList">
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <section class="content-header">
+                <h1>{{$t('ConfirmationOfPayment')}}</h1>
+            </section>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('AmountOfPayment')}}</div>
+                        <div class="input-group col-sm-10">
+                            <input type="text" name="amountToPay" class="form-control"
+                                   v-model="payment.amountToPay" disabled/>
+                            <span class="input-group-addon">{{$t('Yuan')}}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="remarks" class="form-control" v-model="payment.remarks"
+                                   style="width: 355px"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">
+                            <!-- 选项卡组件（菜单项nav-tabs）-->
+                            <ul id="myTab" class="nav nav-tabs" role="tablist">
+                                <li class="active"><a href="#online" role="tab" data-toggle="tab">{{$t('OnlinePayment')}}</a>
+                                </li>
+                                <li><a href="#offline" role="tab" data-toggle="tab">{{$t('OfflineTransfer')}}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!-- 选项卡面板 -->
+        <div id="myTabContent" class="tab-content">
+            <!--在线支付-->
+            <div class="tab-pane active" id="online">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <div class="row">
+                                    <input type="radio" v-model="payment.onlinePayment" name="onlinePayment"
+                                           id="radio1" value="0"/>
+                                    <div>{{$t('AccountBalance')}}&nbsp;&nbsp;<font>{{getBalance()}}</font>&nbsp;&nbsp;{{$t('Yuan')}}
+                                    </div>
+                                    <div style="float: right">{{getTip()}}</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <div class="row">
+                                    <input type="radio" v-model="payment.onlinePayment" name="onlinePayment"
+                                           id="radio2" value="1"/>
+                                    <div>{{$t('UnionPay')}}</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <br><br>
+                <div v-if="payment.onlinePayment==0">
+                    <div class="row">
+                        <div class="form-group col-sm-4">
+                            <div class="col-sm-2 control-label"></div>
+                            <div class="col-sm-10">{{$t('PaymentPassword')}}</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-4">
+                            <div class="col-sm-2 control-label"></div>
+                            <div class="col-sm-10">
+                                <input type="password" name="password" class="form-control"
+                                       v-model="payment.password">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label"></div>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="balancePayment"
+                                               :value="$t('ConfirmationOfPayment')"/>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back"
+                                               :value="$t('cancel')"/>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="payment.onlinePayment==1">
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label"></div>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="unionPay"
+                                               :value="$t('NextStep')"/>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back"
+                                               :value="$t('cancel')"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--线下转账-->
+            <div class="tab-pane" id="offline">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">{{$t('RemittanceUnderLine')}}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-2 control-label"></div>
+                    <p>1.{{$t('TheOfflineCompanyNeedsToTransferThis')}}<font>{{$t('OrderId')}}</font>{{$t('FillInTheTelegraphicTransferVoucher')}}【<font>{{$t('RemittanceUse')}}</font>】、【<font>{{$t('postscript')}}</font>】、
+                        【<font>{{$t('abstract')}}</font>】{{$t('InsideTheFence')}}！{{$t('AcceleratedAudits')}}。</p>
+                </div>
+                <div class="row">
+                    <div class="col-sm-2 control-label"></div>
+                    <p>2.{{$t('AfterTransferSubmitConfirmationPaymentOnThisPage')}}！</p>
+                </div>
+                <div class="row">
+                    <div class="col-sm-2 control-label"></div>
+                    <font>{{$t('MattersNeedingAttention')}}：{{$t('AttentionShouldBePaidToTheFollowingInformationWhenRemittingMoney')}}，{{$t('PleaseKeepInMind')}}！</font>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('MoneyMaker')}}：</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="operator" class="form-control" v-model="payment.operator"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('AmountOfMoney')}}：</div>
+                        {{$t('Yuan')}}
+                        <div class="col-sm-10">
+                            <input type="text" name="amountPaid" class="form-control"
+                                   v-model="payment.amountPaid"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('TimeForMakingMoney')}}：</div>
+                        <div class="col-sm-10">
+                            <input type="text" id="datetimepicker" name="paymentTime" class="form-control"
+                                   data-date-format="yyyy-mm-dd hh:ii:ss" v-model="payment.paymentTime"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('PaymentVoucher')}}：</div>
+                        <div class="col-sm-10" style="width: 70%">
+                            <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                                 :image_list="payment.images"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="offlineValidate"
+                                           :value="$t('submission')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" :value="$t('cancel')"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/logistics/logisticsorder.js"></script>
+</body>
+</html>

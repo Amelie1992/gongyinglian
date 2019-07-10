@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>账期账单</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <!--日期时间插件-->
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
+
+    <style>
+        font {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" :placeholder="$t('PleaseEnterTheOrderNumber')" maxlength="20"/>
+            </div>
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.finalPayee" :placeholder="$t('PleaseInputTheOtherCompany')" maxlength="20"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}</button>
+            <div class="row">
+                <div class="col-xs-12">
+                    <table id="table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--详情页-->
+    <div v-show="detailList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <!--垫付详情-->
+                <div>
+                    <section class="content-header">
+                        <h1>
+                            {{$t('AdvancePaymentDetails')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+                        </h1>
+                    </section>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AccountNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="creditNumber" class="form-control"
+                                           v-model="bill.creditNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('OrderId')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderNumber" class="form-control"
+                                           v-model="bill.orderNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('TheOtherCompany')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="finalPayee" class="form-control" v-model="bill.finalPayee"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AccountAmount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="creditAmount" class="form-control"
+                                           v-model="bill.creditAmount" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('amountPaid')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amountPaid" class="form-control"
+                                           v-model="bill.amountPaid" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('SurplusAmount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="remainingAmountPayable" class="form-control"
+                                           v-model="bill.remainingAmountPayable" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('ApplicationTime')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="applicationTime" class="form-control"
+                                           v-model="bill.applicationTime" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('StateOfMoney')}}</div>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="status" class="form-control" v-model="bill.status" disabled/>-->
+                                    <select class="form-control" v-model="bill.payableStatus" name="status" disabled>
+                                        <option v-for="(item,index) in statusList" :value="index">{{item}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AuditStatus')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control" v-model="bill.auditStatus" name="auditStatus" disabled>
+                                        <option v-for="(item,index) in auditStatusList" :value="index">{{item}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('TimeOfPayment')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="paymentTime" class="form-control"
+                                           v-model="bill.paymentTime" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4" style="width: 81%">
+                                <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="remarks" class="form-control" v-model="bill.remarks" disabled/>-->
+                                    <textarea name="paymentRemarks" class="form-control" rows="4"
+                                              v-model="bill.paymentRemarks" disabled></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--账期记录-->
+                <div>
+                    <section class="content-header">
+                        <h1>{{$t('AccountRecord')}}</h1>
+                    </section>
+                    <div class="row" style="float: right">
+                        <div class="form-group" style="float: right">
+                            <div class="col-sm-2 control-label"></div>
+                            <!--审核通过 才可付款-->
+                            <input v-show="bill.auditStatus==1" type="button" class="btn btn-primary"
+                                   @click="showPayList" :value="$t('payment')"/>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <table id="recordTable"></table>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <!--金额组成（费用明细） 弹框-->
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <table style="table-layout:fixed" id="costTable1"></table>
+                                    <table style="table-layout:fixed" id="costTable2"></table>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+        </div>
+    </div>
+
+    <!--支付页-->
+    <div v-show="payList">
+        <form class="form-horizontal" id="payForm">
+            <section class="content-header">
+                <h1>{{$t('ConfirmationOfPayment')}}</h1>
+            </section>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('AmountOfPayment')}}</div>
+                        <div class="input-group col-sm-10">
+                            <input type="text" name="amountToPay" class="form-control"
+                                   v-model="payment.amountToPay" disabled/>
+                            <span class="input-group-addon">{{$t('Yuan')}}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="remarks" class="form-control" v-model="payment.remarks"
+                                   style="width: 355px"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label"></div>
+                        <div class="col-sm-10">
+                            <!-- 选项卡组件（菜单项nav-tabs）-->
+                            <ul id="myTab" class="nav nav-tabs" role="tablist">
+                                <li class="active"><a href="#online" role="tab" data-toggle="tab" >{{$t('OnlinePayment')}}</a></li>
+                                <li><a href="#offline" role="tab" data-toggle="tab">{{$t('OfflineTransfer')}}</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 选项卡面板 -->
+                <div id="myTabContent" class="tab-content">
+                    <div class="tab-pane active" id="online">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label"></div>
+                                <div class="col-sm-10">
+                                    <label class="radio-inline">
+                                        <div class="row">
+                                            <input type="radio" v-model="payment.onlinePayment" name="onlinePayment"
+                                                   id="radio" value="0"/>
+                                            <div>{{$t('AccountBalance')}}&nbsp;&nbsp;<font>{{getBalance()}}</font>&nbsp;&nbsp;{{$t('Yuan')}}</div>
+                                            <div style="float: right">{{getTip()}}</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label"></div>
+                                <div class="col-sm-10">
+                                    <label class="radio-inline">
+                                        <div class="row">
+                                            <input type="radio" v-model="payment.onlinePayment" name="onlinePayment"
+                                                   id="radio2" value="1"/>
+                                            <div>{{$t('UnionPay')}}</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <br><br>
+                        <div v-if="payment.onlinePayment==0">
+                            <div class="row">
+                                <div class="form-group col-sm-4">
+                                    <div class="col-sm-2 control-label"></div>
+                                    <div class="col-sm-10">{{$t('PaymentPassword')}}</div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-sm-4">
+                                    <div class="col-sm-2 control-label"></div>
+                                    <div class="col-sm-10">
+                                        <input type="password" name="password" class="form-control" v-model="payment.password">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label"></div>
+                                    &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="balancePayment"
+                                                       :value="$t('ConfirmationOfPayment')"/>
+                                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" :value="$t('cancel')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="payment.onlinePayment==1">
+                            <div class="row">
+                                <div class="form-group">
+                                    <div class="col-sm-2 control-label"></div>
+                                    &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="unionPay"
+                                                       :value="$t('NextStep')"/>
+                                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" :value="$t('cancel')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--线下转账-->
+                    <div class="tab-pane" id="offline">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label"></div>
+                                <div class="col-sm-10">{{$t('RemittanceUnderLine')}}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-2 control-label"></div>
+                            <p>1.{{$t('TheOfflineCompanyNeedsToTransferThis')}}<font>{{$t('OrderId')}}</font>{{$t('FillInTheTelegraphicTransferVoucher')}}【<font>{{$t('RemittanceUse')}}</font>】、【<font>{{$t('postscript')}}</font>】、
+                                【<font>{{$t('abstract')}}</font>】{{$t('InsideTheFence')}}！{{$t('AcceleratedAudits')}}。</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-2 control-label"></div>
+                            <p>2.{{$t('AfterTransferSubmitConfirmationPaymentOnThisPage')}}！</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-2 control-label"></div>
+                            <font>{{$t('MattersNeedingAttention')}}：{{$t('AttentionShouldBePaidToTheFollowingInformationWhenRemittingMoney')}}，{{$t('PleaseKeepInMind')}}！</font>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('MoneyMaker')}}：</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="operator" class="form-control" v-model="payment.operator"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AmountOfMoney')}}：</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amountPaid" class="form-control" v-model="payment.amountPaid"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('TimeForMakingMoney')}}：</div>
+                                <div class="col-sm-10">
+                                    <input type="text" id="datetimepicker" name="paymentTime" class="form-control"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss" v-model="payment.paymentTime"/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('PaymentVoucher')}}：</div>
+                                <div class="col-sm-10" style="width: 70%">
+                                    <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                                         :image_list="payment.images"></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label"></div>
+                                &nbsp;&nbsp;<input type="button" class="btn btn-primary" @click="offlineValidate" :value="$t('submission')"/>
+                                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" :value="$t('cancel')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<!--日期时间-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/bill/credit_bill_payable.js"></script>
+</body>
+</html>

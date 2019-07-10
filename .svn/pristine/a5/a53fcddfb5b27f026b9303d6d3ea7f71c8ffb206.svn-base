@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>物流求购</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+<style>
+    .has-feedback .form-control{
+        padding-right: 35.5px;
+    }
+</style>
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('zhubiaoti2')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.title"
+                       :placeholder="$t('InputHeaderInformation')">
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" title="全部" data-width="auto"
+                        v-model="params.categoryId">
+                    <option value="">{{$t('transporttype')}}</option>
+                    <option v-for="item in categoryOptions" :value="item.value">
+                        {{item.label}}
+                    </option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsdemand:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsdemand:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsdemand:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o">&nbsp;{{$t('delete')}}</i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table" class="table text-nowrap"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default">
+        <div class="panel-heading">
+            <span class="panel-title">{{$t('wuliuxixnxi2')}}</span>
+        </div>
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('title')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="title" class="form-control" v-model="logisticsDemand.title"
+                                       :placeholder="$t('title')" onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('goods')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="goods" class="form-control" v-model="logisticsDemand.goods"
+                                       :placeholder="$t('goods')" onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('Num1')}}</label>
+                            <div class="col-sm-10 input-group">
+                                <input style="width: 66%" type="text" name="height" class="form-control"
+                                       v-model="logisticsDemand.height"
+                                       :placeholder="$t('Num1')" onkeyup="this.value=this.value.replace(/\s+/g,'')"/>
+                                <select style="width: 33%" class="form-control" v-model="logisticsDemand.unit"
+                                        name="unit">
+                                    <option value="0">{{$t('ton')}}</option>
+                                    <option value="1">{{$t('kg')}}</option>
+                                    <option value="2">{{$t('slcabinet')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('type')}}</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" v-model="logisticsDemand.type" @change="changeType"
+                                        name="type">
+                                    <option value="0">{{$t('DomesticLogistics')}}</option>
+                                    <option value="1">{{$t('InternationalLogistics')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('categoryId')}}</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" v-model="logisticsDemand.categoryId" name="categoryId">
+                                    <option value="0">{{$t('Ship')}}</option>
+                                    <option value="1">{{$t('Car')}}</option>
+                                    <option value="2">{{$t('Aviation')}}</option>
+                                    <option value="3">{{$t('Train')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国内运输线路start-->
+            <div class="row" v-show="logisticsDemand.type==0">
+                <!--<input type="button" class="btn btn-primary"  />-->
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="col-sm-12">
+                            <div class="col-sm-8">
+                                <div class="form-group required">
+                                    <div class="col-sm-2" style="width:120px;"><span class="label label-default">{{$t('transportlinein')}}</span>
+
+                                    </div>
+                                    <label class="col-sm-2 control-label">{{$t('departure')}}</label>
+                                    <div class="col-sm-2">
+                                        <vm-select :options="provinces1" title="请选择省" search="true"
+                                                   v-model="logisticsDemand.provinceStart"
+                                                   name="provinceStart" @input="provincesChange"
+                                                   :value="logisticsDemand.provinceStart"></vm-select>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <vm-select :options="cities" title="请选择市区" :value="logisticsDemand.cityStart"
+                                                   search="true" v-model="logisticsDemand.cityStart"
+                                                   name="cityStart"></vm-select>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="form-group required">
+                                    <div class="col-sm-2" style="width:120px;"></div>
+                                    <label class="col-sm-2 control-label">{{$t('destination')}}</label>
+                                    <div class="col-sm-2">
+                                        <vm-select :options="provinces2" title="请选择省" search="true"
+                                                   v-model="logisticsDemand.provinceEnd"
+                                                   :value="logisticsDemand.provinceEnd"
+                                                   name="provinceEnd" @input="provincesChange1"></vm-select>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <vm-select :options="cities1" title="请选择市区" search="true"
+                                                   v-model="logisticsDemand.cityEnd" :value="logisticsDemand.cityEnd"
+                                                   name="cityEnd"></vm-select>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国内运输线路end-->
+            <!--国际运输线路start-->
+            <div class="row" v-show="logisticsDemand.type==1">
+                <!--<input type="button" class="btn btn-primary"  />-->
+                *tips:国际线路拟用输入方式
+                <div class="panel panel-default guoji">
+                    <div class="panel-body">
+                        <div class="col-sm-12">
+                            <div class="col-sm-8">
+                                <div class="col-sm-2 control-label"><span class="label label-default">{{$t('transportlineout')}}</span>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group required">
+                                        <label class="col-sm-2 control-label">{{$t('departure')}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" name="provinceStart" class="form-control"
+                                                   v-model="logisticsDemand.provinceStart" onkeyup="this.value=this.value.replace(/\s+/g,'')"
+                                                   :placeholder="$t('inputCountryName')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-7">
+                                            <input type="text" name="cityStart" class="form-control"
+                                                   v-model="logisticsDemand.cityStart" onkeyup="this.value=this.value.replace(/\s+/g,'')"
+                                                   :placeholder="$t('inputCityName')"/>
+                                        </div>
+                                        <!--&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+                                        <!--<input type="button" class="btn btn-primary" @click="removeRow1(index,$event)"-->
+                                        <!--value="移除路线"/>-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="col-sm-2 control-label"></div>
+                                <div class="col-sm-4">
+                                    <div class="form-group required">
+                                        <label class="col-sm-2 control-label">{{$t('destination')}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" name="provinceEnd" class="form-control"
+                                                   v-model="logisticsDemand.provinceEnd" onkeyup="this.value=this.value.replace(/\s+/g,'')"
+                                                   :placeholder="$t('inputCountryName')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-7">
+                                            <input type="text" name="cityEnd" class="form-control"
+                                                   v-model="logisticsDemand.cityEnd" onkeyup="this.value=this.value.replace(/\s+/g,'')"
+                                                   :placeholder="$t('inputCityName')"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国际运输线路end-->
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-1">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('describe')}}</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="form-group">
+                            <el-textarea id="myEditor" name="describe"
+                                         v-model="logisticsDemand.describe"></el-textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <div class="col-sm-2 control-label"></div>
+                    <input type="button" class="btn btn-primary" v-if="backShow" @click="validate" :value="$t('sure')"/>
+                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+
+<script src="../../js/modules/logistics/logisticsdemand.js"></script>
+</body>
+</html>

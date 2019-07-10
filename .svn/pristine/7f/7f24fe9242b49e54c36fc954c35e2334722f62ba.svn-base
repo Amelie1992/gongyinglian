@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.marketing.dao.MarketTenderRecordDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.marketing.entity.MarketTenderRecordEntity" id="marketTenderRecordMap">
+        <result property="id" column="id"/>
+        <result property="marketTenderId" column="market_tender_id"/>
+        <result property="contact" column="contact"/>
+        <result property="telephone" column="telephone"/>
+        <result property="price" column="price"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+		<association property="file" column="market_tender_id"
+					 select="com.wzlue.chain.marketing.dao.MarketTenderAnnexDao.getAnnexByTenderId"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.marketing.entity.MarketTenderRecordEntity">
+		SELECT * FROM market_tender_record WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultMap="marketTenderRecordMap">
+		SELECT * FROM market_tender_record
+		<where>
+			<if test="marketTenderId != null">
+				market_tender_id=#{marketTenderId}
+			</if>
+		</where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM market_tender_record
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.marketing.entity.MarketTenderRecordEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO market_tender_record
+		(
+			`market_tender_id`,
+			`contact`,
+			`telephone`,
+			`price`,
+			`company_id`,
+			`company_name`,
+			`dept_id`,
+			`create_by`,
+			`authorizes_id`,
+			`create_date`,
+			`update_by`,
+			`update_date`,
+			`del_flag`
+		)
+		VALUES
+		(
+			#{marketTenderId},
+			#{contact},
+			#{telephone},
+			#{price},
+			#{companyId},
+			#{companyName},
+			#{deptId},
+			#{createBy},
+			#{authorizesId},
+			#{createDate},
+			#{updateBy},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.marketing.entity.MarketTenderRecordEntity">
+		UPDATE market_tender_record
+		<set>
+			<if test="marketTenderId != null">`market_tender_id` = #{marketTenderId}, </if>
+			<if test="contact != null">`contact` = #{contact}, </if>
+			<if test="telephone != null">`telephone` = #{telephone}, </if>
+			<if test="price != null">`price` = #{price}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="companyName != null">`company_name` = #{companyName}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="authorizesId != null">`authorizes_id` = #{authorizesId}, </if>
+			<if test="createDate != null">`create_date` = #{createDate}, </if>
+			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
+			<if test="updateDate != null">`update_date` = #{updateDate}, </if>
+			<if test="delFlag != null">`del_flag` = #{delFlag}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM market_tender_record WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM market_tender_record WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<!--参与竞标人数-->
+	<select id="queryTotalById" resultType="int">
+		SELECT count(*) FROM market_tender_record WHERE market_tender_id = #{value}
+	</select>
+</mapper>

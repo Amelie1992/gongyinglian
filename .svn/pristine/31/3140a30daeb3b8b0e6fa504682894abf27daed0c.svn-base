@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.offer.dao.GoodsOfferCommodityDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity" id="goodsOfferCommodityMap">
+        <result property="id" column="id"/>
+        <result property="goodsOfferId" column="goods_offer_id"/>
+        <result property="commodityId" column="commodity_id"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityNumber" column="commodity_number"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityCount" column="commodity_count"/>
+        <result property="commodityTransactionCount" column="commodity_transaction_count"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityCountryName" column="commodityCountryName"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="categoryId" column="category_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity">
+		SELECT * FROM goods_offer_commodity WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="goodsOfferCommodityMap">
+        SELECT t1.*,t2.name as commodityCountryName FROM goods_offer_commodity t1
+        LEFT JOIN sys_dict t2 on t1.commodity_country = t2.code
+        <where>
+            t1.goods_offer_id=#{goodsOfferId}
+            <if test="commodityName!=null and commodityName.trim() != ''">
+              and  t1.commodity_name like concat('%',#{commodityName},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM goods_offer_commodity
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity">
+        INSERT INTO goods_offer_commodity
+        (
+        `goods_offer_id`,
+        `commodity_id`,
+        `commodity_name`,
+        `commodity_number`,
+        `commodity_unit`,
+        `commodity_price`,
+        `commodity_count`,
+        `commodity_transaction_count`,
+        `commodity_factory_number`,
+        `commodity_country`,
+        `commodity_packing`,
+        `category_id`,
+        `category_name`
+        )
+        VALUES
+        (
+        #{goodsOfferId},
+        #{commodityId},
+        #{commodityName},
+        #{commodityNumber},
+        #{commodityUnit},
+        #{commodityPrice},
+        #{commodityCount},
+        #{commodityTransactionCount},
+        #{commodityFactoryNumber},
+        #{commodityCountry},
+        #{commodityPacking},
+        #{item.categoryId},
+        #{item.categoryName}
+        )
+    </insert>
+    <insert id="saveBatch" parameterType="list">
+        INSERT INTO goods_offer_commodity
+        (
+        `goods_offer_id`,
+        `commodity_id`,
+        `commodity_name`,
+        `commodity_number`,
+        `commodity_unit`,
+        `commodity_price`,
+        `commodity_count`,
+        `commodity_transaction_count`,
+        `commodity_factory_number`,
+        `commodity_country`,
+        `commodity_packing`,
+        `category_id`,
+        `category_name`,
+          create_time
+        )
+        VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+            (
+            #{item.goodsOfferId},
+            #{item.commodityId},
+            #{item.commodityName},
+            #{item.commodityNumber},
+            #{item.commodityUnit},
+            #{item.commodityPrice},
+            #{item.commodityCount},
+            #{item.commodityTransactionCount},
+            #{item.commodityFactoryNumber},
+            #{item.commodityCountry},
+            #{item.commodityPacking},
+            #{item.categoryId},
+            #{item.categoryName},
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity">
+        UPDATE goods_offer_commodity
+        <set>
+            <if test="goodsOfferId != null">`goods_offer_id` = #{goodsOfferId},</if>
+            <if test="commodityId != null">`commodity_id` = #{commodityId},</if>
+            <if test="commodityName != null">`commodity_name` = #{commodityName},</if>
+            <if test="commodityNumber != null">`commodity_number` = #{commodityNumber},</if>
+            <if test="commodityUnit != null">`commodity_unit` = #{commodityUnit},</if>
+            <if test="commodityPrice != null">`commodity_price` = #{commodityPrice},</if>
+            <if test="commodityCount != null">`commodity_count` = #{commodityCount},</if>
+            <if test="categoryName != null">`category_name` = #{categoryName},</if>
+            <if test="categoryId != null">`category_id` = #{categoryId},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="commodityPacking != null">`commodity_packing` = #{commodityPacking},</if>
+            <if test="commodityClassification != null">`commodity_classification` = #{commodityClassification}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_offer_commodity WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_offer_commodity WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteOld">
+        DELETE FROM goods_offer_commodity WHERE goods_offer_id =#{id}
+    </delete>
+
+</mapper>

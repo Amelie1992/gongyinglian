@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.logistics.dao.LogisticsOfferAddressDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity" id="logisticsOfferAddressMap">
+        <result property="id" column="id"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="area" column="area"/>
+        <result property="address" column="address"/>
+		<result property="provinceEnd" column="province_end"/>
+        <result property="cityEnd" column="city_end"/>
+        <result property="areaEnd" column="area_end"/>
+        <result property="addressEnd" column="address_end"/>
+        <result property="describe" column="describe"/>
+        <result property="logisticsId" column="logistics_id"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity">
+		SELECT * FROM logistics_offer_address WHERE id = #{value}
+	</select>
+
+	<select id="queryLists" resultType="string">
+		SELECT
+			a.province
+		FROM
+			logistics_offer_address a
+		LEFT JOIN logistics_offer o ON o.id = a.logistics_id
+		WHERE
+		o.type = 1 GROUP BY a.province
+	</select>
+
+	<select id="queryListsEnd" resultType="string">
+		SELECT
+			a.province_end
+		FROM
+			logistics_offer_address a
+		LEFT JOIN logistics_offer o ON o.id = a.logistics_id
+		WHERE
+			o.type = 1 GROUP BY a.province_end
+	</select>
+	<select id="queryListInters" parameterType="string" resultType="string">
+		SELECT
+		a.city
+		FROM
+		logistics_offer_address a
+		LEFT JOIN logistics_offer o ON o.id = a.logistics_id
+		WHERE
+		o.type = 1
+		<if test="province!=null and province !=''">
+		AND a.province=#{province}
+		</if>
+	</select>
+	<select id="queryListIntersEnd" parameterType="string" resultType="string">
+		SELECT
+		a.city_end
+		FROM
+		logistics_offer_address a
+		LEFT JOIN logistics_offer o ON o.id = a.logistics_id
+		WHERE
+		o.type = 1
+		<if test="provinceEnd!=null and provinceEnd !=''">
+		AND a.province_end=#{provinceEnd}
+		</if>
+	</select>
+
+	<select id="queryList" resultMap="logisticsOfferAddressMap">
+		SELECT p.province provinceName,p1.province provinceEndName,a.* FROM logistics_offer_address a
+		INNER JOIN  sys_provinces p
+		ON a.province = p.provinceid
+		INNER JOIN  sys_provinces p1
+		ON a.province_end = p1.provinceid
+		<where>
+			<if test="logisticsId != null">
+				logistics_id=#{logisticsId}
+			</if>
+		</where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM logistics_offer_address
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO logistics_offer_address
+		(
+			`province`,
+			`city`,
+			`area`,
+			`address`,
+			`province_end`,
+			`city_end`,
+			`area_end`,
+			`address_end`,
+			`describe`,
+			`logistics_id`
+		)
+		VALUES
+		(
+			#{province},
+			#{city},
+			#{area},
+			#{address},
+			#{provinceEnd},
+			#{cityEnd},
+			#{areaEnd},
+			#{addressEnd},
+			#{describe},
+			#{logisticsId}
+		)
+	</insert>
+
+	<insert id="saveList" parameterType="arraylist" useGeneratedKeys="true" keyProperty="id">
+		insert into logistics_offer_address
+		(
+		`province`,
+		`city`,
+		`area`,
+		`address`,
+		`province_end`,
+		`city_end`,
+		`area_end`,
+		`address_end`,
+		`describe`,
+		`logistics_id`
+		)
+		values
+		<foreach collection="list" item="emp" separator=",">
+			(
+			#{emp.province},
+			#{emp.city},
+			#{emp.area},
+			#{emp.address},
+			#{emp.provinceEnd},
+			#{emp.cityEnd},
+			#{emp.areaEnd},
+			#{emp.addressEnd},
+			#{emp.describe},
+			#{emp.logisticsId}
+			)
+		</foreach>
+	</insert>
+	<update id="update" parameterType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity">
+		UPDATE logistics_offer_address
+		<set>
+			<if test="province != null">`province` = #{province}, </if>
+			<if test="city != null">`city` = #{city}, </if>
+			<if test="area != null">`area` = #{area}, </if>
+			<if test="address != null">`address` = #{address}, </if>
+			<if test="provinceEnd != null">`province_end` = #{provinceEnd}, </if>
+			<if test="cityEnd != null">`city_end` = #{cityEnd}, </if>
+			<if test="areaEnd != null">`area_end` = #{areaEnd}, </if>
+			<if test="addressEnd != null">`address_end` = #{addressEnd}, </if>
+			<if test="describe != null">`describe` = #{describe}, </if>
+			<if test="logisticsId != null">`logistics_id` = #{logisticsId}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM logistics_offer_address WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM logistics_offer_address WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteBatchs" parameterType="long">
+		DELETE FROM logistics_offer_address WHERE logistics_id = #{logisticsId}
+	</delete>
+
+	<select id="queryByLogisticsId" resultType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity">
+		SELECT * FROM logistics_offer_address WHERE logistics_id = #{logisticsId}
+	</select>
+</mapper>

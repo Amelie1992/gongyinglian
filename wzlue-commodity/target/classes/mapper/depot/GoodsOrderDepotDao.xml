@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.depot.dao.GoodsOrderDepotDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.depot.entity.GoodsOrderDepotEntity" id="goodsOrderDepotMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="storageName" column="storage_name"/>
+        <result property="address" column="address"/>
+        <result property="contact" column="contact"/>
+        <result property="phone" column="phone"/>
+        <result property="email" column="email"/>
+        <result property="unit" column="unit"/>
+        <result property="money1" column="money1"/>
+        <result property="money2" column="money2"/>
+        <result property="money3" column="money3"/>
+        <result property="money4" column="money4"/>
+        <result property="money5" column="money5"/>
+        <result property="money6" column="money6"/>
+        <result property="money7" column="money7"/>
+        <result property="money8" column="money8"/>
+        <result property="money9" column="money9"/>
+        <result property="money10" column="money10"/>
+        <result property="money11" column="money11"/>
+        <result property="money12" column="money12"/>
+        <result property="money13" column="money13"/>
+        <result property="money14" column="money14"/>
+        <result property="money15" column="money15"/>
+        <result property="money16" column="money16"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.depot.entity.GoodsOrderDepotEntity">
+        SELECT * FROM goods_order_depot WHERE order_id = #{orderId} ORDER BY create_time desc LIMIT 1
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.depot.entity.GoodsOrderDepotEntity">
+        SELECT * FROM goods_order_depot
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM goods_order_depot
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.depot.entity.GoodsOrderDepotEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_order_depot
+        (
+        `order_id`,
+        `storage_name`,
+        `address`,
+        `contact`,
+        `phone`,
+        `email`,
+        `unit`,
+        `money1`,
+        `money2`,
+        `money3`,
+        `money4`,
+        `money5`,
+        `money6`,
+        `money7`,
+        `money8`,
+        `money9`,
+        `money10`,
+        `money11`,
+        `money12`,
+        `money13`,
+        `money14`,
+        `money15`,
+        `money16`,
+        create_time
+        )
+        VALUES
+        (
+        #{orderId},
+        #{storageName},
+        #{address},
+        #{contact},
+        #{phone},
+        #{email},
+        #{unit},
+        #{money1},
+        #{money2},
+        #{money3},
+        #{money4},
+        #{money5},
+        #{money6},
+        #{money7},
+        #{money8},
+        #{money9},
+        #{money10},
+        #{money11},
+        #{money12},
+        #{money13},
+        #{money14},
+        #{money15},
+        #{money16},
+        #{createTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.depot.entity.GoodsOrderDepotEntity">
+        UPDATE goods_order_depot
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="storageName != null">`storage_name` = #{storageName},</if>
+            <if test="address != null">`address` = #{address},</if>
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="money1 != null">`money1` = #{money1},</if>
+            <if test="money2 != null">`money2` = #{money2},</if>
+            <if test="money3 != null">`money3` = #{money3},</if>
+            <if test="money4 != null">`money4` = #{money4},</if>
+            <if test="money5 != null">`money5` = #{money5},</if>
+            <if test="money6 != null">`money6` = #{money6},</if>
+            <if test="money7 != null">`money7` = #{money7},</if>
+            <if test="money8 != null">`money8` = #{money8},</if>
+            <if test="money9 != null">`money9` = #{money9},</if>
+            <if test="money10 != null">`money10` = #{money10},</if>
+            <if test="money11 != null">`money11` = #{money11},</if>
+            <if test="money12 != null">`money12` = #{money12},</if>
+            <if test="money13 != null">`money13` = #{money13},</if>
+            <if test="money14 != null">`money14` = #{money14},</if>
+            <if test="money15 != null">`money15` = #{money15},</if>
+            <if test="money16 != null">`money16` = #{money16}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM goods_order_depot WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_order_depot WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 查询订单仓储开始时间-->
+    <select id="getCreateTimeByOrder" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity" resultMap="goodsOrderDepotMap">
+          SELECT
+            id,
+            order_id,
+            storage_name,
+            address,
+            contact,
+            phone,
+            email,
+            unit,
+            money1,money2,money3,money4,money5,money6,money7,money8,money9,money10,money11,money12,money13,money14,money15,money16,create_time
+           FROM goods_order_depot WHERE order_id = #{orderNumber}
+           ORDER BY create_time desc
+           limit 1
+    </select>
+
+</mapper>

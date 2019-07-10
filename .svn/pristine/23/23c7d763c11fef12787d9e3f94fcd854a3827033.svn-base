@@ -1,0 +1,325 @@
+
+package com.wzlue.chain.web.controller.declare;
+
+import java.io.File;
+import java.util.*;
+
+import com.alibaba.fastjson.JSONObject;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.annotation.JsonObject;
+import com.wzlue.chain.common.exception.RRException;
+import com.wzlue.chain.common.utils.DateUtils;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.declare.entity.*;
+import com.wzlue.chain.declare.service.DeclareOfferService;
+import com.wzlue.chain.declare.service.DeclareOrderOssService;
+import com.wzlue.chain.sys.entity.SysDictEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysDictService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.io.FileUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.declare.service.DeclareOrderService;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import org.springframework.web.multipart.MultipartFile;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 报关订单
+ *
+ * @author
+ * @email
+ * @date 2018-08-20 17:38:05
+ */
+@SuppressWarnings("ALL")
+@RestController
+@RequestMapping("/declare/declareorder")
+@Api(value = "报关订单")
+public class DeclareOrderController extends AbstractController {
+    @Autowired
+    private DeclareOrderService declareOrderService;
+    @Autowired
+    private DeclareOrderOssService declareOrderOssService;
+    @Autowired
+    private DeclareOfferService declareOfferService;
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private SysDictService dictService;
+    @Value("${fileupload.filepath}")
+    String filePath;
+
+    @Value("${fileupload.server}")
+    String serverUrl;
+
+    /**
+     * 买入订单列表
+     */
+    @GetMapping("/list")
+    @ApiOperation(value = "报关订单列表-买家")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "companyId", dataType = "int", value = "传入买家公司id", paramType = "query"),
+            @ApiImplicitParam(name = "orderNumber", dataType = "string", value = "订单编号", paramType = "query"),
+            @ApiImplicitParam(name = "token", paramType = "header", value = "token", required = true, dataType = "string")
+    })
+    public R list(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        //查询本公司买入的订单信息
+        List<DeclareOrderEntity> declareOrderList = declareOrderService.queryList(query);
+        int total = declareOrderService.queryTotal(query);
+
+        return R.page(declareOrderList, total);
+    }
+
+    /**
+     * 上传报关文件
+     */
+    @PostMapping("/saveFile")
+//    @RequiresPermissions("order:declareordeross:save")
+    @ApiOperation(value = "上传报关文件")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R saveFile(@RequestBody Map<String,Object> param) {
+        List<Map<String, Object>> list1 = (List<Map<String, Object>>) param.get("list");
+        Object orderId = list1.get(0).get("orderId");
+        List<DeclareOrderOssEntity> list= (List<DeclareOrderOssEntity>) param.get("list");
+//         java.util.LinkedHashMap cannot be cast to xxx
+//         先转成MAP 在转成JSON  在转成JavaBean
+//        Map<String, Object> mapL= (Map) param.get("list");        java.util.ArrayList cannot be cast to java.util.Map
+        String json = JSONObject.toJSONString(list);
+        List<DeclareOrderOssEntity> list2 = JSONObject.parseArray(json, DeclareOrderOssEntity.class);
+        declareOrderOssService.saveFile(list2);
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("orderState", 4);
+        map.put("userId", getUserId());
+        map.put("id", orderId);
+        declareOrderService.updateOrderState(map);
+
+        return R.ok();
+    }
+
+    /**
+     * 卖出订单列表
+     */
+    @GetMapping("/list2")
+    @ApiOperation(value = "报关订单列表-卖家")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "merchantCompanyId", dataType = "int", value = "传入卖家公司id", paramType = "query"),
+            @ApiImplicitParam(name = "orderNumber", dataType = "string", value = "订单编号", paramType = "query"),
+            @ApiImplicitParam(name = "token", paramType = "header", value = "token", required = true, dataType = "string")
+    })
+    public R list2(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        SysUserEntity user = getUser();
+        if (user.getCompanyId() == null) {
+            return R.page(null, 0);
+        }
+        //查询本公司卖出的订单信息
+        query.put("merchantCompanyId", user.getCompanyId());
+        List<DeclareOrderEntity> declareOrderList = declareOrderService.queryList1(query);
+        int total = declareOrderService.queryTotal(query);
+        return R.page(declareOrderList, total);
+    }
+
+    /**
+     * 信息
+     */
+    @GetMapping("/info")
+    @ApiOperation(value = "报关订单详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", dataType = "Long", value = "订单id", paramType = "query"),
+            @ApiImplicitParam(name = "token", paramType = "header", value = "token", required = true, dataType = "string")
+    })
+    public R info(@ApiIgnore @RequestParam Long id) {
+        DeclareOrderEntity declareOrder = declareOrderService.queryObject(Math.toIntExact(id));
+        List<DeclareOrderCommodityEntity> orderGoods = declareOrder.getGoods();
+        /*for (DeclareOrderCommodityEntity good : orderGoods) {
+            SysDictEntity sysDictEntity = dictService.queryByCountryName(good.getCommodityCountry());
+            good.setCommodityCountryName(sysDictEntity.getName());
+        }*/
+        DeclareOrderOfferEntity orderOfferEntity = declareOrder.getOrderOfferEntity();
+        orderOfferEntity.setTitle(declareOrder.getOfferName());
+        orderOfferEntity.setNum(declareOrder.getNum());
+        orderOfferEntity.setTotal(declareOrder.getTotal());
+        return R.ok("declareOrder", declareOrder);
+    }
+
+    /**
+     * 保存
+     */
+    @PostMapping("/save")
+//    @RequiresPermissions("declare:declareorder:save")
+    @ApiOperation(value = "报关新增下单")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R save(@RequestBody DeclareOrderEntity declareOrder) {
+        SysUserEntity user = getUser();
+        declareOrder.setBuyCompanyId(Math.toIntExact(user.getCompanyId()));
+        declareOrder.setCreateBy(getUserId());
+        declareOrder.setCreateTime(new Date());
+        declareOrderService.save(declareOrder);
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @PostMapping("/update")
+//    @RequiresPermissions("declare:declareorder:update")
+    @ApiOperation(value = "修改订单接口")
+    @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    public R update(@RequestBody DeclareOrderEntity declareOrderEntity1) {
+        //确认接单:1待支付
+        DeclareOrderEntity declareOrder=null;
+        if(declareOrderEntity1.getOrderNumber() == null){
+            declareOrder = declareOrderService.queryObject(declareOrderEntity1.getId().intValue());
+            declareOrder.setOrderState(declareOrderEntity1.getOrderState());
+        }else{
+            declareOrder=declareOrderEntity1;
+        }
+        declareOrderService.update(declareOrder);
+        Integer tbp = 1;
+        if (tbp == declareOrder.getOrderState()) {
+            //生成账单
+            BillEntity bill = new BillEntity();
+            bill.setOrderNumber(declareOrder.getOrderNumber());
+            bill.setOrderType(0);
+            billService.save(bill);
+        }
+
+        return R.ok();
+    }
+
+    /**
+     * 商家改价
+     */
+    @PostMapping("/updatePrice")
+    @ApiOperation(value = "改价接口")
+    @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    public R updatePrice(@RequestBody DeclareOrderEntity declareOrder) {
+        //确认接单:1待支付
+        declareOrderService.updatePrice(declareOrder);
+        return R.ok();
+    }
+
+    /**
+     * 取消订单
+     */
+    @PostMapping("/updateOrderState")
+//    @RequiresPermissions("declare:declareorder:update")
+    @ApiOperation(value = "取消订单")
+    @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    public R updateOrderState(@RequestBody Map<String, Object> map){
+        map.put("userId",getUser().getUserId());
+        declareOrderService.updateOrderState(map);
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+//    @RequiresPermissions("declare:declareorder:delete")
+    public R delete(@RequestBody Integer[] ids) {
+        declareOrderService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+    /**
+     * 上传文件
+     */
+    @RequestMapping("/upload")
+    public R upload(@RequestParam("file") MultipartFile file) throws Exception {
+        if (file.isEmpty()) {
+            throw new RRException("上传文件不能为空");
+        }
+
+        String filename = file.getOriginalFilename();
+
+        String suffix = filename.substring(filename.lastIndexOf("."), filename.length());
+
+        String uuid = UUID.randomUUID().toString();
+
+        String currDate = DateUtils.format(new Date(), "yyyyMMdd");
+
+        FileUtils.writeByteArrayToFile(new File(filePath + "/fileupload/" + currDate + "/" + uuid + suffix), file.getBytes());
+
+        R r = R.ok();
+        r.put("url", serverUrl + "/" + currDate + "/" + uuid + suffix);
+        r.put("name", filename);
+
+        return r;
+    }
+
+    /**
+     * 获取报关报盘的公司
+     *
+     * @return
+     */
+    @RequestMapping("/getCompanys")
+    public R getCompanys() {
+        SysUserEntity user = getUser();
+        List<MerchantCompanyEntity> companys = declareOrderService.getCompanys(user.getCompanyId());
+        return R.ok().put("companys", companys);
+    }
+
+    /**
+     * 首页展示数据查询(订单成交统计)
+     * queryBy: year season month week days
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj = new HashMap();
+        List<Object> dataList = new ArrayList();
+        Long userId = getUserId();
+        map.put("userId", userId);
+        List<Map> declareOrder = declareOrderService.showList(map);
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<String> itemList = (List) map.get("itemList");
+        Map temp = new HashMap();
+        /* 循环时期节点Array 空值处理 */
+        for (String item : itemList) {
+            temp = new HashMap();
+            temp.put("time", item);
+            temp.put("data", null);
+            // 遍历对比数据库的日期节点,当节点有统计值则赋值,否则默认为null；
+            for (Map declareData : declareOrder) {
+                String val = (String) declareData.get("title");
+                if (val.equals(temp.get("time"))) {
+                    temp.put("data", declareData.get("total"));
+                }
+            }
+            dataList.add(temp);
+            //todo 循环其他订单的数据进行封装处理
+        }
+        Obj.put("name", "报关订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+}

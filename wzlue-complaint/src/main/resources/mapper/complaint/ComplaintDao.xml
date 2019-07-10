@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.complaint.dao.ComplaintDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.complaint.entity.ComplaintEntity" id="complaintMap">
+        <result property="id" column="id"/>
+        <result property="complaintFrom" column="complaint_from"/>
+        <result property="complaintTo" column="complaint_to"/>
+        <result property="orderId" column="order_id"/>
+        <result property="complaintTime" column="complaint_time"/>
+        <result property="reason" column="reason"/>
+        <result property="status" column="status"/>
+        <result property="result" column="result"/>
+        <result property="suggestion" column="suggestion"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="complaintFromId" column="complaint_from_id"/>
+        <result property="complaintToId" column="complaint_to_id"/>
+        <result property="orderType" column="order_type"/>
+        <collection property="images"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    column="{code=id,type=imgeType}"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryList"/>
+    </resultMap>
+
+    <!--<select id="queryObject" resultType="com.wzlue.chain.complaint.entity.ComplaintEntity">-->
+    <!--SELECT * FROM complaint WHERE id = #{value}-->
+    <!--</select>-->
+
+    <select id="queryObject" resultMap="complaintMap">
+		SELECT c.*,'complaint' imgeType FROM complaint c
+		WHERE c.id = #{value}
+	</select>
+
+    <select id="queryList"  resultMap="complaintMap">
+        SELECT * ,'complaint' imgeType FROM complaint
+        <where>
+            <if test="complaintFromId!=null">
+                `complaint_from_id` = #{complaintFromId}
+            </if>
+            <if test="complaintToId!=null">
+                AND `complaint_to_id` = #{complaintToId}
+            </if>
+            <if test="status!=null and status.trim() !=''">
+                AND status = #{status}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id DESC
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="java.lang.Integer">
+        SELECT count(*) FROM complaint
+        <where>
+            <if test="complaintFromId!=null">
+                `complaint_from_id` = #{complaintFromId}
+            </if>
+            <if test="complaintToId!=null">
+                AND `complaint_to_id` = #{complaintToId}
+            </if>
+            <if test="status!=null and status.trim() !=''">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.complaint.entity.ComplaintEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO complaint
+		(
+        `complaint_from`,
+        `complaint_to`,
+        `order_id`,
+        `complaint_time`,
+        `reason`,
+        `status`,
+        `result`,
+        `suggestion`,
+        `dept_id`,
+        `create_by`,
+        `created_time`,
+        `update_by`,
+        `update_time`,
+        `company_id`,
+        `authorizes_id`,
+        `complaint_from_id`,
+        `complaint_to_id`,
+        `order_type`
+									)
+		VALUES
+		(
+        #{complaintFrom},
+        #{complaintTo},
+        #{orderId},
+        #{complaintTime},
+        #{reason},
+        #{status},
+        #{result},
+        #{suggestion},
+        #{deptId},
+        #{createBy},
+        #{createdTime},
+        #{updateBy},
+        #{updateTime},
+        #{companyId},
+        #{authorizesId},
+        #{complaintFromId},
+        #{complaintToId},
+        #{orderType}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.complaint.entity.ComplaintEntity">
+        UPDATE complaint
+        <set>
+            <if test="complaintFrom != null">`complaint_from` = #{complaintFrom},</if>
+            <if test="complaintTo != null">`complaint_to` = #{complaintTo},</if>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="complaintTime != null">`complaint_time` = #{complaintTime},</if>
+            <if test="reason != null">`reason` = #{reason},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="result != null">`result` = #{result},</if>
+            <if test="suggestion != null">`suggestion` = #{suggestion},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="complaintFromId != null">`complaint_from_id` = #{complaintFromId},</if>
+            <if test="complaintToId != null">`complaint_to_id` = #{complaintToId},</if>
+            <if test="orderType != null">`order_type` = #{orderType}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="handle">
+        UPDATE complaint
+        <set>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="result != null">`result` = #{result},</if>
+            <if test="suggestion != null">`suggestion` = #{suggestion},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM complaint WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM complaint WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="queryObjectByOrderIdAndCompanyId" resultMap="complaintMap">
+        SELECT
+        a.`id`,
+        a.`complaint_from`,
+        a.`complaint_to`,
+        a.`order_id`,
+        a.`complaint_time`,
+        a.`reason`,
+        a.`status`,
+        a.`result`,
+        a.`suggestion`,
+        a.`dept_id`,
+        a.`create_by`,
+        a.`created_time`,
+        a.`update_by`,
+        a.`update_time`,
+        a.`company_id`,
+        a.`authorizes_id`,
+        a.`complaint_from_id`,
+        a.`complaint_to_id`,
+        a.`order_type`,
+        'complaint' imgeType
+        FROM complaint a
+        WHERE a.order_id=#{orderId}
+        AND a.company_id=#{companyId}
+        <if test="orderType!=null and orderType!=''">
+            AND a.order_type = #{orderType}
+        </if>
+        limit 1
+    </select>
+
+    <select id="getComplaint" parameterType="com.wzlue.chain.complaint.entity.ComplaintEntity" resultType="Integer">
+        SELECT count(1) from complaint WHERE order_id = #{orderId} AND complaint_from_id = #{complaintFromId}
+    </select>
+</mapper>

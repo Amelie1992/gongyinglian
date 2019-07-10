@@ -1,0 +1,387 @@
+package com.wzlue.chain.logistics.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.agent.entity.ContractAnnexEntity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+
+
+/**
+ * (物流订单)合同信息表
+ * 
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-18 16:30:22
+ */
+public class LogisticsContractEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//id
+	private Long id;
+	//合同创建来源 1.订单创建 2.自主录入
+	private Integer dataSource;
+	//合同编号
+	private String contractNumber;
+	//订单编号
+	private String orderNumber;
+	//合同名称
+	private String contractName;
+	//甲方名称
+	private String partyAName;
+	//甲方id
+	private String partyAId;
+	//乙方名称
+	private String partyBName;
+	//乙方Id
+	private String partyBId;
+	//付款方式
+	private Integer paymentMethod;
+	//合同金额
+	private BigDecimal contractAmount;
+	//甲方企业合同存放位置
+	private String customsStorageLocation;
+	//乙方企业合同存放位置
+	private String merchantStorageLocation;
+	//签订日期
+	@JsonFormat(pattern = "yyy-MM-dd")
+	private Date dateOfSigning;
+	//到期日期
+	@JsonFormat(pattern = "yyy-MM-dd")
+	private Date expireDate;
+	//0：卖方1：买方
+	private Integer owner;
+	//备注
+	private String remarks;
+	//创建人
+	private Integer createdBy;
+	//创建时间
+	private Date createdTime;
+	//修改人
+	private Integer modityBy;
+	//修改时间
+	private Date modityTime;
+	//部门Id
+	private Integer deptId;
+	//公司用户
+	private Integer companyId;
+	//授权用户
+	private Integer authorizesId;
+	//合同文件
+	//合同文件
+	private List<ContractAnnexEntity> file;
+	//合同类型
+	private Integer type;
+	//存放位置
+	private String location;
+
+	//关联订单表
+	private LogisticsOrderEntity logisticsOrder;
+
+	public LogisticsOrderEntity getLogisticsOrder() {
+		return logisticsOrder;
+	}
+
+	public void setLogisticsOrder(LogisticsOrderEntity logisticsOrder) {
+		this.logisticsOrder = logisticsOrder;
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
+	public Integer getDataSource() {
+		return dataSource;
+	}
+
+	public void setDataSource(Integer dataSource) {
+		this.dataSource = dataSource;
+	}
+
+	public Integer getType() {
+		return type;
+	}
+
+	public void setType(Integer type) {
+		this.type = type;
+	}
+
+	public List<ContractAnnexEntity> getFile() {
+		return file;
+	}
+
+	public void setFile(List<ContractAnnexEntity> file) {
+		this.file = file;
+	}
+
+	/**
+	 * 设置：id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：id
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：合同编号
+	 */
+	public void setContractNumber(String contractNumber) {
+		this.contractNumber = contractNumber;
+	}
+	/**
+	 * 获取：合同编号
+	 */
+	public String getContractNumber() {
+		return contractNumber;
+	}
+	/**
+	 * 设置：订单编号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：订单编号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：合同名称
+	 */
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
+	}
+	/**
+	 * 获取：合同名称
+	 */
+	public String getContractName() {
+		return contractName;
+	}
+	/**
+	 * 设置：甲方名称
+	 */
+	public void setPartyAName(String partyAName) {
+		this.partyAName = partyAName;
+	}
+	/**
+	 * 获取：甲方名称
+	 */
+	public String getPartyAName() {
+		return partyAName;
+	}
+	/**
+	 * 设置：甲方id
+	 */
+	public void setPartyAId(String partyAId) {
+		this.partyAId = partyAId;
+	}
+	/**
+	 * 获取：甲方id
+	 */
+	public String getPartyAId() {
+		return partyAId;
+	}
+	/**
+	 * 设置：乙方名称
+	 */
+	public String getPartyBName() {
+		return partyBName;
+	}
+
+	public void setPartyBName(String partyBName) {
+		this.partyBName = partyBName;
+	}
+
+	public String getPartyBId() {
+		return partyBId;
+	}
+
+	public void setPartyBId(String partyBId) {
+		this.partyBId = partyBId;
+	}
+
+	/**
+	 * 设置：付款方式
+	 */
+	public void setPaymentMethod(Integer paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
+	/**
+	 * 获取：付款方式
+	 */
+	public Integer getPaymentMethod() {
+		return paymentMethod;
+	}
+	/**
+	 * 设置：合同金额
+	 */
+	public void setContractAmount(BigDecimal contractAmount) {
+		this.contractAmount = contractAmount;
+	}
+	/**
+	 * 获取：合同金额
+	 */
+	public BigDecimal getContractAmount() {
+		return contractAmount;
+	}
+
+	public String getCustomsStorageLocation() {
+		return customsStorageLocation;
+	}
+
+	public void setCustomsStorageLocation(String customsStorageLocation) {
+		this.customsStorageLocation = customsStorageLocation;
+	}
+
+	public String getMerchantStorageLocation() {
+		return merchantStorageLocation;
+	}
+
+	public void setMerchantStorageLocation(String merchantStorageLocation) {
+		this.merchantStorageLocation = merchantStorageLocation;
+	}
+
+	/**
+	 * 设置：签订日期
+	 */
+	public void setDateOfSigning(Date dateOfSigning) {
+		this.dateOfSigning = dateOfSigning;
+	}
+	/**
+	 * 获取：签订日期
+	 */
+	public Date getDateOfSigning() {
+		return dateOfSigning;
+	}
+	/**
+	 * 设置：到期日期
+	 */
+	public void setExpireDate(Date expireDate) {
+		this.expireDate = expireDate;
+	}
+	/**
+	 * 获取：到期日期
+	 */
+	public Date getExpireDate() {
+		return expireDate;
+	}
+	/**
+	 * 设置：0：卖方1：买方
+	 */
+	public void setOwner(Integer owner) {
+		this.owner = owner;
+	}
+	/**
+	 * 获取：0：卖方1：买方
+	 */
+	public Integer getOwner() {
+		return owner;
+	}
+	/**
+	 * 设置：备注
+	 */
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+	/**
+	 * 获取：备注
+	 */
+	public String getRemarks() {
+		return remarks;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreatedBy(Integer createdBy) {
+		this.createdBy = createdBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Integer getCreatedBy() {
+		return createdBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreatedTime(Date createdTime) {
+		this.createdTime = createdTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	public Date getCreatedTime() {
+		return createdTime;
+	}
+	/**
+	 * 设置：修改人
+	 */
+	public void setModityBy(Integer modityBy) {
+		this.modityBy = modityBy;
+	}
+	/**
+	 * 获取：修改人
+	 */
+	public Integer getModityBy() {
+		return modityBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setModityTime(Date modityTime) {
+		this.modityTime = modityTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	public Date getModityTime() {
+		return modityTime;
+	}
+	/**
+	 * 设置：部门Id
+	 */
+	public void setDeptId(Integer deptId) {
+		this.deptId = deptId;
+	}
+	/**
+	 * 获取：部门Id
+	 */
+	public Integer getDeptId() {
+		return deptId;
+	}
+	/**
+	 * 设置：公司用户
+	 */
+	public void setCompanyId(Integer companyId) {
+		this.companyId = companyId;
+	}
+	/**
+	 * 获取：公司用户
+	 */
+	public Integer getCompanyId() {
+		return companyId;
+	}
+	/**
+	 * 设置：授权用户
+	 */
+	public void setAuthorizesId(Integer authorizesId) {
+		this.authorizesId = authorizesId;
+	}
+	/**
+	 * 获取：授权用户
+	 */
+	public Integer getAuthorizesId() {
+		return authorizesId;
+	}
+}

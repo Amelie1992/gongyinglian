@@ -1,0 +1,882 @@
+$(function () {
+
+    vm.initTable();
+
+    $("form").FM({
+        fields: vm.fields,
+        success: vm.saveOrUpdate
+        // vm.saveOrUpdate
+
+    })
+});
+
+function returnReload() {
+    location.reload();
+}
+
+//报送类型
+function pricringMethodFmt(value, rows, index) {
+    if (rows.pricingMethod == '1') {
+        return ['从价'].join('');
+    } else if (rows.pricingMethod == '2') {
+        return ['从量'].join('');
+    }
+}
+
+function pendingStatusFmt(value, rows, index) {
+    if (rows.pendingStatus == 1) {
+        return ['待审核'].join('');
+    } else if (rows.pendingStatus == 2) {
+        return ['审核通过'].join('');
+    } else {
+        return ['审核未通过'].join('');
+    }
+}
+
+function operFormatter(value, row, index) {
+
+    if (row.pendingStatus == 1 || row.pendingStatus == 3) {
+        if (hasPermission('item:apply:review')) {
+            return ['<a id="btn_pend" class="">' + vm.$t("review") + '</a>'].join('');
+        } else {
+            return ['<a id="btn_edit" class="">' + vm.$t("modify") + '</a>'].join('');
+        }
+    }
+}
+
+window.operateEvents = {
+    'click #btn_edit': function (e, value, row, index) {
+        var rowId = row.id;
+        vm.update(rowId);
+    },
+    'click #btn_del': function (e, value, row, index) {
+        var rowId = row.id;
+        vm.del(rowId);
+    },
+    'click #btn_pend': function (e, value, row, index) {
+        var rowId = row.id;
+        vm.review(rowId);
+    }
+};
+/*产地信息tab*/
+window.placeEvents = {
+    'click #removePlace': function (e, value, row, index) {
+        var data = $("#itemPlaceTab").bootstrapTable("getData");
+        data.splice(index, 1);
+        $("#itemPlaceTab").bootstrapTable('load', data);
+    },
+    'change .sltplace': function (e, value, row, index) {
+        row.place = $(e.currentTarget).val();
+        var $rowPlaces = $("#itemPlaceTab select option:selected");
+        var flag = true;
+        $.each($rowPlaces, function (index, obj, array) {
+            let nowIdx = index + 1;
+            if (row.index == nowIdx) {
+                // list.remove(obj);
+                //不能手动输入
+                for (var i = 0; i < vm.placeData.length; i++) {
+                    if (obj.value == vm.placeData[i].code) {
+                        return;
+                    }
+                }
+                alert("无效产地");
+                row.place = '';
+                flag = false;
+            }
+            else {
+                if (obj.value == row.place) {
+                    alert("商品产地信息重复", function () {
+                        row.place = '';
+                        $("#slt_place" + row.index).val("");
+                        flag = false;
+                    });
+                }
+            }
+        });
+        $("#itemPlaceTab").bootstrapTable('resetView');
+
+        return flag;
+
+    },
+    'change #input_numerical': function (e, value, row, index) {
+        row.numerical = $(e.currentTarget).val();
+        //$("#itemPlaceTab").bootstrapTable('updateRow', {index: index, row: row});
+    },
+    'change #input_tariff': function (e, value, row, index) {
+        row.tariff = $(e.currentTarget).val();
+        // $("#itemPlaceTab").bootstrapTable('updateRow', {index: index, row: row});
+    },
+    'change #input_VAT': function (e, value, row, index) {
+        row.valueAddTariff = $(e.currentTarget).val();
+        // $("#itemPlaceTab").bootstrapTable('updateRow', {index: index, row: row});
+    },
+    'change #input_AD': function (e, value, row, index) {
+        row.additionDuty = $(e.currentTarget).val();
+        // $("#itemPlaceTab").bootstrapTable('updateRow', {index: index, row: row});
+    },
+    'change #input_remark': function (e, value, row, index) {
+        row.remark = $(e.currentTarget).val();
+        // $("#itemPlaceTab").bootstrapTable('updateRow', {index: index, row: row});
+    },
+};
+
+//序号
+function sequenceFmt(value, row, index) {
+    console.log("index: ,", row);
+    if (row.index == null) {
+        row.index = index + 1;
+    }
+    return row.index;
+}
+
+function placeFmt(value, row, index) {
+    if (row.place == null) {
+        row.place = '';
+    }
+    let str = '';
+    if (vm.title != '审核') {
+        str = '<select class="form-control selectpicker sltplace">';
+    }
+    else {
+        str = '<select class="form-control selectpicker sltplace" disabled="true">';
+    }
+    if (row.place == null) {
+        str += '<option value="" selected>请选择产地</option>';
+    } else {
+        str += '<option value="">请选择产地</option>';
+    }
+    vm.placeData.forEach(function (item, index) {
+        if (item.code == row.place) {
+            str += '<option value="' + item.code + '" selected>' + item.name + '</option>';
+        } else {
+            str += '<option value="' + item.code + '">' + item.name + '</option>';
+        }
+    })
+    str += '</select>';
+    return str;
+
+}
+
+function numericalFmt(value, row, index) {
+    if (row.numerical == null) {
+        row.numerical = '';
+    }
+    if (vm.title != '审核') {
+        if (vm.itemApply.pricingMethod == '1')
+            return '<input type="number" step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_numerical" value="' + row.numerical + '">'
+        else
+            return '<input type="number" disabled="disabled" step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_numerical" value="' + row.numerical + '">'
+    } else {
+        return row.numerical + '';
+    }
+}
+
+function tariffFmt(value, row, index) {
+    if (row.tariff == null) {
+        row.tariff = '';
+    }
+    if (vm.title != '审核') {
+        if (vm.itemApply.pricingMethod == '2')
+            return '<input type="number" step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_tariff" value="' + row.tariff + '">'
+        else
+            return '<input type="number" disabled="disabled"  step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_tariff" value="' + row.tariff + '">'
+    } else {
+        return row.tariff + '';
+    }
+}
+
+//VAT => valueAddTariff
+function VATFmt(value, row, index) {
+    if (row.valueAddTariff == null) {
+        row.valueAddTariff = '';
+    }
+    if (vm.title != '审核') {
+        return '<input type="number" step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_VAT" value="' + row.valueAddTariff + '">';
+    } else {
+        return row.valueAddTariff + '';
+    }
+}
+
+//AD => additionDuty
+function ADFmt(value, row, index) {
+    if (row.additionDuty == null) {
+        row.additionDuty = '';
+    }
+    if (vm.title != '审核') {
+        return '<input type="number" step="0.00001" min="0.00001" max="100.00000" class="form-control" id="input_AD" value="' + row.additionDuty + '">'
+    } else {
+        return row.additionDuty + '';
+    }
+}
+
+function remarkFmt(value, row, index) {
+    if (row.remark == null) {
+        row.remark = '';
+    }
+    if (vm.title != '审核') {
+        return '<input type="text" class="form-control" id="input_remark" value="' + row.remark + '">';
+    } else {
+        return row.remark + '';
+    }
+}
+
+//onclick="placeEvents.removeFun()"
+function placeOperaFormatter() {
+    if (vm.title != '审核') {
+        return ['<a href="javascript:void(0)" onClick="removePlace(this)"  id="removePlace">移除</a>'].join('');
+    } else {
+        return ['<a href="javascript:void(0)" v-if="" id="removePlace" disabled="true">无</a>'].join('');
+    }
+
+}
+
+function removePlace(obj) {
+    var num = $(obj).parent().parent().children(":first").text();
+    $(obj).parent().parent().remove();
+    vm.places.splice(num - 1, 1);
+
+    var data = $("#itemPlaceTab").bootstrapTable("getData");
+    data.splice(num - 1, 1);
+    for (var i = 0; i < data.length; i++) {
+        data[i].index = i + 1;
+    }
+    $("#itemPlaceTab").bootstrapTable('load', data);
+}
+
+var vm = new Vue({
+    el: '#bodyDiv',
+    i18n,
+    data: {
+        showList: true,
+        title: null,
+        params: {
+            goodsName: '',
+            pendingStatus: '',
+            page: 1,
+            pageSize: 10,
+            total: 0
+        },
+        itemApply: {},
+        disenbled: false,
+        categoryList: [],
+        placeData: [],
+        fields: {
+            itemName: {
+                message: '商品名称验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '商品名称不能为空'
+                    }, stringLength: {min: 1, max: 20, message: '商品名称长度小于20'}
+                },
+            },
+            itemCode: {
+                message: '商品编码验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '商品编码不能为空'
+                    },
+                },
+            },
+            factoryNo: {
+                message: '厂号验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '厂号不能为空'
+                    }, stringLength: {min: 1, max: 20, message: '厂号长度小于20'}
+                },
+            },
+            categoryId: {
+                message: '商品分类验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '请选择商品分类'
+                    }
+                }
+            },
+            pricingMethod: {
+                validators: {
+                    notEmpty: {
+                        message: '请选择计价方式'
+                    }
+                }
+            }
+        },
+        places: [],
+        itemPlace: {},
+        addPlaceShow: true,
+        pendingStatusList: []
+    },
+    methods: {
+
+        initTable: function () {
+
+            //列表
+            $("#table").bootstrapTable("destroy");     //**********对于查询必不可少
+            $("#table").BT({
+                url: baseURL + 'goods/apply/list',
+                columns: [
+                    {checkbox: true},
+                    {title: vm.$t("productName"), field: 'itemName'},
+                    {
+                        title: vm.$t("Categories"), field: 'categoryName',
+                        formatter: function (value, row) {
+                            var str;
+                            if (row.categoryId == 1) {
+                                str = '猪肉';
+                            } else if (row.categoryId == 2) {
+                                str = '牛肉';
+                            } else if (row.categoryId == 3) {
+                                str = '羊肉';
+                            } else if (row.categoryId == 4) {
+                                str = '禽类';
+                            } else if (row.categoryId == 5) {
+                                str = '水产';
+                            } else if (row.categoryId == 6) {
+                                str = '乳制品';
+                            } else if (row.categoryId == 7) {
+                                str = '其他';
+                            }
+                            return str;
+                        }
+                    },
+                    {title: vm.$t("FactoryNumber"), field: 'factoryNo'},
+                    {title: vm.$t("ValuationMethod"), field: 'pricingMethod', formatter: pricringMethodFmt},
+                    {title: vm.$t("CreationTime"), field: 'createTime'},
+                    {title: vm.$t("AuditStatus"), field: 'pendingStatus', formatter: pendingStatusFmt},
+                    {title: vm.$t("ReviewNotes"), field: 'pendingInfo'},
+                    {title: vm.$t("chaozuo"), formatter: operFormatter, events: operateEvents}
+                ],
+                //条件查询
+                queryParams: vm.params,
+                search: true,
+                onLoadSuccess: function (data) {
+
+                }
+            });
+
+            $("#itemPlaceTab").bootstrapTable("destroy");     //**********对于查询必不可少
+            $("#itemPlaceTab").BT({
+                columns: [
+                    {title: vm.$t("sequence"), field: 'id', formatter: sequenceFmt, width: '5%'},
+                    {title: vm.$t("place"), field: 'place', formatter: placeFmt, events: placeEvents, width: '10%'},
+                    {
+                        title: vm.$t("numerical"), field: 'numerical', width: '10%',
+                        // formatter: numericalFmt, events: placeEvents,
+                        editable: {
+                            type: 'text',
+                            title: vm.$t("numerical"),
+                            emptytext: vm.$t("numerical"),
+                            // defaultValue: 1,
+                            validate: function (v) {
+                                if (!v) return "计价数值不能为空";
+                                if (!/(^[1-9](\d{1,8})?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)/.test(v)) return '计价数值的整数最多9位，小数最多2位';
+                                $('#itemPlaceTab').bootstrapTable('resetView');
+                            }
+                        }
+                    },
+                    {
+                        title: vm.$t("tariff") + "%", field: 'tariff', width: '10%',
+                        // formatter: tariffFmt, events: placeEvents,
+                        editable: {
+                            type: 'text',
+                            title: vm.$t("tariff"),
+                            emptytext: vm.$t("tariff"),
+                            // defaultValue: 1,
+                            validate: function (v) {
+                                if (!v) return "关税不能为空";
+                                if (!/(^[1-9](\d{1,8})?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)/.test(v)) return '关税的整数最多9位，小数最多2位';
+                                $('#itemPlaceTab').bootstrapTable('resetView');
+                            }
+                        }
+                    },
+                    {
+                        title: vm.$t("VAT") + "%", field: 'valueAddTariff', width: '10%',
+                        // formatter: VATFmt, events: placeEvents,
+                        editable: {
+                            type: 'text',
+                            title: vm.$t("VAT"),
+                            emptytext: vm.$t("VAT"),
+                            // defaultValue: 1,
+                            validate: function (v) {
+                                if (!v) return "增值税不能为空";
+                                if (!/(^[1-9](\d{1,8})?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)/.test(v)) return '增值税的整数最多9位，小数最多2位';
+                                $('#itemPlaceTab').bootstrapTable('resetView');
+                            }
+                        }
+                    },
+                    {
+                        title: vm.$t("additionDuty") + "%", field: 'additionDuty', width: '10%',
+                        // formatter: ADFmt, events: placeEvents,
+                        editable: {
+                            type: 'text',
+                            title: vm.$t("additionDuty"),
+                            emptytext: vm.$t("additionDuty"),
+                            // defaultValue: 1,
+                            validate: function (v) {
+                                if (!v) return "附加税不能为空";
+                                if (!/(^[1-9](\d{1,8})?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)/.test(v)) return '附加税的整数最多9位，小数最多2位';
+                                $('#itemPlaceTab').bootstrapTable('resetView');
+                            }
+                        }
+                    },
+                    {
+                        title: vm.$t("Remarks"), field: 'remark', width: '10%',
+                        // formatter: remarkFmt, events: placeEvents,
+                        editable: {
+                            type: 'text',
+                            title: vm.$t("Remarks"),
+                            emptytext: vm.$t("Remarks"),
+                            // defaultValue: 1,
+                            validate: function (v) {
+                                if (v && v.length > 20) return '长度小于20';
+                                $('#itemPlaceTab').bootstrapTable('resetView');
+                            }
+                        }
+                    },
+                    {title: vm.$t("chaozuo"), formatter: placeOperaFormatter, events: operateEvents, width: '5%'},
+                ],
+                //条件查询
+                // queryParams: vm.params,
+                onLoadSuccess: function () {
+                    $('#itemPlaceTab').bootstrapTable('resetView');
+                }
+            })
+
+        },
+
+        query: function () {
+            vm.reload();
+        },
+
+        //获取所属商品分类
+        getGoodsType: function () {
+            $.get(baseURL + 'goods/category/getCategoryList', function (res) {
+                if (res.code == 0) {
+                    res.data.unshift({categoryName: '请选择', id: null});
+                    vm.categoryList = res.data;
+
+                }
+            });
+        },
+
+        generator: function () {
+            var tableNames = getSelectedRows2();
+            if (tableNames == null) {
+                return;
+            }
+            location.href = baseURL + "goods/apply/code?token=" + token + "&tables=" + JSON.stringify(tableNames);
+
+        },
+        add: function () {
+            vm.showList = false;
+            vm.addPlaceShow = true;
+            vm.title = "新增";
+            vm.itemApply = {};
+            bindSelect("sltCate", "goods/category/getSelectList");
+            $('#itemPlaceTab').bootstrapTable('removeAll');
+            vm.getPlaceData();
+            vm.getGoodsType();
+        },
+        update: function (rowId) {
+            vm.getPlaceData();
+            if (rowId == null) {
+                return;
+            }
+            vm.showList = false;
+            vm.addPlaceShow = false;
+            vm.title = "修改";
+            $('#itemPlaceTab').bootstrapTable('removeAll');
+            vm.getInfo(rowId)
+        },
+        review: function (rowId) {
+            vm.getPlaceData();
+            if (rowId == null) {
+                return;
+            }
+            vm.showList = false;
+            vm.title = "审核";
+            vm.disenbled = true;
+            $('#itemPlaceTab').bootstrapTable('removeAll');
+            vm.getInfo(rowId)
+        },
+        saveOrUpdate: function (event) {
+            layer.load();
+            // if (vm.itemApply.categoryId == null || vm.itemApply.categoryId == "") {
+            //     alert("无效的商品分类", function () {
+            //     })
+            //     layer.closeAll();
+            //     return false;
+            // }
+            // var method = vm.itemApply.pricingMethod;
+            // if (method != null) {
+            //     if (method == '1' || method == '2') {
+            //
+            //     } else {
+            //         alert("无效的计价方式", function () {
+            //         })
+            //         layer.closeAll();
+            //         return false;
+            //     }
+            // } else {
+            //     alert("无效的计价方式", function () {
+            //     })
+            //     layer.closeAll();
+            //     return false;
+            // }
+
+            vm.places = [];
+            vm.places = $("#itemPlaceTab").bootstrapTable('getData');
+
+            let flag = true;
+            if (vm.places.length < 1) {
+                alert("请添加产地信息");
+                layer.closeAll();
+                return false;
+            }
+            if (vm.places != null && vm.places.length > 0) {
+                var count = 0;
+                $.each(vm.places, function (index, item, array) {
+                    var now = index + 1;
+                    if (item.place == null || item.place == '') {
+                        alert("第" + now + "条产地信息,请选择产地", function () {
+                            flag = false;
+                        });
+                        count += 1
+                        layer.closeAll();
+                        return false;
+                    }
+
+                    // if (item.numerical==null || item.numerical <=0){
+                    if (vm.itemApply.pricingMethod == 1 && isBlank(item.numerical)) {
+                        alert("第" + now + "条产地信息,请填写计价数值", function () {
+                            flag = false;
+                        });
+                        count += 1;
+                        layer.closeAll();
+                        return false;
+                    }
+                    //长度设定
+                    // if(item.numerical.length>20 || item.tariff.length>20 ||item.valueAddTariff>20 ||item.additionDuty>20){
+                    //     alert("长度小于20位",function () {
+                    //         flag=false;
+                    //     });
+                    //    count+=1;
+                    //     layer.closeAll();
+                    //    return false;
+                    // }
+
+                    // if (item.tariff==null || item.tariff <=0){
+                    if (vm.itemApply.pricingMethod == 2 && isBlank(item.tariff)) {
+                        alert("第" + now + "条产地信息,请正确填写关税", function () {
+                            flag = false;
+                        });
+                        count += 1;
+                        layer.closeAll();
+                        return false;
+                    }
+                    // if (item.valueAddTariff == null || item.valueAddTariff <= 0) {
+                    if (isBlank(item.valueAddTariff)) {
+                        alert("第" + now + "条产地信息,请正确填写增值税", function () {
+                            flag = false;
+                        });
+                        count += 1;
+                        layer.closeAll();
+                        return false;
+                    }
+                    // if (item.additionDuty == null || item.additionDuty <= 0) {
+                    if (isBlank(item.additionDuty)) {
+                        alert("第" + now + "条产地信息,请正确填写附加税", function () {
+                            flag = false;
+                        });
+                        count += 1;
+                        layer.closeAll();
+                        return false;
+                    }
+                    // if (item.numerical == null || item.numerical == "") {
+                    //     item.numerical = 0;
+                    // }
+                    // if (item.tariff == null || item.tariff == "") {
+                    //     item.tariff = 0;
+                    // }
+                    // if (item.valueAddTariff == null || item.valueAddTariff == "") {
+                    //     item.valueAddTariff = 0;
+                    // }
+                    // if (item.additionDuty == null || item.additionDuty == "") {
+                    //     item.additionDuty = 0;
+                    // }
+                });
+                if (count > 0) {
+                    layer.closeAll();
+                    return false;
+                }
+            }
+
+            vm.itemApply.places = vm.places;
+            var url = '';
+            if (vm.title != '审核') {
+                url = vm.itemApply.id == null ? "goods/apply/save" : "goods/apply/update";
+            } else {
+                url = "goods/apply/review";
+                if (vm.itemApply.pendingStatus == 1) {
+                    alert("请选择审核状态")
+                    layer.closeAll();
+                    return false;
+                }
+                if (vm.itemApply.pendingStatus == 3 && (vm.itemApply.pendingInfo == null || vm.itemApply.pendingInfo == '')) {
+                    alert("请填写审核备注信息", function () {
+                    });
+                    layer.closeAll();
+                    return false;
+                }
+            }
+            // console.log("request Api~~");
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(vm.itemApply),
+                success: function (r) {
+                    layer.closeAll();
+                    if (r.code === 0) {
+                        alert('操作成功', function (index) {
+                            location.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+
+
+        },
+        del: function (rowIds) {
+            /*var rows=getSelectedRows();
+             $.each(rows, function (idx, item) {
+                    if(item.pendingStatus==2)
+                    {
+                        if(!hasPermission('item:apply:review')){
+                            alert("已通过的不能删除");
+                        }
+                    }
+                });*/
+            var rowIds = getSelectedRowsId("id");
+
+            confirm('确定要删除选中的记录？', function () {
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "goods/apply/delete",
+                    dataType: "JSON",
+                    data: JSON.stringify(rowIds),
+                    success: function (r) {
+                        if (r.code == 0) {
+                            alert('操作成功', function (index) {
+                                vm.reload();
+                            });
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
+        getInfo: function (id) {
+            vm.itemApply = {};
+            vm.getPlaceData();
+            vm.getGoodsType();
+            bindSelect("sltCate", "goods/category/getSelectList");
+            $.get(baseURL + "goods/apply/info/" + id, function (r) {
+                vm.itemApply = r.itemInfoApply;
+                $(".selectCategoryCode").val(vm.itemApply.categoryId).trigger("change");
+                $(".selectPricingMethod").val(vm.itemApply.pricingMethod).trigger("change");
+                $(".selectPendingStatus").val(vm.itemApply.pendingStatus).trigger("change");
+                if (vm.title == '审核') {
+                    vm.itemApply.pendingInfo = '';
+                }
+                if (r.itemInfoApply.places != null) {
+                    for (let i = 0; i < r.itemInfoApply.places.length; i++) {
+                        let item = r.itemInfoApply.places[i];
+                        //vm.placeData.push(item);
+                    }
+                    $("#itemPlaceTab").bootstrapTable('append', vm.itemApply.places);
+                }
+                $(".selectpicker").select2({
+                    allowClear: false,
+                    tags: true,
+                    width: "100%",
+                    placeholder: "请选择",
+                });
+            });
+        },
+        reload: function (event) {
+            vm.showList = true;
+            vm.title = "";
+            vm.disenbled = false;
+            //刷新 如需条件查询common.js
+            $("#table").BTF5(vm.params);
+            $("form").RF();
+        },
+        validate: function () {
+            var bl = $('form').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        addPlace: function () {
+            var flag = false;
+            if (vm.places != null && vm.places.length > 0) {
+                // vm.places.forEach(function (item) {
+                //
+                // })
+            }
+            if (flag) {
+                return;
+            }
+            var grid = $('#itemPlaceTab').bootstrapTable('getData');
+
+            if (grid.length > 0) {
+                alert("只能添加一条产地信息");
+                return;
+            }
+
+
+            var data = {};
+            data.id = null;
+            data.place = null;
+            data.numerica = null;
+            data.tariff = null;
+            data.valueAddTariff = null;
+            data.additionDuty = null;
+            data.remark = null;
+            vm.places.push(data);
+            $('#itemPlaceTab').bootstrapTable('append', data);
+            $(".selectpicker").select2({
+                allowClear: false,
+                tags: true,
+                width: "100%",
+                placeholder: "请选择",
+            });
+        },
+        getPlaceData: function () {
+            $.get({
+                url: baseURL + 'sys/dict/getByType',
+                dataType: 'JSON',
+                async: false,
+                data: {type: '国家编码'},
+                success: function (r) {
+                    if (r.code == 0) {
+                        vm.placeData = r.data;
+                        // for(let item of vm.placeData){
+                        //     item.text = item.name;
+                        //     item.id = item.code;
+                        // }
+                    }
+                }
+            })
+        },
+
+    },
+    watch: {
+        "$i18n.locale": function (val, oldVal) {
+            console.log(" vm.$i18n.locale", vm.$i18n.locale)
+            $("#table").bootstrapTable("refresh");
+        },
+    },
+    watch: {
+        "$i18n.locale": function (value) {
+            if (value == 'en') {
+                $("#table").bootstrapTable.defaults.locale = "en-US";
+                $("#itemPlaceTab").bootstrapTable.defaults.locale = "en-US";
+            } else {
+                $("#table").bootstrapTable.defaults.locale = "zh-CN";
+                $("#itemPlaceTab").bootstrapTable.defaults.locale = "zh-CN";
+            }
+            $("#table").bootstrapTable("destroy");
+            $("#itemPlaceTab").bootstrapTable("destroy");
+            this.initTable();
+        },
+    },
+
+});
+
+//分类
+$(".selectCategoryCode").on("select2:select", function () {
+    var data = $(this).val()
+    if (data == 1 || data == 2 || data == 3 || data == 4 || data == 5 || data == 6 || data == 7) {
+        vm.itemApply.categoryId = data;
+    } else {
+        alert("无效的分类");
+        vm.itemApply.categoryId = null;
+    }
+
+    return;
+
+
+});
+
+//计价方式
+$(".selectPricingMethod").on("select2:select", function () {
+    var data = $(this).val();
+    vm.itemApply.pricingMethod = data;
+
+    // 设置从量和关税都不可输入
+    $('#input_numerical').attr('disabled', true);
+    $('#input_tariff').attr('disabled', true);
+
+    if (data == '1') { // 选择从价时 设置关税可输入
+        $('#input_numerical').removeAttr('disabled');
+        $('#input_numerical').val('');
+        $('#itemPlaceTab').bootstrapTable('showColumn', 'numerical');
+        $('#itemPlaceTab').bootstrapTable('hideColumn', 'tariff');
+        vm.itemApply.numerical = '';
+    } else if (data == '2') {// 选择从量时 关税不可输入,从量值可输入 input_tariff
+        $('#input_tariff').removeAttr('disabled');
+        $('#input_tariff').val('');
+        $('#itemPlaceTab').bootstrapTable('showColumn', 'tariff');
+        $('#itemPlaceTab').bootstrapTable('hideColumn', 'numerical');
+        vm.itemApply.tariff = '';
+    }
+});
+
+$(".selectPendingStatus").on("select2:select", function () {
+    var data = $(this).val();
+    vm.itemApply.pendingStatus = data;
+
+});
+
+function bindSelect(ctrlName, url) {
+    var control = $('#' + ctrlName);
+    //设置Select2的处理
+    control.select2({
+        allowClear: true,
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+        // escapeMarkup: function (m) {
+        //     return m;
+        // }
+    });
+
+    //绑定Ajax的内容
+    $.get(baseURL + url, function (res) {
+        control.empty();//清空下拉框
+        addItem(res.data, ctrlName);
+    });
+}
+
+function addItem(list, nodeName) {
+    var $node = $('#' + nodeName);
+    $node.append("<option value=''></option>");
+    $node.append("<option value='default'>请选择商品分类</option>");
+    $.each(list, function (i, item) {
+            if (item.parentId == 0) {
+                $node.append("<option value='" + item.id + "'>" + item.categoryName + "</option>");
+            } else {
+                $node.append("<option value='" + item.id + "'>&nbsp;" + item.categoryName + "</option>");
+            }
+            if (item.list != null && item.list.length > 0) {
+                addItem(item.list, nodeName);
+            }
+        }
+    );
+    return $node;
+}

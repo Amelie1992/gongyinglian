@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.marketing.dao.MarketTenderDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.marketing.entity.MarketTenderEntity" id="marketTenderMap">
+        <result property="id" column="id"/>
+        <result property="tenderNumber" column="tender_number"/>
+        <result property="tenderName" column="tender_name"/>
+        <result property="type" column="type"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="schedule" column="schedule"/>
+        <result property="contact" column="contact"/>
+        <result property="telephone" column="telephone"/>
+        <result property="email" column="email"/>
+        <result property="status" column="status"/>
+        <result property="count" column="count"/>
+        <result property="demand" column="demand"/>
+        <result property="describe" column="describe"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+        <collection property="marketTenderRecordEntityList"
+                    ofType="com.wzlue.chain.marketing.entity.MarketTenderRecordEntity"
+                    select="com.wzlue.chain.marketing.dao.MarketTenderRecordDao.queryList"
+                    column="{marketTenderId=id}">
+            <id column="id" property="id"/>
+            <result column="market_tender_id" property="marketTenderId"/>
+            <result column="contact" property="contact"/>
+            <result column="telephone" property="telephone"/>
+            <result column="price" property="price"/>
+            <result column="company_id" property="companyId"/>
+            <result column="company_name" property="companyName"/>
+            <result column="dept_id" property="deptId"/>
+            <result column="create_by" property="createBy"/>
+            <result column="authorizes_id" property="authorizesId"/>
+            <result column="create_date" property="createDate"/>
+            <result column="update_by" property="updateBy"/>
+            <result column="update_date" property="updateDate"/>
+            <result column="del_flag" property="delFlag"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="marketTenderMap">
+        SELECT
+        *
+        FROM
+            market_tender
+        WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.marketing.entity.MarketTenderEntity">
+        SELECT * FROM market_tender
+        <where>
+            <if test="tenderName != null and tenderName.trim() !=''">
+                tender_name like concat('%',#{tenderName},'%')
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and	company_id = #{companyId}
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND  status = #{status}
+            </if>
+            <if test="isStratEnd != null and isStratEnd == 1">
+                AND  <![CDATA[ start_time > now() or start_time < now() and  end_time > now() ]]>
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM market_tender
+        <where>
+            <if test="tenderName != null and tenderName.trim() !=''">
+                tender_name like concat('%',#{tenderName},'%')
+            </if>
+            <if test="companyId != null and companyId !=''">
+                and	company_id = #{companyId}
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND  status = #{status}
+            </if>
+            <if test="isStratEnd != null and isStratEnd == 1">
+                AND  <![CDATA[ start_time > now() or start_time < now() and  end_time > now() ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.marketing.entity.MarketTenderEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO market_tender
+		(
+			`tender_number`,
+			`tender_name`,
+			`type`,
+			`start_time`,
+			`end_time`,
+			`province`,
+			`city`,
+			`schedule`,
+			`contact`,
+			`telephone`,
+			`email`,
+			`status`,
+			`demand`,
+			`describe`,
+			`company_id`,
+			`company_name`,
+			`dept_id`,
+			`create_by`,
+			`authorizes_id`,
+			`create_date`,
+			`update_by`,
+			`update_date`,
+			`del_flag`
+		)
+		VALUES
+		(
+			#{tenderNumber},
+			#{tenderName},
+			#{type},
+			#{startTime},
+			#{endTime},
+			#{province},
+			#{city},
+			#{schedule},
+			#{contact},
+			#{telephone},
+			#{email},
+			#{status},
+			#{demand},
+			#{describe},
+			#{companyId},
+			#{companyName},
+			#{deptId},
+			#{createBy},
+			#{authorizesId},
+			#{createDate},
+			#{updateBy},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.marketing.entity.MarketTenderEntity">
+        UPDATE market_tender
+        <set>
+            <if test="tenderNumber != null">`tender_number` = #{tenderNumber},</if>
+            <if test="tenderName != null">`tender_name` = #{tenderName},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="startTime != null">`start_time` = #{startTime},</if>
+            <if test="endTime != null">`end_time` = #{endTime},</if>
+            `province` = #{province},
+            `city` = #{city},
+            `schedule` = #{schedule},
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="telephone != null">`telephone` = #{telephone},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="count != null">`count` = #{count},</if>
+            <if test="demand != null">`demand` = #{demand},</if>
+            <if test="describe != null">`describe` = #{describe},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="createDate != null">`create_date` = #{createDate},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateDate != null">`update_date` = #{updateDate},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM market_tender WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM market_tender WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <update id="updateStatus" parameterType="map">
+        UPDATE market_tender
+        <set>
+            <if test="status == 0">
+                status=1,
+            </if>
+            <if test="status == 1">
+                status=0,
+            </if>
+            update_by = #{userId},
+            `update_date` = now()
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

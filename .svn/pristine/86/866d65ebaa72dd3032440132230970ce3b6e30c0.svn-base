@@ -1,0 +1,78 @@
+package com.wzlue.chain.web.controller.storage.timer;
+
+import com.wzlue.chain.sys.MSdx.ApiDemo4Java;
+import com.wzlue.chain.sys.entity.StorageWarningEntity;
+import com.wzlue.chain.sys.entity.SysNoticeEntity;
+import com.wzlue.chain.sys.service.SysNoticeService;
+import com.wzlue.chain.web.controller.wechat.MyWebSocket;
+import net.sf.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created by Administrator on 2018/9/26.
+ */
+@Component
+public class Message {
+    @Autowired
+    private SysNoticeService sysNoticeService;
+    @Autowired
+    private MyWebSocket webSocket;
+
+    //        @Scheduled(cron="0 0 8 * * ?")
+    public void pushMessage() {
+        List<StorageWarningEntity> list = sysNoticeService.queryStorageInfo();
+        for (StorageWarningEntity warning : list) {
+            SysNoticeEntity sysNotice = new SysNoticeEntity();
+            sysNotice.setTitle("仓库货物保质期通知");
+            sysNotice.setNoticeType("0");
+            sysNotice.setPositionId("后台首页");
+            sysNotice.setAdviceUserId(warning.getAdviceUserId());
+            sysNotice.setReceiverId(warning.getReceiverId());
+            sysNotice.setNoticeContent(warning.getNoticeContent());
+            sysNotice.setCreatedTime(new Date());
+            sysNoticeService.save(sysNotice);
+            try {
+                Map<String, Object> map = new HashMap<>();
+                map.put("positionId", sysNotice.getPositionId());
+                List<SysNoticeEntity> sysNotices = sysNoticeService.queryNow(map);
+                JSONArray jsons = JSONArray.fromObject(sysNotices);
+                webSocket.sendMessage(jsons.toString(), sysNotice.getPositionId());
+            } catch (IOException e) {
+
+            }
+//            短信通知
+//            ApiDemo4Java.sendbzq(warning.getStorageName(),warning.getCommodityName(),warning.getRemainingDays(),warning.getPhone());
+        }
+        List<StorageWarningEntity> list2 = sysNoticeService.queryStorageInfo2();
+        for (StorageWarningEntity warning : list2) {
+            SysNoticeEntity sysNotice = new SysNoticeEntity();
+            sysNotice.setTitle("仓库费用通知");
+            sysNotice.setNoticeType("0");
+            sysNotice.setPositionId("后台首页");
+            sysNotice.setAdviceUserId(warning.getAdviceUserId());
+            sysNotice.setReceiverId(warning.getReceiverId());
+            sysNotice.setNoticeContent(warning.getNoticeContent());
+            sysNotice.setCreatedTime(new Date());
+            sysNoticeService.save(sysNotice);
+            try {
+                Map<String, Object> map = new HashMap<>();
+                map.put("positionId", sysNotice.getPositionId());
+                List<SysNoticeEntity> sysNotices = sysNoticeService.queryNow(map);
+                JSONArray jsons = JSONArray.fromObject(sysNotices);
+                webSocket.sendMessage(jsons.toString(), sysNotice.getPositionId());
+            } catch (IOException e) {
+
+            }
+            //短信通知
+//            ApiDemo4Java.sendccfy(warning.getStorageName(),warning.getPhone());
+        }
+    }
+}

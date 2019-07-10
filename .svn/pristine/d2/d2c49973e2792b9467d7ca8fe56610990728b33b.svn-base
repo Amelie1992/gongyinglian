@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>售后服务</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <!--下拉框-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <!--单选按钮-->
+
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('ApplyFor')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <!--<input type="text" class="form-control" v-model="params.name" placeholder=""/>-->
+                <select class="form-control" data-width="auto"
+                        v-model="params.serviceType">
+                    <option value="">{{$t('QueryCriteria')}}</option>
+                    <option v-for="(item,index) in serviceTypeList" :value="index">{{item}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!--申请售后页面-->
+    <div v-show="addList" class="panel panel-default" style="margin-top: 20px;">
+        <section class="content-header">
+            <h1>
+                {{$t('AfterSaleService')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+            </h1>
+        </section>
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <!--申请售后的商品信息-->
+                <div class="row">
+                    <table id="goodsInfo"></table>
+                </div>
+                <!---->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">订单号</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="orderId" class="form-control" v-model="afterSale.orderId"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">买家</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="buyer" class="form-control" v-model="afterSale.buyer"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">卖家</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="seller" class="form-control" v-model="afterSale.seller"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">商品名称</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="goodsName" class="form-control" v-model="afterSale.goodsName"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">单价</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="unitPrice" class="form-control" v-model="afterSale.unitPrice"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">数量</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="number" class="form-control" v-model="afterSale.number"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">总价</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="totalPrice" class="form-control" v-model="afterSale.totalPrice"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ServiceType')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="serviceType" class="form-control" v-model="afterSale.serviceType"-->
+                            <!--placeholder="服务类型0：退货 1： 换货 2：索赔"/>-->
+                            <label class="radio-inline">
+                                <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio1"
+                                       value="0"/>
+                                {{$t('ReturnGoods')}}
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio2"
+                                       value="1"/>
+                                {{$t('ExchangeGoods')}}
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" v-model="afterSale.serviceType" name="serviceType" id="radio3"
+                                       value="2"/>
+                                {{$t('ClaimDemage')}}
+                            </label>
+
+                            <!--<laebl-gruop id="serviceLab">-->
+                            <!--<label class="radio-inline" v-for="item in serviceList">-->
+                            <!--<input name="serviceId" type="checkbox" :text="item.serviceName"  :value="item.id" >{{item.serviceName}}-->
+                            <!--</label>-->
+                            <!--</laebl-gruop>-->
+
+                            <!--<input id="commodityCode" type="text" name="commodityCode" class="form-control"-->
+                            <!--v-model="logisticsOffer.commodityCode" placeholder="商品编码" disabled/>-->
+                            <!--<input type="radio" name="commodityCode" value="1" checked="checked"-->
+                            <!--onchange="change2(this)"/>自动生成-->
+                            <!--&nbsp;&nbsp;<input type="radio" name="commodityCode" value="0"-->
+                            <!--onchange="change2(this)"/>手动输入-->
+                        </div>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==0||afterSale.serviceType==2" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('RefundForm')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="refundForm" class="form-control" v-model="afterSale.refundForm"-->
+                            <!--placeholder="退款方式 0：银联 1： 转账"/>-->
+                            <select class="form-control col-sm-10" style="width: 25%"
+                                    v-model="afterSale.refundForm" name="refundForm"
+                                    :placeholder="$t('PleaseChooseTheRefundMethod')">
+                                <option
+                                        v-for="(item,index) in refundFormList"
+                                        :label="item"
+                                        :value="index"
+                                >{{item}}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==0" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ReturnQuantity')}}</div>
+                        <div class="col-sm-10" style="width: 7%">
+                            <input type="text" name="quantity" class="form-control" v-model="afterSale.quantity"/>
+                        </div>
+                        <span class="help-inline">{{$t('Tips')}}{{afterSale.number}}</span>
+                    </div>
+                    <!--提示框-->
+                    <!--<div class="control-group warning" style="margin-bottom:-6px">-->
+                    <!--<label>退货数量-->
+                    <!--<input type="text">-->
+                    <!--<span class="help-inline">您最多退货数量为{{afterSale.number}}个</span>-->
+                    <!--</label>-->
+                    <!--</div>-->
+                </div>
+                <div v-show="afterSale.serviceType==1" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ExchangeQuantity')}}</div>
+                        <div class="col-sm-10" style="width: 7%">
+                            <input type="text" name="quantity" class="form-control" v-model="afterSale.quantity"/>
+                        </div>
+                        <span class="help-inline">{{$t('Tips')}}{{afterSale.number}}</span>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==2" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ClaimQuantity')}}</div>
+                        <div class="col-sm-10" style="width: 7%">
+                            <input type="text" name="quantity" class="form-control" v-model="afterSale.quantity"/>
+                        </div>
+                        <span class="help-inline">{{$t('Tips')}}{{afterSale.number}}</span>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==0" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ReturnReason')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="reason" class="form-control" v-model="afterSale.reason"-->
+                            <!--placeholder="原因 0：物品损坏 1： 质量不合格 2：产品型号错误 3：其他"/>-->
+                            <select class="form-control col-sm-10" style="width: 25%"
+                                    v-model="afterSale.reason" name="reason"
+                                    :placeholder="$t('PleaseChooseTheReason')">
+                                <option
+                                        v-for="(item,index) in reasonList"
+                                        :label="item"
+                                        :value="index"
+                                >{{item}}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==1" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ExchangeReason')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="reason" class="form-control" v-model="afterSale.reason"-->
+                            <!--placeholder="原因 0：物品损坏 1： 质量不合格 2：产品型号错误 3：其他"/>-->
+                            <select class="form-control col-sm-10" style="width: 25%"
+                                    v-model="afterSale.reason" name="reason"
+                                    :placeholder="$t('PleaseChooseTheReason')">
+                                <option
+                                        v-for="(item,index) in reasonList"
+                                        :label="item"
+                                        :value="index"
+                                >{{item}}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div v-show="afterSale.serviceType==2" class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ClaimReason')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="reason" class="form-control" v-model="afterSale.reason"-->
+                            <!--placeholder="原因 0：物品损坏 1： 质量不合格 2：产品型号错误 3：其他"/>-->
+                            <select class="form-control col-sm-10" style="width: 25%"
+                                    v-model="afterSale.reason" name="reason"
+                                    :placeholder="$t('PleaseChooseTheReason')">
+                                <option
+                                        v-for="(item,index) in reasonList"
+                                        :label="item"
+                                        :value="index"
+                                >{{item}}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ProblemDescription')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="description" class="form-control" v-model="afterSale.description"/>-->
+                            <textarea name="description" class="form-control" rows="5"
+                                      v-model="afterSale.description" style="width: 25%"></textarea>
+                            <!--style="width: 167%;height: 100px"-->
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('Pictures')}}</div>
+                        <div class="col-sm-10" style="width: 35%">
+                            <!--<input type="text" name="imageUrl" class="form-control" v-model="afterSale.imageUrl"-->
+                            <!--placeholder="为了更好的解决问题，可上传图片"/>-->
+                            <!--<span>{{$t('productPicture')}}</span>-->
+                            <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                                 :image_list="afterSale.images"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">申请日期</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="applicationDate" class="form-control"-->
+                <!--v-model="afterSale.applicationDate"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">处理状态</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="status" class="form-control" v-model="afterSale.status"-->
+                <!--placeholder="处理状态 0：待处理 1： 已处理"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">处理结果</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="result" class="form-control" v-model="afterSale.result"-->
+                <!--placeholder="处理结果 0：通过 1：不通过"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">处理意见</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="suggestion" class="form-control" v-model="afterSale.suggestion"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--查看详情页面-->
+    <div v-show="detailList" class="panel panel-default" style="margin-top: 20px;">
+        <section class="content-header">
+            <h1>
+                {{$t('DetailsOfAfterSaleService')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+            </h1>
+        </section>
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="panel-body">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1">{{$t('status')}}：{{getAfterSaleStatus()}}</div>
+                        <div class="col-sm-4">{{$t('CodeId')}}：{{afterSale.code}}</div>
+                        <div class="col-sm-2">{{$t('OrderId')}}：{{afterSale.orderId}}</div>
+                        <div class="col-sm-2">{{$t('ApplicationDate')}}：{{afterSale.applicationDate}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">{{$t('Seller')}}：{{afterSale.seller}}</div>
+                    </div>
+                </div>
+
+                <!--申请售后的商品信息-->
+                <div v-show="afterSale.orderType==1" class="row"><!-- //订单类型 1：货物 -->
+                    <table id="goodsInfo2"></table>
+                </div>
+
+                <!---->
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('ServiceType')}}：{{getAfterSaleServiceType()}}</div>
+                        <div v-if="afterSale.serviceType==0||afterSale.serviceType==2" class="col-sm-4">
+                            {{$t('RefundForm')}}：{{getAfterSaleRefundForm()}}
+                        </div>
+                        <div v-show="afterSale.serviceType==0" class="col-sm-4">
+                            {{$t('ReturnQuantity')}}：{{afterSale.quantity}}
+                        </div>
+                        <div v-show="afterSale.serviceType==1" class="col-sm-4">
+                            {{$t('ExchangeQuantity')}}：{{afterSale.quantity}}
+                        </div>
+                        <div v-show="afterSale.serviceType==2" class="col-sm-4">
+                            {{$t('ClaimQuantity')}}：{{afterSale.quantity}}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div v-show="afterSale.serviceType==0" class="col-sm-4">
+                            {{$t('ReturnReason')}}：{{getAfterSaleReason()}}
+                        </div>
+                        <div v-show="afterSale.serviceType==1" class="col-sm-4">
+                            {{$t('ExchangeReason')}}：{{getAfterSaleReason()}}
+                        </div>
+                        <div v-show="afterSale.serviceType==2" class="col-sm-4">
+                            {{$t('ClaimReason')}}：{{getAfterSaleReason()}}
+                        </div>
+                        <div class="col-sm-4">{{$t('ProblemDescription')}}：{{afterSale.description}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('Pictures')}}：
+                            <commodity-fileinput :image_list="afterSale.images" :files="images"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+
+                <!--已处理的信息展示-->
+                <div class="panel-body">
+                    <div class="row" v-show="afterSale.status==1">
+                        <div class="col-sm-4">{{$t('Result')}}：{{getAfterSaleResult()}}</div>
+                        <div class="col-sm-4">{{$t('Suggestion')}}：{{afterSale.suggestion}}</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <!--<input type="button" class="btn btn-primary" @click="validate" value="确定"/>-->
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<!--下拉框-->
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/afterSale/aftersale_buyer.js"></script>
+</body>
+</html>

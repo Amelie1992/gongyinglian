@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>流程部署</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link href="../../plugins/bootstrap-fileinput-master/css/fileinput.min.css" media="all" rel="stylesheet"
+          type="text/css"/>
+    <link href="../../plugins/bootstrap-switch/css/bootstrap-switch.min.css" rel="stylesheet"
+          type="text/css"/>
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak>
+    <section class="content-header">
+        <h1>
+            流程部署
+        </h1>
+    </section>
+    <div v-show="showList">
+        <section class="content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="panel panel-default col-sm-2">
+                                <div class="panel-heading">
+                                    <span class="panel-title">流程列表</span>
+                                    <span class="panel-title pull-right">
+                                </span>
+                                    <div class="panel-body">
+                                        <table id="leftTable" class="table text-nowrap" ref="leftTable"></table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel panel-default col-sm-10">
+                                <div class="panel-heading">
+                                    <span class="panel-title">流程明细</span>
+                                    <span class="panel-title pull-right">
+                                    <button
+                                            class="btn btn-primary btn-sm"
+                                            @click="add">
+                                        <i class="fa fa-plus"><!--v-if="hasPermission('workflow:business:all')"--></i>&nbsp;新增步骤
+                                    </button>
+                                    <button
+                                            class="btn btn-danger btn-sm"
+                                            @click="del">
+                                        <i class="fa fa-trash-o"><!--v-if="hasPermission('workflow:business:all')"--></i>&nbsp;保存提交
+                                    </button>
+                                </span>
+                                    <div class="panel-body">
+                                        <table id="table" class="table text-nowrap" ref="table"></table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default">
+        <div class="panel-heading">{{title}}</div>
+        <form class="form-horizontal"></form>
+    </div>
+    <!-- 模态框（Modal） -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel"></h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="addForm">
+                    <div class="form-group form-inline">
+                        <label>流程名称:</label>
+                        <input type="text" v-model="currentType.value" class="form-control" placeholder="流程名称" disabled>
+                    </div>
+                    <div class="form-group form-inline">
+                        <label>节点名称:</label>
+                        <input type="text" v-model="currentNodeForm.name" class="form-control" placeholder="节点名称"
+                               name="name" data-bv-notempty data-bv-notempty-message="请输入节点名称"
+                        >
+                    </div>
+                    <div class="form-group form-inline">
+                        <label>审批岗位:</label>
+                        <vm-select :options="jobList" v-model="currentNodeForm.candidateGroups"  index="2" title="全部" search="false"
+                                   data-width="auto"></vm-select>
+                    </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <el-button type="button" class="btn btn-primary btn-sm" plain @click="saveOrUpdate('currentNodeForm')">保存</el-button>
+                    <el-button type="button" class="btn btn-warning btn-sm" plain @click="resetForm('currentNodeForm')" id="dialogclean">关闭</el-button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</div>
+
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js" type="text/javascript"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<script src="../../plugins/bootstrap-switch/js/bootstrap-switch.min.js" type="text/javascript"></script>
+<script src="../../js/modules/workflow/workflowDepoly.js"></script>
+</body>
+</html>

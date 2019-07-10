@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.logistics.dao.LogisticsOfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsOfferEntity" id="logisticsOfferMap">
+        <result property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="phone" column="phone"/>
+        <result property="contact" column="contact"/>
+        <result property="price" column="price"/>
+        <result property="unit" column="unit"/>
+        <result property="type" column="type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="companyInfo" column="company_info"/>
+        <result property="businessIntroduction" column="business_introduction"/>
+        <result property="commodityCode" column="commodity_code"/>
+        <result property="describe" column="describe"/>
+        <result property="status" column="status"/>
+        <result property="num" column="num"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="creatDate" column="creat_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+        <collection property="logisticsOfferAddressList"
+                    ofType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity"
+                    select="com.wzlue.chain.logistics.dao.LogisticsOfferAddressDao.queryList"
+                    column="{logisticsId=id}"
+                    autoMapping="true">
+            <result property="id" column="id"/>
+            <result property="province" column="province"/>
+            <result property="city" column="city"/>
+            <result property="area" column="area"/>
+            <result property="address" column="address"/>
+            <result property="provinceEnd" column="province_end"/>
+            <result property="cityEnd" column="city_end"/>
+            <result property="areaEnd" column="area_end"/>
+            <result property="addressEnd" column="address_end"/>
+            <result property="describe" column="describe"/>
+            <result property="logisticsId" column="logistics_id"/>
+        </collection>
+    </resultMap>
+
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsOfferEntity" id="logisticsOfferMap2">
+        <result property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="phone" column="phone"/>
+        <result property="contact" column="contact"/>
+        <result property="price" column="price"/>
+        <result property="unit" column="unit"/>
+        <result property="type" column="type"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="companyInfo" column="company_info"/>
+        <result property="businessIntroduction" column="business_introduction"/>
+        <result property="commodityCode" column="commodity_code"/>
+        <result property="describe" column="describe"/>
+        <result property="status" column="status"/>
+        <result property="num" column="num"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="creatDate" column="creat_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+        <collection property="logisticsOfferAddressList"
+                    ofType="com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity"
+                    select="com.wzlue.chain.logistics.dao.LogisticsOfferAddressDao.queryByLogisticsId"
+                    column="{logisticsId=id}"/>
+    </resultMap>
+
+
+    <select id="queryObject" resultMap="logisticsOfferMap">
+		SELECT * FROM logistics_offer WHERE  id = #{value}
+	</select>
+
+    <select id="queryObject2" resultMap="logisticsOfferMap2">
+		SELECT * FROM logistics_offer WHERE  id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="logisticsOfferMap2">
+        SELECT
+        o.*
+        FROM
+        logistics_offer o
+        <where>
+            del_flag=0
+            <if test="categoryId != null and categoryId.trim() !=''">
+                AND o.category_id = #{categoryId}
+            </if>
+            <if test="title != null and title !=''">
+                AND o.title like concat('%',#{title},'%')
+            </if>
+            <if test="status!=null and status !=''">
+                AND o.status=#{status}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id=#{companyId}
+            </if>
+            <if test="type != null and type !=''">
+                AND	o.type = #{type}
+            </if>
+            <if test="province != null and province !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province like concat('%',#{province},'%'))
+            </if>
+            <if test="provinceEnd != null and provinceEnd !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province_end like concat('%',#{provinceEnd},'%'))
+            </if>
+            <if test="city != null and city !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.city = #{city})
+            </if>
+            <if test="cityEnd != null and cityEnd !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.city_end = #{cityEnd})
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY o.update_date desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+
+    <select id="queryList" resultMap="logisticsOfferMap2">
+        SELECT
+        o.*
+        FROM
+        logistics_offer o
+        <where>
+            del_flag=0
+            <if test="categoryId != null and categoryId.trim() !=''">
+                AND o.category_id = #{categoryId}
+            </if>
+            <if test="title != null and title !=''">
+                AND o.title like concat('%',#{title},'%')
+            </if>
+            <if test="status!=null and status !=''">
+                AND o.status=#{status}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id=#{companyId}
+            </if>
+            <if test="type != null and type !=''">
+                AND	o.type = #{type}
+            </if>
+            <if test="province != null and province !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province like concat('%',#{province},'%'))
+            </if>
+            <if test="provinceEnd != null and provinceEnd !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province_end like concat('%',#{provinceEnd},'%'))
+            </if>
+            <if test="city != null and city !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.city = #{city})
+            </if>
+            <if test="cityEnd != null and cityEnd !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.city_end = #{cityEnd})
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY o.update_date desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM logistics_offer o
+        <where>
+            del_flag=0
+            <if test="categoryId != null and categoryId.trim() !=''">
+                AND o.category_id = #{categoryId}
+            </if>
+            <if test="title != null and title !=''">
+                AND o.title like concat('%',#{title},'%')
+            </if>
+            <if test="status!=null and status!=''">
+                AND o.status=#{status}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                AND o.company_id=#{companyId}
+            </if>
+            <if test="type != null and type !=''">
+                AND	o.type = #{type}
+            </if>
+            <if test="province != null and province !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province = #{province})
+            </if>
+            <if test="provinceEnd != null and provinceEnd !=''">
+                AND	(select count(1) from logistics_offer_address oa where o.id = oa.logistics_id and oa.province_end = #{provinceEnd})
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.logistics.entity.LogisticsOfferEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO logistics_offer
+		(
+        `title`,
+        `phone`,
+        `contact`,
+        `price`,
+        `unit`,
+        `type`,
+        `category_id`,
+        `company_info`,
+        `business_introduction`,
+        `commodity_code`,
+        `describe`,
+        `status`,
+        `num`,
+        `transaction_time`,
+        `company_id`,
+        `company_name`,
+        `dept_id`,
+        `create_by`,
+        `authorizes_id`,
+        `creat_date`,
+        `update_by`,
+        `update_date`,
+        `del_flag`
+		)
+		VALUES
+		(
+        #{title},
+        #{phone},
+        #{contact},
+        #{price},
+        #{unit},
+        #{type},
+        #{categoryId},
+        #{companyInfo},
+        #{businessIntroduction},
+        #{commodityCode},
+        #{describe},
+        #{status},
+        #{num},
+        #{transactionTime},
+        #{companyId},
+        #{companyName},
+        #{deptId},
+        #{createBy},
+        #{authorizesId},
+        #{creatDate},
+        #{updateBy},
+        #{updateDate},
+        #{delFlag}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.logistics.entity.LogisticsOfferEntity">
+        UPDATE logistics_offer
+        <set>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="price != null">`price` = #{price},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="categoryId != null">`category_id` = #{categoryId},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="companyInfo != null">`company_info` = #{companyInfo},</if>
+            <if test="businessIntroduction != null">`business_introduction` = #{businessIntroduction},</if>
+            <if test="commodityCode != null">`commodity_code` = #{commodityCode},</if>
+            <if test="describe != null">`describe` = #{describe},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="num != null">`num` = #{num},</if>
+            <if test="transactionTime != null">`transaction_time` = #{transactionTime},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="creatDate != null">`creat_date` = #{creatDate},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateDate != null">`update_date` = #{updateDate},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM logistics_offer WHERE  id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM logistics_offer WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateStatus" parameterType="map">
+        UPDATE logistics_offer
+        <set>
+            <if test="status == 0">
+                status=1,
+            </if>
+            <if test="status == 1">
+                status=0,
+            </if>
+            update_by = #{userId},
+            `update_date` = now()
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    <!--物流编码是否重复-->
+    <select id="checkCode" resultType="com.wzlue.chain.logistics.entity.LogisticsOfferEntity">
+        SELECT * FROM logistics_offer WHERE `commodity_code`=#{commodityCode}
+    </select>
+
+    <update id="updateByOrderId2">
+        UPDATE logistics_offer a
+        LEFT JOIN logistics_order_offer b on a.id=b.offer_id
+        SET a.num=IFNULL(a.num,1)-1
+        WHERE b.order_id=#{id}
+    </update>
+</mapper>

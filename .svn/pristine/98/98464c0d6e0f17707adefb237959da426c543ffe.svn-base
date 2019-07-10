@@ -1,0 +1,31 @@
+package com.wzlue.chain.highcharts.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.highcharts.dao.HighchartsDao;
+import com.wzlue.chain.highcharts.entity.HighchartsEntity;
+import com.wzlue.chain.highcharts.service.HighchartsService;
+
+
+
+@Service("highchartsService")
+public class HighchartsServiceImpl implements HighchartsService {
+	@Autowired
+	private HighchartsDao highchartsDao;
+
+	@Override
+	public List<Integer> getTotalOrder() {
+        List<Map<String, Object>> declareOrder = highchartsDao.queryDeclareOrderAmount();
+        List<Map<String, Object>> putgoodsOrder = highchartsDao.queryPutgoodsOrderAmount();
+        List<Map<String, Object>> logisticsOrder = highchartsDao.queryLogisticsOrderAmount();
+		List<Map<String, Object>> orderBuy = highchartsDao.queryOrderBuyAmount();
+		List<Map<String, Object>> agentOrder = highchartsDao.queryAgentOrderAmount();
+
+
+		return null;
+	}
+}

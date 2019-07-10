@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>货物求购</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('GoodsPurchaseList')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.titleName" :placeholder="$t('PleaseEnterTheTitleName')"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}  <!--v-if="hasPermission('offer:goodsbuying:save')"-->
+            </button>
+            <button class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}} <!--v-if="hasPermission('offer:goodsbuying:update')"-->
+            </button>
+            <button class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}} <!--v-if="hasPermission('offer:goodsbuying:delete')"-->
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="form" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="form-group col-sm-4 required">
+                        <label class="col-sm-2 control-label">{{$t('title')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="titleName" class="form-control"
+                                   v-model="goodsBuying.titleName" :placeholder="$t('title')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4 required">
+                        <label class="col-sm-2 control-label">{{$t('PurchaseClassification')}}</label>
+                        <div class="col-sm-10">
+                            <select v-model="goodsBuying.buyingType" class="form-control" name="buyingType">
+                                <option :value="0">{{$t('futures')}}</option>
+                                <option :value="1">{{$t('spotGoods')}}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4 required">
+                        <label class="col-sm-2 control-label">{{$t('productName')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityName" class="form-control"
+                                   v-model="goodsBuying.commodityName" :placeholder="$t('productName')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4 required">
+                        <label class="col-sm-2 control-label">{{$t('Categories')}}</label>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="categoryName" class="form-control"
+                                   v-model="goodsBuying.categoryName" placeholder="分类名称"/>-->
+                            <vm-select :options="categorys" :title="$t('SelectTypeMsg')" search="true"
+                                       v-model="goodsBuying.categoryId" @input="categoryChange"
+                                       :value="goodsBuying.categoryId"
+                                       name="categoryId"></vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <label class="col-sm-2 control-label">{{$t('place')}}</label>
+                        <div class="col-sm-10">
+                           <!-- <input type="text" name="commodityCountry" class="form-control"
+                                   v-model="goodsBuying.commodityCountry" placeholder="产地"/>-->
+                            <vm-select :options="placeData" :title="$t('SelectTypeMsg')" search="true"
+                                       v-model="goodsBuying.commodityCountry"
+                                       :value="goodsBuying.commodityCountry"
+                                       name="commodityCountry"></vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <label class="col-sm-2 control-label">{{$t('FactoryNumber')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityFactoryNumber" class="form-control"
+                                   v-model="goodsBuying.commodityFactoryNumber" :placeholder="$t('FactoryNumber')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <label class="col-sm-2 control-label">{{$t('num')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityCount" class="form-control"
+                                   v-model="goodsBuying.commodityCount" :placeholder="$t('Unlimited')"/>
+                            <vm-select :options="goodsUnits" :title="$t('SelectUnit')" search="true" ref="goodsUnits"
+                                       v-model="goodsBuying.commodityUnit"
+                                       name="commodityUnit"></vm-select>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <label class="col-sm-2 control-label">{{$t('BudgetaryPrice')}}</label>
+                        <div class="col-sm-10 input-group">
+                            <input style="width: 56%" type="text" name="commodityPrice" class="form-control"
+                                   v-model="goodsBuying.commodityPrice" :placeholder="$t('Unlimited')"/>
+                            <select style="width: 40%" class="form-control" v-model="goodsBuying.unit"
+                                    name="unit">
+                                <option value="0">{{$t('Yuan')}}</option>
+                                <option value="1">{{$t('Dollar')}}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <label class="col-sm-2 control-label">{{$t('pack')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityPacking" class="form-control"
+                                   v-model="goodsBuying.commodityPacking" :placeholder="$t('pack')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4" v-show="goodsBuying.buyingType==1">
+                        <label class="col-sm-2 control-label">{{$t('PlaceofDelivery')}}</label>
+                        <div class="col-sm-10">
+                            <vm-select :options="provinces" :title="$t('selectProvince')" search="true"
+                                       v-model="goodsBuying.goodsPodProvince"
+                                       name="goodsPodProvince"
+                                       :method="provincesChange"></vm-select>
+                            <vm-select :options="cities" :title="$t('selectCities')" search="true"
+                                       v-model="goodsBuying.goodsPodCity"
+                                       name="goodsPodCity"></vm-select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4" v-show="goodsBuying.buyingType==0">
+                        <label class="col-sm-2 control-label">{{$t('Schedule')}}</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control"
+                                   name="goodsSailingTime"
+                                   v-model="goodsBuying.goodsSailingTime"
+                                   :placeholder="$t('Unlimited')">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group required">
+                        <label class="control-label" style="text-align:left;">{{$t('productPicture')}}</label>
+                        <commodity-fileinput :this_maxFileCount="6" ref="file" :files="images"
+                                             :image_list="goodsBuying.images"></commodity-fileinput>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group required">
+                        <label class="col-sm-2 control-label">{{$t('productDescription')}}</label>
+                        <div class="col-sm-10">
+                            <el-textarea id="myEditor" name="goodsDescribe"></el-textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" v-if="showSure" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="returnReload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+<script src="../../plugins/ueditor/lang/zh-cn/zh-cn.js"></script>
+
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/offer/goodsbuying.js"></script>
+</body>
+</html>

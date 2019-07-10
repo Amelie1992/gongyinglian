@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>组织架构</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../css/all-skins.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-tree/css/bootstrap-treeview.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+    <style>
+        .el-card.shadow1 {
+            box-shadow: 0 0 0 0 !important;
+        }
+    </style>
+</head>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div class="page-header">
+        <h3>{{$t('organizationalStructure')}}</h3>
+    </div>
+    <!-- 选择菜单 -->
+    <div class="row">
+        <div class="col-xs-5 col-sm-4">
+            <div id="tree"></div>
+        </div>
+        <div class="col-xs-6 col-sm-8">
+            <div class="panel panel-default">
+                <div class="box-header">
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#myModal">{{$t('added')}}</button>
+                    <button type="button" class="btn btn-danger" @click="del(this)">{{$t('delete')}}</button>
+                </div>
+                <div class="panel-heading">{{$t('ArchitectureInformation')}}</div>
+                <div class="panel-body">
+                    <form class="form-horizontal" id="deptForm">
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label">{{$t('HierarchicalName')}}</label>
+                                    <div class="col-xs-6">
+                                        <input type="text" class="form-control" v-model="newNode.name" name="classname"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-6">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">{{$t('ClassificationType')}}</label>
+                                    <div class="col-xs-6">
+                                        <label class="checkbox-inline">
+                                            <input type="radio" name="depttype" id="department" value="0" v-model="newNode.deptType">{{$t('department')}}
+                                        </label>
+                                        <!-- <label class="checkbox-inline">
+                                             <input type="radio" name="depttype" id="company" value="1" :checked='newNode.deptType=="1"' v-model="newNode.deptType">公司
+                                         </label>-->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label">{{$t('SuperiorName')}}</label>
+                                    <div class="col-xs-6">
+                                        <input type="text" class="form-control" v-model="newNode.parentName" readonly="readonly" name="parentName"/>
+                                        <!--<select class="form-control" id="updateDept">
+                                          &lt;!&ndash;  <template v-for="(item,key,index) in deptList">
+
+                                                <optgroup :label="item.text">
+                                                    <option :value="option.id" v-for="option in item.nodes">{{option.text}}</option>
+
+                                                </optgroup>
+                                            </template>&ndash;&gt;
+                                        </select>-->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-xs-6">
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label">{{$t('sort')}}</label>
+                                    <div class="col-xs-6">
+                                        <input type="text" class="form-control" v-model="newNode.orderNum" name="orderNum"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel-footer">
+                    <button type="button" class="btn btn-primary" data-toggle="button" @click="validFromSuccess('deptForm')">{{$t('save')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 新增部门-->
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('added')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="addMenu">
+                        <div class="form-group row required">
+                            <label class="col-sm-2 control-label">{{$t('HierarchicalName')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" v-model="menu.name" name="menuname"/>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label">{{$t('ClassificationType')}}</label>
+                            <div class="col-sm-8">
+                                <label class="checkbox-inline">
+                                    <input type="radio" name="menudepty" value="0" checked>{{$t('department')}}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label">{{$t('SuperiorName')}}</label>
+                            <div class="col-sm-8">
+
+                                <select class="form-control" id="addDept">
+                                    <!--<template v-for="(item,key,index) in deptList">
+
+                                        <optgroup :label="item.text">
+                                            <option :value="option.id" v-for="option in item.nodes" v-model="menu.parentId">{{option.text}}</option>
+
+                                        </optgroup>
+                                    </template>-->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label">{{$t('sort')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" v-model="menu.orderNum" name="menuorderNum"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="save">{{$t('save')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!--<div class="wrapper" id="rrapp" v-cloak>
+    &lt;!&ndash;头部&ndash;&gt;
+    <main-header></main-header>
+    &lt;!&ndash;导航路由&ndash;&gt;
+    <main-router></main-router>
+    <section class="content content-wrapper">
+        <h4 class="title-h4">组织架构</h4>
+        <el-row :gutter="30" v-show="showList">
+            <el-col :span="8">
+                <el-card class="box-card" style="min-height: 400px;overflow:auto">
+                    <el-tree
+                            :data="deptList"
+                            default-expand-all
+                            node-key="id"
+                            ref="tree"
+                            highlight-current
+                            check-strictly
+                            @check-change="handleClick"
+                            @node-click="reloadTree"
+                            :props="defaultProps">
+                    </el-tree>
+                </el-card>
+            </el-col>
+            <el-col :span="16">
+                <el-card class="shadow" style="min-height: 437px;overflow:auto">
+                    <el-button v-if="hasPermission('sys:sysdept:save')" type="success" plain @click="add">
+                        <i class="fa fa-plus">&nbsp;新增</i></el-button>
+                    <el-button v-if="hasPermission('sys:sysdept:delete')" type="danger" plain @click="del('menu')">
+                        <i class="fa fa-trash-o">&nbsp;删除</i></el-button>
+                    <el-card class="shadow" style="border: 0px;">
+                        <div slot="header" class="clearfix">
+                            <i class="title_left">架构信息</i>
+                        </div>
+                        <el-form :model="newNode" :rules="rules" ref="newNode" label-width="150px" style="width: 100%">
+                            <el-row class="m-bottom-20">
+                                <el-col :span="12">
+                                    <el-form-item label="机构名称" prop="name" ref="name1" style="width: 100%;" >
+                                        <el-input v-model="newNode.name" placeholder="菜单名称或按钮名称" maxlength="20"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="创建时间">
+                                        <el-date-picker
+                                                style="width: 100%;"
+                                                v-model="newNode.createDate"
+                                                type="date"
+                                                placeholder="无"
+                                                readonly
+                                                value-format="yyyy-MM-dd">
+                                        </el-date-picker>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-row class="m-bottom-20">
+                                <el-col :span="12">
+                                    <el-form-item label="机构类型" prop="deptType">
+                                        <el-radio-group v-model="newNode.deptType" style="width: 100%;">
+                                            <el-radio label="0">部门</el-radio>
+                                            <el-radio label="1">公司</el-radio>
+                                        </el-radio-group>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="更新时间">
+                                        <el-date-picker
+                                                style="width: 100%;"
+                                                v-model="newNode.updateDate"
+                                                type="date"
+                                                placeholder="无"
+                                                readonly
+                                                value-format="yyyy-MM-dd">
+                                        </el-date-picker>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+
+                            <el-row class="m-bottom-20">
+                                <el-col :span="12">
+                                    <el-form-item label="上级机构" prop="newParentId" style="width: 100%;">
+                                        <el-cascader
+                                                style="width: 100%"
+                                                :show-all-levels="false"
+                                                :options="deptList"
+                                                :props="props"
+                                                change-on-select
+                                                clearable="true"
+                                                v-model="newNode.newParentId">
+                                        </el-cascader>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="排序号" prop="orderNum" ref="orderNum"  v-if="menu.type != 2" style="width:100%;">
+                                        <el-input type="number" v-model="newNode.orderNum" placeholder="排序号"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+
+                            <el-row style="text-align: left;">
+                                <el-form-item>
+                                    <el-button type="primary" plain @click="update('newNode')">保存</el-button>
+                                    <el-button type="warning" plain @click="reload('newNode')">取消</el-button>
+                                </el-form-item>
+                            </el-row>
+                        </el-form>
+                    </el-card>
+                </el-card>
+            </el-col>
+        </el-row>
+
+
+        &lt;!&ndash;新增模态框&ndash;&gt;
+        <el-dialog :title="title" :visible.sync="dialogVisible">
+            <el-form :model="menu" :rules="rules" ref="menu" label-width="150px" style="width: 100%">
+                <el-row class="m-bottom-20">
+                    <el-col :span="18">
+                        <el-form-item label="机构名称" prop="name" ref="name1" style="width: 100%;" >
+                            <el-input v-model="menu.name" placeholder="菜单名称或按钮名称" maxlength="20"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row class="m-bottom-20">
+                    <el-col :span="18">
+                        <el-form-item label="机构类型" prop="deptType">
+                            <el-radio-group v-model="menu.deptType" style="width: 100%;">
+                                <el-radio label="0">部门</el-radio>
+                                <el-radio label="1">公司</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row class="m-bottom-20">
+                    <el-col :span="18">
+                        <el-form-item label="上级机构" prop="newParentId" style="width: 100%;">
+                            <el-cascader
+                                    style="width: 100%"
+                                    :show-all-levels="false"
+                                    :options="deptList"
+                                    :props="props"
+                                    change-on-select
+                                    clearable="true"
+                                    v-model="menu.newParentId">
+                            </el-cascader>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row class="m-bottom-20">
+                    <el-col :span="18">
+                        <el-form-item label="排序号" prop="orderNum" ref="orderNum"  v-if="menu.type != 2" style="width:100%;">
+                            <el-input type="number" v-model="menu.orderNum" placeholder="排序号"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row style="text-align: left;">
+                    <el-form-item>
+                        <el-button type="primary" plain @click="save('menu')">保存</el-button>
+                        <el-button type="warning" plain @click="reload('menu')">返回</el-button>
+                    </el-form-item>
+                </el-row>
+            </el-form>
+        </el-dialog>
+
+    </section>
+</div>-->
+
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/app.js"></script>
+<script src="../../libs/validator.js"></script>
+<script src="../../plugins/bootstrap-tree/js/bootstrap-treeview.js"></script>
+
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/sys/dept.js"></script>
+</body>
+</div>
+</html>

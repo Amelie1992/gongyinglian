@@ -1,0 +1,155 @@
+package com.wzlue.chain.contract.service.impl;
+
+
+import com.wzlue.chain.contract.dao.GoodsContractDao;
+import com.wzlue.chain.contract.entity.GoodsContractEntity;
+import com.wzlue.chain.contract.service.GoodsContractService;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysDictEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.ImageService;
+import com.wzlue.chain.sys.service.SysDictService;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+/**
+ * @author Administrator
+ */
+@Service("goodsContractService")
+public class GoodsContractServiceImpl implements GoodsContractService {
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private GoodsContractDao goodsContractDao;
+    @Autowired
+    private ImageService imageService;
+    @Autowired
+    private SysDictService dictService;
+
+    private SysUserEntity getUser() {
+        return (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+    }
+
+    private Long getUserId() {
+        return getUser().getUserId();
+    }
+
+    @Override
+    public GoodsContractEntity queryObject(Long id) {
+        return goodsContractDao.queryObject(id);
+    }
+
+    @Override
+    public List<GoodsContractEntity> queryList(Map<String, Object> map) {
+        return goodsContractDao.queryListById(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return goodsContractDao.queryTotalById(map);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void save(GoodsContractEntity goodsContract) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        if(goodsContract.getCreateBy() == null){
+            goodsContract.setCreateBy(user.getUserId().intValue());
+        }
+        if(goodsContract.getOrderNumber() == "" || goodsContract.getOrderNumber() == null){
+            goodsContract.setOrderNumber(sysNumberRuleService.getCodeNumber("number_order_goods"));
+        }
+        goodsContract.setOwner(user.getCompanyId().toString());
+        goodsContract.setCreateTime(new Date());
+        goodsContract.setDateOfSigning(new Date());
+        goodsContract.setAutomatic(0);
+        goodsContractDao.save(goodsContract);
+        List<ImageEntity> files = goodsContract.getFile();
+        if(files == null){
+            return;
+        }
+        for(ImageEntity file : files){
+            file.setCreateBy(getUserId().toString());
+            file.setCreateDate(new Date());
+            file.setPicType("contract_attachment_goods");
+            file.setType("goods_contract");
+            file.setCode(goodsContract.getId().intValue());
+            imageService.save(file);
+        }
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveAutomaticContract(GoodsContractEntity goodsContract) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        if(goodsContract.getCreateBy() == null){
+            goodsContract.setCreateBy(user.getUserId().intValue());
+        }
+        goodsContract.setCreateTime(new Date());
+        goodsContract.setDateOfSigning(new Date());
+        goodsContractDao.save(goodsContract);
+    }
+
+    @Override
+    public GoodsContractEntity queryObjectByOrder(Map<String, Object> params) {
+        params.put("owner",getUser().getCompanyId());
+        params.put("createBy",getUser().getCompanyId());
+        return goodsContractDao.queryObjectByOrder(params);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(GoodsContractEntity goodsContract) {
+        goodsContract.setModityBy(getUserId().intValue());
+        goodsContract.setModityTime(new Date());
+        goodsContractDao.update(goodsContract);
+        Map<String,Object> params=new HashMap<>(16);
+        List<SysDictEntity> dic = dictService.queryByType("contract_attachment");
+        params.put("code",goodsContract.getId());
+        params.put("picType",dic.get(0).getCode());
+        imageService.deleteByCode(params);
+        List<ImageEntity> files = goodsContract.getFile();
+        if(files != null){
+            for(ImageEntity file : files){
+                file.setCreateBy(getUserId().toString());
+                file.setCreateDate(new Date());
+                file.setPicType(dic.get(0).getCode());
+                file.setType("goods_contract");
+                file.setCode(goodsContract.getId().intValue());
+                imageService.save(file);
+            }
+
+        }
+    }
+
+    @Override
+    public void delete(Long id) {
+        goodsContractDao.delete(id);
+    }
+
+    @Override
+    public void deleteByOrderId(String orderId) {
+        goodsContractDao.deleteByOrderId(orderId);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        goodsContractDao.deleteBatch(ids);
+    }
+
+    @Override
+    public List<GoodsContractEntity> queryByContractNumber(String contractNumber) {
+        return goodsContractDao.queryByContractNumber(contractNumber);
+    }
+}

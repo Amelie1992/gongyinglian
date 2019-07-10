@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(订单)合同信息表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('DeclareContract')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.contractName" @keyup.enter="query" :placeholder="$t('EnterContractName')">
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.contractNumber" @keyup.enter="query" :placeholder="$t('InputContractCode')">
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.orderNumber" @keyup.enter="query" :placeholder="$t('InputOrderEncoding')">
+                </div>
+                <button class="btn btn-default m-left-5" @click="query"><i class = "fa fa-search"></i>&nbsp;{{$t('query')}}</button>
+               <!-- <button class="btn btn-success" @click="downLoad"><i class="fa fa-trash-o"></i>&nbsp;{{$t('DownloadAttachments')}}</button>-->
+                <button class="btn btn-primary m-left-5" @click="add"><i class="fa fa-floppy-o"></i>&nbsp;{{$t('added')}}</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('ContractNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractNumber" class="form-control"
+                                           v-model="declareContract.contractNumber" :placeholder="$t('ContractNumber')" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('OrderNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderNumber" class="form-control"
+                                           v-model="declareContract.orderNumber" :placeholder="$t('OrderNumber')" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('ContractName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractName" class="form-control"
+                                           v-model="declareContract.contractName" :placeholder="$t('ContractName')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('NameOfPartyA')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="customsCopName" class="form-control"
+                                           v-model="declareContract.customsCopName" :placeholder="$t('NameOfPartyA')" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('NameOfPartyB')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="merchantCopName" class="form-control"
+                                           v-model="declareContract.merchantCopName" :placeholder="$t('NameOfPartyB')" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('PaymentMethod')}}</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control selectpicker selectPayMethod" id="payMethod" :placeholder="$t('PleaseChoosePaymentMethod')"
+                                            v-model="declareContract.payMethod" :disabled="isAddFlag">
+                                        <option value="1" >{{$t('LumpSumPayment')}}</option>
+                                        <option value="2" >{{$t('InstallmentPayment')}}</option>
+                                        <option value="3" >{{$t('Other')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('ContractAmount')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractAmount" class="form-control" setp="0.01" min="0.001"
+                                           v-model="declareContract.contractAmount" :placeholder="$t('ContractAmount')" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('DateOfSigning')}}</label>
+                                <div class="col-sm-10">
+                                    <input name="dateOfSigning" class="form-control datepicker" id="dateOfSigning"
+                                           v-model="declareContract.dateOfSigning" :placeholder="$t('DateOfSigning')"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('ExpirationDate')}}</label>
+                                <div class="col-sm-10">
+                                    <input name="expireDate" class="form-control datepicker" id="expireDate"
+                                           v-model="declareContract.expireDate" :placeholder="$t('ExpirationDate')"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss" :disabled="isAddFlag"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('StoragePosition')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="location" class="form-control" v-model="declareContract.location"
+                                           :placeholder="$t('LocationOfEnterpriseContract')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-8">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-sm-10">
+                                    <textarea type="text" name="remarks" class="form-control" v-model="declareContract.remarks"
+                                              :placeholder="$t('Remarks')"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-8">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('appendicesOfAContract')}}</label>
+                                <div class="col-sm-10">
+                                    <commodity-fileinput ref="file" :this_multiple="false" :drop_zone_enabled="false"
+                                                         :show_preview="false" :max_file_count='5' :files.sync="files"
+                                                         :image_list="declareContract.file"
+                                                         deleteurl="/storage/storagecontract/deleteById"></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">{{$t('appendicesOfAContract')}}</label>
+                        <div class="col-sm-10">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>附件名</th>
+                                    <!--<th>附件路径</th>-->
+                                    <th>上传人</th>
+                                    <th>上传时间</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(item,index) in declareContract.fileList">
+                                    <td>
+                                        {{item.picName}}
+                                    </td>
+                                    <!--<td>
+                                        {{item.picUrl}}
+                                    </td>-->
+                                    <td>
+                                        {{item.username}}
+                                    </td>
+                                    <td>
+                                        {{item.createTime}}
+                                    </td>
+                                    <td><a class="glyphicon glyphicon-trash" href="javascript:void(0)" @click="removeFile(index)"></a>&nbsp;&nbsp;
+                                        <a title="预览" class="glyphicon glyphicon-zoom-in"  href="javascript:void(0)" @click="preview(index)"></a>&nbsp;&nbsp;
+                                        <a title="下载" class="glyphicon glyphicon-download-alt" href="javascript:void(0)" @click="downloadFile(index)"></a>&nbsp;&nbsp;
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <div v-if="title!='详情'"  >
+                                <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                            </div>
+                            <div class="col-sm-2 control-label" v-if="title=='详情'"  >
+                                <input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<!--文件上传插件-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<!--时间插件-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+
+<script src="../../js/modules/declare/declarecontract.js"></script>
+<script>
+    $(".datepicker").datetimepicker({
+        language:'zh-CN',
+        format: 'yyyy-mm-dd',//显示格式
+        weekStart: 1,
+        todayHighlight: 1,//今天高亮
+        minView: 'month',//设置只显示到月份
+        startView:2,
+        // startDate: new Date(),//设置开始日期
+        forceParse: 0,
+        showMeridian: 1,
+        autoclose: true,//选择后自动关闭
+    });
+</script>
+</body>
+</html>

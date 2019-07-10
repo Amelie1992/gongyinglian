@@ -1,0 +1,199 @@
+package com.wzlue.chain.agent.service.impl;
+
+import com.wzlue.chain.agent.dao.AgentOfferBusinessDao;
+import com.wzlue.chain.agent.dao.AgentOfferGoodsCategoryDao;
+import com.wzlue.chain.agent.entity.AgentOfferBusinessEntity;
+import com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity;
+import com.wzlue.chain.common.exception.RRException;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import com.wzlue.chain.agent.dao.AgentOfferDao;
+import com.wzlue.chain.agent.entity.AgentOfferEntity;
+import com.wzlue.chain.agent.service.AgentOfferService;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * 代理报盘信息表(业务接口实现)
+* */
+@Service("agentOfferService")
+public class AgentOfferServiceImpl implements AgentOfferService {
+	@Autowired
+	private AgentOfferDao agentOfferDao;
+	@Autowired
+	private AgentOfferBusinessDao agentOfferBusinessDao;
+	@Autowired
+	private AgentOfferGoodsCategoryDao agentOfferGoodsCategoryDao;
+	@Autowired
+	private SysUserDao sysUserDao;
+	@Override
+	public AgentOfferEntity queryObject(Integer id){
+		return agentOfferDao.queryObject(id);
+	}
+	
+	@Override
+	public List<AgentOfferEntity> queryList(Map<String, Object> map){
+		return agentOfferDao.queryList(map);
+	}
+	
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return agentOfferDao.queryTotal(map);
+	}
+	
+	@Override
+	@Transactional
+	public void save(AgentOfferEntity agentOffer){
+		SysUserEntity userEntity = sysUserDao.queryObject(agentOffer.getCreateBy());
+		Date nowTime = new Date();
+		agentOffer.setCreateTime(nowTime);
+		agentOffer.setUpdateTime(nowTime);
+
+		if (userEntity!=null) {
+			agentOffer.setDeptId(userEntity.getDepartmentId());
+			agentOffer.setCompanyId(userEntity.getCompanyId());
+		}
+//		agentOffer.setOfferStatus(0);
+		 //判断报盘编码来源方式 如为生成 则生成编码
+		if (agentOffer.getIdSourceType()==1){
+			agentOffer.setOfferCode(UUID.randomUUID().toString().toUpperCase());
+		}
+		//保存报盘信息
+		agentOfferDao.save(agentOffer);
+		//保存报盘的服务类型信息
+		if (agentOffer.getBusiness()!=null && agentOffer.getBusiness().get(0)!=null){
+			for(AgentOfferBusinessEntity businessEntity : agentOffer.getBusiness()){
+				businessEntity.setOfferId(agentOffer.getId());
+				agentOfferBusinessDao.save(businessEntity);
+			}
+		}
+		//保存代理报盘所属分类信息
+		if (agentOffer.getCategorys()!=null && agentOffer.getCategorys().get(0)!=null){
+			for (AgentOfferGoodsCategoryEntity categoryEntity: agentOffer.getCategorys()){
+				categoryEntity.setOfferId(agentOffer.getId());
+				agentOfferGoodsCategoryDao.save(categoryEntity);
+			}
+		}
+	}
+	
+	@Override
+	@Transactional
+	public void update(AgentOfferEntity agentOffer){
+		AgentOfferEntity temp = agentOfferDao.queryInfo(agentOffer.getId());
+		if (temp!=null) {
+			temp.setUpdateBy(agentOffer.getUpdateBy());
+			temp.setUpdateTime(new Date());
+			//判断报盘编码来源方式 如为生成 则生成编码
+			if (agentOffer.getIdSourceType() == 0) {
+				temp.setOfferCode(agentOffer.getOfferCode());
+			}
+			temp.setTitle(agentOffer.getTitle());
+			temp.setPrice(agentOffer.getPrice());
+			temp.setCurrency(agentOffer.getCurrency());
+			temp.setValuationUnit(agentOffer.getValuationUnit());
+			temp.setContactPerson(agentOffer.getContactPerson());
+			temp.setContactPhone(agentOffer.getContactPhone());
+			temp.setIntroduction(agentOffer.getIntroduction());
+			agentOfferDao.update(temp);
+
+			//删除原有的所有服务类型信息
+			agentOfferBusinessDao.deleteByOfferId(agentOffer.getId());
+
+			//保存修改后的服务类型信息
+			if(agentOffer.getBusiness()!=null && agentOffer.getBusiness().get(0)!=null){
+				for(AgentOfferBusinessEntity businessEntity : agentOffer.getBusiness()){
+					businessEntity.setOfferId(agentOffer.getId());
+					agentOfferBusinessDao.save(businessEntity);
+				}
+			}
+			agentOfferGoodsCategoryDao.deleteByOfferId(agentOffer.getId());
+
+			//保存代理所属商品分类
+			if (agentOffer.getCategorys()!=null && agentOffer.getCategorys().get(0)!= null){
+				for (AgentOfferGoodsCategoryEntity categoryEntity : agentOffer.getCategorys()){
+					categoryEntity.setOfferId(agentOffer.getId());
+					agentOfferGoodsCategoryDao.save(categoryEntity);
+				}
+			}
+
+		}else{
+			throw new RRException("该报盘信息异常");
+		}
+	}
+	
+	@Override
+	public void delete(Integer id){
+		agentOfferDao.delete(id);
+	}
+	
+	@Override
+	public void deleteBatch(Integer[] ids){
+		agentOfferDao.deleteBatch(ids);
+	}
+
+	@Override
+	public List<AgentOfferEntity> pageList(Map<String, Object> map) {
+		return agentOfferDao.pageList(map);
+	}
+
+	@Override
+	public Integer pageCount(Map<String, Object> map) {
+		return agentOfferDao.pageCount(map);
+	}
+
+	@Override
+	public AgentOfferEntity queryInfo(Long id) {
+		return agentOfferDao.queryInfo(id);
+	}
+
+	@Override
+	public void updateDel(Long id,Long userId) {
+		AgentOfferEntity agent = agentOfferDao.queryObject(id);
+		if (agent!=null){
+			agent.setUpdateBy(userId);
+			agent.setUpdateTime(new Date());
+			agent.setOfferStatus(3);
+			agentOfferDao.updateDel(agent);
+		}else {
+			throw new RRException("该报盘信息异常");
+		}
+		agentOfferDao.updateDel(agent);
+	}
+    //上架
+	@Override
+	public void shelf(Long id) {
+		agentOfferDao.shelf(id);
+	}
+    //下架
+	@Override
+	public void obtained(Long id) {
+		agentOfferDao.obtained(id);
+	}
+
+	@Override
+	public List<AgentOfferEntity> getListByCompanyId(Long id) {
+		return agentOfferDao.getListByCompanyId(id);
+	}
+
+	@Override
+	public void shelfOrobtained(List<AgentOfferEntity> agentOfferEntities) {
+		agentOfferDao.shelfOrobtained(agentOfferEntities);
+	}
+
+	@Override
+	public void obtainedAll(List<AgentOfferEntity> agentOfferEntities) {
+		agentOfferDao.updatedAll(agentOfferEntities,2);
+	}
+
+	@Override
+	public void shelfAll(List<AgentOfferEntity> agentOfferEntities) {
+		agentOfferDao.updatedAll(agentOfferEntities,1);
+	}
+}

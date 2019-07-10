@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOfferGoodsCategoryDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity" id="agentOfferGoodsCategoryMap">
+        <result property="id" column="id"/>
+        <result property="offerId" column="offer_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="categoryName" column="category_name"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity">
+		SELECT * FROM agent_offer_goods_category WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity">
+		SELECT * FROM agent_offer_goods_category
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_offer_goods_category
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_offer_goods_category
+		(
+			`offer_id`,
+			`category_id`,
+			`category_name`
+		)
+		VALUES
+		(
+			#{offerId},
+			#{categoryId},
+			#{categoryName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity">
+		UPDATE agent_offer_goods_category
+			<set>
+				<if test="offerId != null">`offer_id` = #{offerId}, </if>
+				<if test="categoryId != null">`category_id` = #{categoryId}, </if>
+				<if test="categoryName != null">`category_name` = #{categoryName}</if>
+			</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM agent_offer_goods_category WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM agent_offer_goods_category WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByOfferId">
+		DELETE FROM agent_offer_goods_category  WHERE offer_id = #{id}
+	</delete>
+
+	<select id="queryByOfferId" resultMap="agentOfferGoodsCategoryMap">
+		  SELECT * FROM agent_offer_goods_category WHERE offer_id = #{value}
+	</select>
+</mapper>

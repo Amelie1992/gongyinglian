@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.bill.dao.BillDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.bill.entity.BillEntity" id="billMap">
+        <result property="id" column="id"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderType" column="order_type"/>
+        <result property="payee" column="payee"/>
+        <result property="payer" column="payer"/>
+        <result property="payeeId" column="payee_id"/>
+        <result property="payerId" column="payer_id"/>
+        <result property="unit" column="unit"/>
+        <result property="amountReceivable" column="amount_receivable"/>
+        <result property="amountPayable" column="amount_payable"/>
+        <result property="amountReceived" column="amount_received"/>
+        <result property="amountPaid" column="amount_paid"/>
+        <result property="remainingAmountReceivable" column="remaining_amount_receivable"/>
+        <result property="remainingAmountPayable" column="remaining_amount_payable"/>
+        <result property="receivableStatus" column="receivable_status"/>
+        <result property="payableStatus" column="payable_status"/>
+        <result property="validState" column="valid_state"/>
+        <result property="receivingTime" column="receiving_time"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="receivingRemarks" column="receiving_remarks"/>
+        <result property="paymentRemarks" column="payment_remarks"/>
+        <result property="billType" column="bill_type"/>
+        <result property="creditNumber" column="credit_number"/>
+        <result property="applicationTime" column="application_time"/>
+        <result property="creditAmount" column="credit_amount"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="auditOpinion" column="audit_opinion"/>
+        <result property="repeatOrder" column="repeat_order"/>
+        <result property="finalPayee" column="final_payee"/>
+        <result property="finalPayeeId" column="final_payee_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <collection property="paymentRecords"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.bill.entity.PaymentRecordEntity"
+                    column="{billId=id}"
+                    select="com.wzlue.chain.bill.dao.PaymentRecordDao.queryList"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="billMap">
+		SELECT
+		a.* ,
+		(select b.company_name from merchant_company b WHERE b.id=a.payee_id) payee,
+		(select b.company_name from merchant_company b WHERE b.id=a.payer_id) payer
+		FROM bill a WHERE a.id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.bill.entity.BillEntity">
+        SELECT
+        a.* ,
+        (a.amount_receivable) amount_receivable2 ,
+        (a.amount_payable) amount_payable2 ,
+        (a.amount_received) amount_received2 ,
+        (a.amount_paid) amount_paid2 ,
+        (a.remaining_amount_receivable) remaining_amount_receivable2 ,
+        (a.remaining_amount_payable) remaining_amount_payable2,
+        (select b.company_name from merchant_company b WHERE b.id=a.payee_id) payee,
+        (select b.company_name from merchant_company b WHERE b.id=a.payer_id) payer
+        FROM bill a
+        <where>
+            `bill_type` = 0 AND `repeat_order` IS NULL
+            <if test="payeeId != null and payeeId != ''">
+                AND `payee_id` = #{payeeId}
+            </if>
+            <if test="payerId != null and payerId != ''">
+                AND `payer_id` = #{payerId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+            <if test="receivableStatus != null and receivableStatus != ''">
+                AND `receivable_status`= #{receivableStatus}
+            </if>
+            <if test="payableStatus != null and payableStatus != ''">
+                AND `payable_status`= #{payableStatus}
+            </if>
+            <if test="orderType != null and orderType != ''">
+                AND `order_type`= #{orderType}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM bill
+        <where>
+            <if test="payeeId != null and payeeId != ''">
+                AND `payee_id` = #{payeeId}
+            </if>
+            <if test="payerId != null and payerId != ''">
+                AND `payer_id` = #{payerId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+            <if test="receivableStatus != null and receivableStatus != ''">
+                AND `receivable_status`= #{receivableStatus}
+            </if>
+            <if test="payableStatus != null and payableStatus != ''">
+                AND `payable_status`= #{payableStatus}
+            </if>
+            <if test="orderType != null and orderType != ''">
+                AND `order_type`= #{orderType}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.bill.entity.BillEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO bill
+		(
+            `contract_number`,
+            `order_number`,
+            `order_type`,
+            `payee`,
+            `payer`,
+            `payee_id`,
+            `payer_id`,
+            `amount_receivable`,
+            `amount_payable`,
+            `amount_received`,
+            `amount_paid`,
+            `unit`,
+            `remaining_amount_receivable`,
+            `remaining_amount_payable`,
+            `receivable_status`,
+            `payable_status`,
+            `valid_state`,
+            `receiving_time`,
+            `payment_time`,
+            `receiving_remarks`,
+            `payment_remarks`,
+            `bill_type`,
+            `credit_number`,
+            `application_time`,
+            `credit_amount`,
+            `audit_status`,
+            `audit_opinion`,
+            `repeat_order`,
+            `final_payee`,
+            `final_payee_id`,
+            `dept_id`,
+            `create_by`,
+            `created_time`,
+            `update_by`,
+            `update_time`,
+            `company_id`,
+            `authorizes_id`
+									)
+		VALUES
+		(
+            #{contractNumber},
+            #{orderNumber},
+            #{orderType},
+            #{payee},
+            #{payer},
+            #{payeeId},
+            #{payerId},
+            #{amountReceivable},
+            #{amountPayable},
+            #{amountReceived},
+            #{amountPaid},
+            #{unit},
+            #{remainingAmountReceivable},
+            #{remainingAmountPayable},
+            #{receivableStatus},
+            #{payableStatus},
+            #{validState},
+            #{receivingTime},
+            #{paymentTime},
+            #{receivingRemarks},
+            #{paymentRemarks},
+            #{billType},
+            #{creditNumber},
+            #{applicationTime},
+            #{creditAmount},
+            #{auditStatus},
+            #{auditOpinion},
+            #{repeatOrder},
+            #{finalPayee},
+            #{finalPayeeId},
+            #{deptId},
+            #{createBy},
+            #{createdTime},
+            #{updateBy},
+            #{updateTime},
+            #{companyId},
+            #{authorizesId}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.bill.entity.BillEntity">
+        UPDATE bill
+        <set>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="orderType != null">`order_type` = #{orderType},</if>
+            <if test="payee != null">`payee` = #{payee},</if>
+            <if test="payer != null">`payer` = #{payer},</if>
+            <if test="payeeId != null">`payee_id` = #{payeeId},</if>
+            <if test="payerId != null">`payer_id` = #{payerId},</if>
+            <if test="amountReceivable != null">`amount_receivable` = #{amountReceivable},</if>
+            <if test="amountPayable != null">`amount_payable` = #{amountPayable},</if>
+            <if test="amountReceived != null">`amount_received` = #{amountReceived},</if>
+            <if test="amountPaid != null">`amount_paid` = #{amountPaid},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="remainingAmountReceivable != null">`remaining_amount_receivable` = #{remainingAmountReceivable},</if>
+            <if test="remainingAmountPayable != null">`remaining_amount_payable` = #{remainingAmountPayable},</if>
+            <if test="receivableStatus != null">`receivable_status` = #{receivableStatus},</if>
+            <if test="payableStatus != null">`payable_status` = #{payableStatus},</if>
+            <if test="validState != null">`valid_state` = #{validState},</if>
+            <if test="receivingTime != null">`receiving_time` = #{receivingTime},</if>
+            <if test="paymentTime != null">`payment_time` = #{paymentTime},</if>
+            <if test="receivingRemarks != null">`receiving_remarks` = #{receivingRemarks},</if>
+            <if test="paymentRemarks != null">`payment_remarks` = #{paymentRemarks},</if>
+            <if test="billType != null">`bill_type` = #{billType},</if>
+            <if test="creditNumber != null">`credit_number` = #{creditNumber},</if>
+            <if test="applicationTime != null">`application_time` = #{applicationTime},</if>
+            <if test="creditAmount != null">`credit_amount` = #{creditAmount},</if>
+            <if test="auditStatus != null">`audit_status` = #{auditStatus},</if>
+            <if test="auditOpinion != null">`audit_opinion` = #{auditOpinion},</if>
+            <if test="repeatOrder != null">`repeat_order` = #{repeatOrder},</if>
+            <if test="finalPayee != null">`final_payee` = #{finalPayee},</if>
+            <if test="finalPayeeId != null">`final_payee_id` = #{finalPayeeId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM bill WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM bill WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--应收账单-->
+    <select id="queryListReceive" resultType="com.wzlue.chain.bill.entity.BillEntity">
+        SELECT * FROM bill
+        <where>
+            `bill_type` = 0 AND `repeat_order` IS NULL
+            <if test="companyId != null">
+                AND `payee_id` = #{companyId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotalReceive" resultType="int">
+        SELECT count(*) FROM bill
+        <where>
+            `bill_type` = 0 AND `repeat_order` IS NULL
+            <if test="companyId != null and companyId != ''">
+                AND `payee_id` = #{companyId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--应付账单-->
+    <select id="queryListPay" resultType="com.wzlue.chain.bill.entity.BillEntity">
+        SELECT * FROM bill
+        <where>
+            `bill_type` = 0
+            <if test="companyId != null and companyId != ''">
+                AND `payer_id` = #{companyId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotalPay" resultType="int">
+        SELECT count(*) FROM bill
+        <where>
+            `bill_type` = 0
+            <if test="companyId != null and companyId != ''">
+                AND `payer_id` = #{companyId}
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                AND `contract_number` LIKE concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--账期账单-->
+    <select id="queryCreditList" resultType="com.wzlue.chain.bill.entity.BillEntity">
+        SELECT * FROM bill
+        <where>
+            `bill_type` = 1
+            <if test="companyId != null and companyId != ''">
+                AND `payer_id` = #{companyId}
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+            <if test="finalPayee != null and finalPayee.trim() != ''">
+                AND `final_payee` LIKE concat('%',#{finalPayee},'%')
+            </if>
+            <if test="payer != null and payer.trim() != ''">
+                AND `payer` LIKE concat('%',#{payer},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryCreditTotal" resultType="int">
+        SELECT count(*) FROM bill
+        <where>
+            `bill_type` = 1
+            <if test="companyId != null and companyId != ''">
+                AND `payer_id` = #{companyId}
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                AND `order_number` LIKE concat('%',#{orderNumber},'%')
+            </if>
+            <if test="finalPayee != null and finalPayee.trim() != ''">
+                AND `final_payee` LIKE concat('%',#{finalPayee},'%')
+            </if>
+            <if test="payer != null and payer.trim() != ''">
+                AND `payer` LIKE concat('%',#{payer},'%')
+            </if>
+        </where>
+    </select>
+
+
+    <!--根据订单号 以及平台公司id 查询商家账单-->
+    <select id="queryByOrderNumberAndPayerId" resultMap="billMap">
+        SELECT * FROM bill WHERE `order_number` = #{orderNumber} AND `payer_id` != #{payerId} AND `bill_type` = 0
+    </select>
+
+    <select id="queryByOrderNumber" resultMap="billMap">
+        SELECT * FROM bill WHERE `order_number` = #{orderNumber} AND `bill_type` = 0 AND `repeat_order` IS NULL
+    </select>
+
+    <select id="queryByOrder" resultMap="billMap">
+        SELECT * FROM bill WHERE `order_number` = #{orderNumber}
+    </select>
+
+    <!--更改款项记录对应的账单金额-->
+    <update id="updateList" parameterType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        <foreach collection="list" separator=";" item="item">
+            UPDATE bill
+            <set>
+                <if test="item.amount != null and item.amount != 0">
+                    `amount_receivable` = `amount_receivable` + #{item.amount},
+                    `amount_payable` = `amount_payable` + #{item.amount},
+                    `remaining_amount_receivable` = `remaining_amount_receivable` + #{item.amount},
+                    `remaining_amount_payable` = `remaining_amount_payable` + #{item.amount},
+                    `receivable_status` = 0,
+                    `payable_status` = 0,
+                </if>
+                `update_time` = NOW()
+            </set>
+            WHERE id = #{item.billId}
+        </foreach>
+    </update>
+
+    <!--更改付款方id-->
+    <update id="updatePayerId" parameterType="com.wzlue.chain.bill.entity.BillEntity">
+        UPDATE bill SET payer_id = #{payerId} WHERE `order_number` = #{orderNumber}
+    </update>
+
+
+</mapper>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>收货地址</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <!--<link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.1.0/css/bootstrap.min.css">-->
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/fileinput/css/fileinput.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div class="page-header">
+        <h3>{{$t('ReceivingAddress')}}</h3>
+    </div>
+    <p class="text-right">
+        <button class="btn btn-primary" @click="showModal"><i class="fa fa-plus"></i>&nbsp;{{$t('NewHarvestAddress')}}
+        </button>
+    </p>
+    <div class="w-90">
+        <template v-for="(item,key,index) in addressList">
+            <div class="panel panel-default">
+                <div class="panel-heading"><!--{{item.addresshear}}--> &nbsp;
+                    <span class="pull-right">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"
+                            @click="deladdress(item)"><span aria-hidden="true">&times;</span></button>
+                </span>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label col-sm-4">{{$t('Addressee')}}：</label>
+                                <div class="col-sm-8">
+                                    <!--<input type="text" class="form-control"/>-->
+                                    {{item.consignee}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label col-sm-4">{{$t('MobilePhoneNo')}}：</label>
+                                <div class="col-sm-8">
+                                    <!--<input type="text" class="form-control"/>-->
+                                    {{item.phonenumber}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label col-sm-4">{{$t('area')}}：</label>
+                                <div class="col-sm-8">
+                                    &lt;!&ndash;<input type="text" class="form-control"/>&ndash;&gt;
+                                    {{item.region}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>-->
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label col-sm-4">{{$t('Area')}}：</label>
+                                <div class="col-sm-8">
+                                    <!--<input type="text" class="form-control"/>-->
+                                    {{item.detailedaddress}} &nbsp; {{item.specificaddress}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <div class="form-group">
+                                <label class="control-label col-sm-4">{{$t('ZipCode')}}：</label>
+                                <div class="col-sm-8">
+                                    <!--<input type="text" class="form-control"/>-->
+                                    {{item.zipcode}}
+                                </div>
+
+                                <div class="pull-right">
+                                    <button type="button" class="btn btn-warning" @click="editItem(item)"><i
+                                            class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('NewAddress')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="addValidata">
+                        <!--<div class="form-group row">
+                            <label class="col-sm-2 control-form" for="addresshear">{{$t('title')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class=" form-control" id="addresshear" name="addresshear"
+                                       :placeholder="$t('PleaseEnterTheTitleName')" v-model="receiving.addresshear">
+                            </div>
+                        </div>-->
+                        <div class="form-group row required">
+                            <label class="col-sm-2 control-label" for="consignee">{{$t('Addressee')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class=" form-control" id="consignee" name="consignee"
+                                       :placeholder="$t('PleaseInputRecipients')" v-model="receiving.consignee">
+                            </div>
+                        </div>
+                        <div class="form-group row required">
+                            <!--/{{$t('gdPhone')}}-->
+                            <label class="col-sm-2 control-label" for="phonenumber">{{$t('MobilePhoneNo')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="phonenumber" name="phonenumber"
+                                       :placeholder="$t('PleaseEnterYourPhoneNumber')" v-model="receiving.phonenumber" maxlength="11">
+                            </div>
+                        </div>
+                        <!--<div class="form-group row">
+                            <label class="col-sm-2 control-form" for="region">{{$t('area')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="region" name="region"
+                                       :placeholder="$t('PleaseInputArea')" v-model="receiving.region">
+                            </div>
+                        </div>-->
+                        <div class="form-group row required">
+                            <label class="col-sm-2 control-label" for="detailedaddress">{{$t('Area')}}</label>
+                            <div class="col-sm-8">
+                                <div id="detailedaddress" data-autoselect="3">
+                                    <select class="province col-sm-2 form-control"></select><!-- 省 -->
+                                    <select class="city col-sm-2 form-control"></select><!-- 市 -->
+                                    <select class="district col-sm-2 form-control"></select><!-- 区 -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label"></label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="detailedaddressinfo" name="specificaddress"
+                                       :placeholder="$t('PleaseInputDetailedAddress')"
+                                       v-model="receiving.specificaddress"/>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-2 control-label" for="zipcode">{{$t('ZipCode')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="zipcode" name="zipcode"
+                                       :placeholder="$t('PleaseInputTheZipCode')" v-model="receiving.zipcode">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" @click="close">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" v-if="!receiving.id"
+                            @click="validFromSuccess('addValidata')">{{$t('save')}}
+                    </button>
+                    <button type="button" class="btn btn-primary" v-else @click="validFromSuccess('addValidata')">
+                        {{$t('ToUpdate')}}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+
+<script src="../../plugins/distpicker/js/distpicker.min.js"></script>
+
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/fileinput/js/fileinput.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+</div>
+</body>
+<script type="text/javascript">
+
+
+    var addValidataFile = {
+        addresshear: {validators: {notEmpty: {message: '请输入标题'}, stringLength: {min: 1, max: 30, message: '长度小于30'}}},
+        consignee: {validators: {notEmpty: {message: '请输入收件人'}, stringLength: {min: 1, max: 20, message: '长度小于20'}}},
+        region: {validators: {notEmpty: {message: '请输入所在区域'}, stringLength: {min: 1, max: 30, message: '长度小于30'}}},
+        specificaddress: {
+            validators: {
+                notEmpty: {message: '请输入详细地址'},
+                stringLength: {min: 1, max: 30, message: '长度小于30'}
+            }
+        },
+        phonenumber: {
+            validators: {
+                notEmpty: {
+                    message: '请输入联系电话'
+                },
+                //正则校验
+                regexp: {
+                    // regexp: /^((0\d{2,3}-\d{7,8})|(^1[3456789]\d{9}))$/,
+                    regexp: /^1[3456789]\d{9}$/,
+                    message: '联系电话格式不正确'
+                }
+            }
+        },
+        zipcode: {
+            validators: {
+                // notEmpty: {
+                //     message: '请输入邮编'
+                // },
+                //正则校验
+                regexp: {
+                    regexp: /^[1-9]\d{5}(?!\d)$/,
+                    message: '邮编格式不正确'
+                }
+            }
+        }
+    };
+    var vm = new Vue({
+        el: '#rrapp',
+        i18n,
+        data: {
+            addressList: [],
+            receiving: {}
+        },
+        methods: {
+            showModal: function () {
+                if (vm.addressList.length == 10 || vm.addressList.length > 10) {
+                    alert("收货地址已达上限(10条）");
+                    return;
+                }else {
+                    $('#myModal').modal('show');
+                }
+            },
+            close: function () {
+                $('#myModal').modal('hide');
+                window.location.reload();
+            },
+            getList: function () {
+                $.get(baseURL + "company/receivingaddress/list", function (r) {
+                    vm.addressList = r.data;
+                });
+            },
+            validFromSuccess: function (el) {
+                var bl = $('#' + el + '').VF();//启用验证
+                if (!bl) {
+                    return;
+                }
+            },
+            editItem: function (item) {
+                vm.receiving = item;
+                $('#myModal').modal('show')
+            },
+            deladdress: function (item) {
+                confirm('确定要删除选中的记录？', function () {
+                    $.ajax({
+                        type: 'POST',
+                        url: baseURL + 'company/receivingaddress/delete',
+                        contentType: 'application/json',
+                        data: JSON.stringify([item.id]),
+                        success: function (obj) {
+                            if (obj.code == '0')
+                                alert('删除成功！', function () {
+                                    vm.getList();
+                                });
+                            else
+                                alert('删除失败！')
+                        },
+                        error: function (err) {
+                            alert(err);
+                        }
+                    })
+                });
+
+            },
+            saveOrUpdate: function () {
+                layer.load();
+                var url = baseURL + 'company/receivingaddress/save';
+                vm.receiving.detailedaddress = $('.province').val() + '-' + $('.city').val() + '-' + $('.district').val();
+                $.ajax({
+                    type: 'POST',
+                    url: url,
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.receiving),
+                    success: function (obj) {
+                        layer.closeAll();
+                        if (obj.code === 0)
+                            alert('保存成功！', function () {
+                                $('#myModal').modal('hide');
+                                vm.getList();
+                            });
+                        else alert(obj.msg);
+
+                    },
+                    error: function (error) {
+                        alert('保存错误！');
+                    }
+
+                })
+            }
+        },
+        created: function () {
+            this.getList()
+        }
+    });
+
+    $("#addValidata").FM({'fields': addValidataFile, "success": vm.saveOrUpdate});
+
+    $('#detailedaddress').distpicker({
+        placeholder: false,
+        autoSelect: true,
+        province: '--请选择--',
+        city: '--请选择--',
+        district: '--请选择--'
+    });
+
+    $('#myModal').on('hide.bs.modal', function (e) {
+        vm.receiving = {};
+        $('#addValidata').RF();
+    })
+</script>
+</html>

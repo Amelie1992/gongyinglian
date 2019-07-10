@@ -1,0 +1,327 @@
+
+package com.wzlue.chain.web.controller.agent;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import cn.hutool.core.util.StrUtil;
+import com.wzlue.chain.agent.entity.AgentOrderEntity;
+import com.wzlue.chain.agent.service.AgentOrderService;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.declare.service.DeclareOrderService;
+import com.wzlue.chain.logistics.service.LogisticsOrderService;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.order.service.GoodsOrderService;
+import org.apache.commons.lang.StringUtils;
+import org.apache.ibatis.annotations.ResultMap;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.service.ApiListing;
+
+
+/**
+ * 代理(订单)表
+ *
+ * @author
+ * @email
+ * @date 2018-08-30 15:40:41
+ */
+@RestController
+@RequestMapping("/agent/order")
+public class AgentOrderController extends AbstractController {
+    @Autowired
+    protected AgentOrderService agentOrderService;
+    @Autowired
+    private GoodsOrderService goodsOrderService;
+    @Autowired
+    private DeclareOrderService declareOrderService;
+    @Autowired
+    private LogisticsOrderService logisticsOrderService;
+    @Autowired
+    private BillService billService;
+
+    private static String[] orderGroup = {"代理订单", "货物订单", "报关订单", "物流订单"};
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        query.put("userId", getUserId());
+        List<AgentOrderEntity> agentOrderList = agentOrderService.pageList(query);
+        int total = agentOrderService.pageCount(query);
+
+        return R.page(agentOrderList, total);
+    }
+
+    /**
+     * 首页展示数据查询(订单成交统计)
+     * queryBy: year season month week days
+     * Params: Map
+     * dateType [日期类型]
+     * stime [区间开始时间]
+     * etime [..结束时间]
+     * itemList [X轴日期节点Array]
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj;
+        Long userId = getUserId();
+        map.put("userId", userId);
+
+        List<String> itemList = (List) map.get("itemList");
+
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<Map> agentOrder = agentOrderService.showList(map);
+        List<Map> goodsOrder = goodsOrderService.showList(map);
+        List<Map> declareOrder = declareOrderService.showList(map);
+        List<Map> logisticsOrder = logisticsOrderService.showList(map);
+
+        Map agentTemp;
+        Map goodsTemp;
+        Map declareTemp;
+        Map logisticsTemp;
+
+        List<Map> dataList = new ArrayList();
+        List<Map> dataList1 = new ArrayList();
+        List<Map> dataList2 = new ArrayList();
+        List<Map> dataList3 = new ArrayList();
+        /* 循环时期节点Array 空值处理 */
+        for (String item : itemList) {
+
+            agentTemp = new HashMap();
+            ergodicMap(agentOrder, agentTemp, item);
+            dataList.add(agentTemp);
+
+            goodsTemp = new HashMap();
+            ergodicMap(goodsOrder, goodsTemp, item);
+            dataList1.add(goodsTemp);
+
+            declareTemp = new HashMap();
+            ergodicMap(declareOrder, declareTemp, item);
+            dataList2.add(declareTemp);
+
+            logisticsTemp = new HashMap();
+            ergodicMap(logisticsOrder, logisticsTemp, item);
+            dataList3.add(logisticsTemp);
+        }
+
+        Obj = new HashMap();
+        Obj.put("name", "代理订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "货物订单");
+        Obj.put("data", dataList1);
+        list.add(Obj);
+        Obj = new HashMap();
+        Obj.put("name", "报关订单");
+        Obj.put("data", dataList2);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "物流订单");
+        Obj.put("data", dataList3);
+        list.add(Obj);
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    private void ergodicMap(List<Map> mapList, Map temp, String item) {
+        temp.put("time", item);
+        temp.put("data", null);
+        for (Map map : mapList) {
+            String val = (String) map.get("title");
+            if (val != null && val.equals(temp.get("time"))) {
+                temp.put("data", map.get("total"));
+            }
+        }
+    }
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+    @RequiresPermissions("agent:order:info")
+    public R info(@PathVariable("id") Long id) {
+        AgentOrderEntity agentOrder = agentOrderService.queryInfo(id);
+
+        return R.ok(agentOrder);
+    }
+
+    /**
+     * 保存 (客户)
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("agent:order:save")
+    public R save(@RequestBody AgentOrderEntity agentOrder) {
+        agentOrder.setCreateBy(getUserId());
+        agentOrder.setUpdateBy(getUserId());
+        agentOrderService.save(agentOrder);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改 (客户)
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("agent:order:update")
+    public R update(@RequestBody AgentOrderEntity agentOrder) {
+        agentOrder.setUpdateBy(getUserId());
+        agentOrderService.update(agentOrder);
+
+        return R.ok();
+    }
+
+    /**
+     * 确认接单 (商家)
+     */
+    @RequestMapping("/accept")
+    @RequiresPermissions("agent:order:update")
+    public R accept(@RequestBody AgentOrderEntity agentOrder) {
+        agentOrder.setUpdateBy(getUserId());
+        agentOrderService.accept(agentOrder);
+
+        if (StringUtils.isNotBlank(agentOrder.getOrderNumber())) {
+            BillEntity bill = new BillEntity();
+            bill.setOrderType(4);
+            bill.setOrderNumber(agentOrder.getOrderNumber());
+            billService.save(bill);
+        }
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("agent:order:delete")
+    public R delete(Long id) {
+        agentOrderService.updateDel(getUserId(), id, 6);
+        return R.ok();
+    }
+
+    /**
+     * 取消订单
+     */
+    @RequestMapping("/cancel")
+    @RequiresPermissions("agent:order:delete")
+    public R cancel(@RequestBody Map<String, Long> map) {
+        agentOrderService.updateDel(getUserId(), map.get("id"), map.get("flag").intValue());
+        return R.ok();
+    }
+
+
+    /**
+     * 通过订单号查询订单的商品信息
+     * 通过订单号 匹配 订单类型
+     * 通过类型 与订单号查询 商品信息
+     */
+    @RequestMapping("/getListByOrderNumber/{orderNumber}")
+    public R getListByOrderNumber(@PathVariable("orderNumber") String orderNumber) {
+
+        String orderType = orderNumber.substring(0, 4);
+        Map<String, Object> map = agentOrderService.getListByOrderNumber(orderNumber, orderType, getUserId());
+
+        return R.ok(map);
+    }
+
+    /**
+     * 改价
+     *
+     * @param map 主键,价格
+     * @return
+     */
+    @RequestMapping("/changePrice")
+    public R changePrice(@RequestBody Map<String, Object> map) {
+        agentOrderService.changePrice(map);
+
+        return R.ok();
+    }
+
+    /**
+     * 设置授权代理订单
+     * @param map
+     * @return
+     */
+    @RequestMapping("/setAgentAuthorize")
+    public R setAgentAuthorize(@RequestBody Map<String, Object> map) {
+        if (StrUtil.hasBlank((String) map.get("companyId")))
+            return R.error("授权公司错误");
+        if (StrUtil.hasBlank((String) map.get("orderNo")))
+            return R.error("授权订单号错误");
+        if (StrUtil.hasBlank((String) map.get("createBy")))
+            return R.error("授权人错误");
+
+        //授权支付
+        agentOrderService.setAgentAuthorize(map);
+        if(map.get("isPayment") != null){
+            BillEntity bill = new BillEntity();
+            bill.setOrderNumber((String) map.get("orderNo"));
+            bill.setPayerId(Integer.parseInt((String) map.get("companyId")));
+            billService.updatePayerId(bill);
+        }
+        return R.ok();
+    }
+
+    /**
+     * 取消授权代理订单
+     * @param map
+     * @return
+     */
+    @RequestMapping("/cavelAgentAuthorize")
+    public R cavelAgentAuthorize(@RequestBody Map<String, Object> map) {
+        if (StrUtil.hasBlank((String) map.get("companyId")))
+            return R.error("取消授权公司错误");
+        if (StrUtil.hasBlank((String) map.get("orderNo")))
+            return R.error("取消授权订单号错误");
+        if (StrUtil.hasBlank((String) map.get("orderStatus")))
+            return R.error("订单当前状态错误");
+
+        BillEntity bill = new BillEntity();
+        bill.setOrderNumber((String) map.get("orderNo"));
+        bill.setPayerId(Integer.parseInt(getUser().getCompanyId().toString()));
+        billService.updatePayerId(bill);
+
+        agentOrderService.cancelAgentAuthorize(map);
+        return R.ok();
+    }
+
+
+    /**
+     * 获取代理授权单
+     */
+    @RequestMapping("/getAgentAuthorize")
+    public R getAgentAuthorize(@RequestParam Map<String, Object> params) {
+        //先获取授权的订单号
+        List<String> orderNos = agentOrderService.getAgentAuthorize(getUser());
+        List<GoodsOrderEntity> goodsOrderList = null;
+        int total = 0;
+        if (null != orderNos && orderNos.size() > 0) {
+            params.put("delFlag", "1");
+            params.put("orderNos", orderNos);
+            Query query = new Query(params);
+            goodsOrderList = goodsOrderService.queryList(query);
+            total = goodsOrderService.queryTotal(query);
+        }
+        return R.page(goodsOrderList, total);
+    }
+}

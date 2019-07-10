@@ -1,0 +1,125 @@
+
+package com.wzlue.chain.web.controller.marketing;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity;
+import com.wzlue.chain.marketing.service.MarketAuctionCommodityService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import springfox.documentation.annotations.ApiIgnore;
+
+import com.wzlue.chain.marketing.entity.MarketAuctionEntity;
+import com.wzlue.chain.marketing.service.MarketAuctionService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 营销拍卖表
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-26 13:43:46
+ */
+@RestController
+@RequestMapping("/marketing/marketauction")
+@Api(value = "拍卖接口数据")
+public class MarketAuctionController extends AbstractController {
+    @Autowired
+    private MarketAuctionService marketAuctionService;
+    @Autowired
+    private MarketAuctionCommodityService marketAuctionCommodityService;
+
+    /**
+     * 列表
+     */
+    @GetMapping("/marketauctionList")
+    @ApiOperation(value = "拍卖列表接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "status", dataType = "int", value = "状态 0:上架,1:下架 2未上架  ", paramType = "query")
+    })
+    public R list(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<MarketAuctionEntity> marketAuctionList = marketAuctionService.queryList(query);
+        int total = marketAuctionService.queryTotal(query);
+
+        return R.page(marketAuctionList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @GetMapping("/marketauctionInfo")
+    @ApiOperation(value = "拍卖详情接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", dataType = "int", value = "拍卖id", paramType = "query")
+    })
+    public R info(@ApiIgnore @RequestParam Long id) {
+        MarketAuctionEntity marketAuction = marketAuctionService.queryObject(id);
+        Map<String, Object> map = new HashMap<>();
+        map.put("auctionId", id);
+        List<MarketAuctionCommodityEntity> marketAuctionCommodityEntityList = marketAuctionCommodityService.queryList(map);
+        R r = R.ok();
+        r.put("marketAuction", marketAuction);
+        r.put("marketAuctionCommodityList", marketAuctionCommodityEntityList);
+        return r;
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("marketing:marketauction:save")
+    public R save(@RequestBody MarketAuctionEntity marketAuction) {
+        SysUserEntity user = getUser();
+        marketAuction.setCreateBy(user.getUserId());
+        marketAuctionService.save(marketAuction);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("marketing:marketauction:update")
+    public R update(@RequestBody MarketAuctionEntity marketAuction) {
+        marketAuctionService.update(marketAuction);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("marketing:marketauction:delete")
+    public R delete(@RequestBody Long[] ids) {
+        marketAuctionService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+}

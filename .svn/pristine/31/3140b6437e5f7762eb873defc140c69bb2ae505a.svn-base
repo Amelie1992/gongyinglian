@@ -1,0 +1,490 @@
+var merchantUser = {
+    companyname: {validators: {notEmpty: {message: '请输入 公司名称'}, stringLength: {min: 1, max: 30, message: '长度小于30'}}},
+    companytype: {validators: {notEmpty: {message: '请选择 公司类型'}}},
+    'serviceType[]': {
+        validators: {
+            choice: {min: 1, message: '请勾选服务类型'}
+        }
+    },
+    unifiedsocialcreditcode: {validators: {notEmpty: {message: '请输入 统一社会信用代码'}, stringLength: {max: 18, message: '统一社会信用代码最大位18位'}}},
+    legalpersonname: {validators: {notEmpty: {message: '请输入 法人姓名'}}},
+    cardNo: {
+        validators: {
+            notEmpty: {
+                message: '身份证号码不能为空'
+            },
+            regexp: {
+                regexp: /^(^[1-9]\d{7}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}$)|(^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])((\d{4})|\d{3}[Xx])$)$/,
+                message: '身份证号码格式不正确，为15位和18位身份证号码！'
+            }
+        }
+    }, contact: {
+        message: '联系人验证失败',
+        validators: {
+            notEmpty: {
+                message: '联系人不能为空'
+            }, stringLength: {min: 1, max: 10, message: '长度小于10'}
+        },
+    },
+    bankaccount: {
+        validators: {
+            notEmpty: {
+                message: '银行账号不能为空'
+            },
+            //正则校验银行账号
+            regexp: {
+                regexp: /^([1-9]{1})(\d{15}|\d{16}|\d{18})$/,
+                message: '银行账号格式不正确'
+            }
+        }
+    }, address: {
+        message: '详细地址验证失败',
+        validators: {
+            notEmpty: {
+                message: '详细地址不能为空'
+            },
+        },
+    }, companylocation: {
+        message: '公司所在地验证失败',
+        validators: {
+            notEmpty: {
+                message: '公司所在地不能为空'
+            }, stringLength: {min: 1, max: 30, message: '长度小于30'}
+        },
+    },
+    mail: {
+        message: '邮箱验证失败',
+        validators: {
+            notEmpty: {
+                message: '邮箱不能为空'
+            },
+            regexp: {
+                regexp: /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/,
+                message: "邮箱格式不正确"
+            }
+        },
+    }, fixedtelephone: {
+        message: '固定电话验证失败',
+        validators: {
+            notEmpty: {
+                message: '固定电话不能为空'
+            }, regexp: {
+                regexp: /\d{3}-\d{8}|\d{4}-\d{7}/,
+                message: '固定电话格式不正确'
+            }
+        }
+    },
+    openingbank: {
+        validators: {
+            notEmpty: {
+                message: '开户行不能为空'
+            },
+            //正则表达式校验开户行
+            regexp: {
+                regexp: /^[\u2E80-\u9FFF]+$/,
+                message: '开户行格式不正确'
+            }
+        }
+    },
+    mobile: {
+        validators: {
+            notEmpty: {
+                message: '手机号码不能为空'
+            },
+            regexp: {
+                regexp: /^1[3456789]\d{9}$/,
+                message: '请输入正确的手机号码'
+            }
+        }
+    },
+    shopLogos: {validators: {notEmpty: {message: '请上传 公司Logo'}}},
+    businesslicense: {validators: {notEmpty: {message: '请上传 营业执照'}}},
+    foodbusinesslicense: {validators: {notEmpty: {message: '请上传 食品经营许可证'}}},
+    businessqualification: {validators: {notEmpty: {message: '请输入 营业资质'}}},
+};
+
+
+var vm = new Vue({
+    el: '#rrapp',
+    i18n,
+    data: {
+        tempImages: {
+            shopLogo: [],
+            businessLicense: [],
+            foodManagement: [],
+            businessOfGoods: [],
+            logisticsBusiness: [],
+            customsDeclaration: [],
+            warehousingBusiness: [],
+            agencyBusiness: [],
+            financialBusiness: [],
+            insuranceBusiness: [],
+            otherQualifications: []
+        },
+        company: {
+            serviceType: [],
+            imageEntityList: []
+        },
+        userEntity: {},
+        serviceTypeList: [],
+        shopLogoFile: [],
+        businessLicenseFile: [],
+        foodManagementFile: [],
+        businessOfGoodsFile: [],
+        logisticsBusinessFile: [],
+        customsDeclarationFile: [],
+        warehousingBusinessFile: [],
+        agencyBusinessFile: [],
+        financialBusinessFile: [],
+        insuranceBusinessFile: [],
+        otherQualificationsFile: [],
+        companyTypeOption: [],
+        files: []
+    },
+    methods: {
+        companyTypeLoad: function () { // 公司类型加载
+            $.get(baseURL + 'company/companytype/listall', function (obj) {
+                vm.companyTypeOption = [];
+                obj.data.forEach(function (item) {
+                    vm.companyTypeOption.push({value: item.id, label: item.typeName})
+                })
+            })
+        },
+
+        checkType: function (services, th) {
+
+            if (th == 1) {
+                vm.$refs.businessOfGoodsFile.destroy();
+                vm.$refs.businessOfGoodsFile.initFileInput();
+            } else if (th == 2) {
+                vm.$refs.logisticsBusinessFile.destroy();
+                vm.$refs.logisticsBusinessFile.initFileInput();
+            } else if (th == 3) {
+                vm.$refs.customsDeclarationFile.destroy();
+                vm.$refs.customsDeclarationFile.initFileInput();
+            } else if (th == 4) {
+                vm.$refs.warehousingBusinessFile.destroy();
+                vm.$refs.warehousingBusinessFile.initFileInput();
+            } else if (th == 5) {
+                vm.$refs.agencyBusinessFile.destroy();
+                vm.$refs.agencyBusinessFile.initFileInput();
+            } else if (th == 6) {
+                vm.$refs.financialBusinessFile.destroy();
+                vm.$refs.financialBusinessFile.initFileInput();
+            } else if (th == 7) {
+                vm.$refs.insuranceBusinessFile.destroy();
+                vm.$refs.insuranceBusinessFile.initFileInput();
+            } else if (th == 8) {
+                vm.$refs.otherQualificationsFile.destroy();
+                vm.$refs.otherQualificationsFile.initFileInput();
+            }
+        },
+
+        initshopLogobusinessLicensefoodManagement: function () { // 初始化 logo, 营业执照, 食品许可
+            vm.$refs.shopLogoFile.destroy();
+            vm.$refs.shopLogoFile.initFileInput();
+            vm.$refs.businessLicenseFile.destroy();
+            vm.$refs.businessLicenseFile.initFileInput();
+            vm.$refs.foodManagementFile.destroy();
+            vm.$refs.foodManagementFile.initFileInput();
+        },
+
+        initFileInput: function () {
+            vm.$nextTick(function () {
+                if ($.inArray(1, vm.company.serviceType) > -1) {
+                    vm.$refs.businessOfGoodsFile.destroy();
+                    vm.$refs.businessOfGoodsFile.initFileInput();
+                }
+                if ($.inArray(2, vm.company.serviceType) > -1) {
+                    vm.$refs.logisticsBusinessFile.destroy();
+                    vm.$refs.logisticsBusinessFile.initFileInput();
+                }
+                if ($.inArray(3, vm.company.serviceType) > -1) {
+                    vm.$refs.customsDeclarationFile.destroy();
+                    vm.$refs.customsDeclarationFile.initFileInput();
+                }
+                if ($.inArray(4, vm.company.serviceType) > -1) {
+                    vm.$refs.warehousingBusinessFile.destroy();
+                    vm.$refs.warehousingBusinessFile.initFileInput();
+                }
+                if ($.inArray(5, vm.company.serviceType) > -1) {
+                    vm.$refs.agencyBusinessFile.destroy();
+                    vm.$refs.agencyBusinessFile.initFileInput();
+                }
+                if ($.inArray(6, vm.company.serviceType) > -1) {
+                    vm.$refs.financialBusinessFile.destroy();
+                    vm.$refs.financialBusinessFile.initFileInput();
+                }
+                if ($.inArray(7, vm.company.serviceType) > -1) {
+                    vm.$refs.insuranceBusinessFile.destroy();
+                    vm.$refs.insuranceBusinessFile.initFileInput();
+                }
+                if ($.inArray(13, vm.company.serviceType) > -1) {
+                    vm.$refs.otherQualificationsFile.destroy();
+                    vm.$refs.otherQualificationsFile.initFileInput();
+                }
+            })
+        },
+        getDate: function () {
+
+            $.get(baseURL + 'company/merchantusers/getUserCompany', function (obj) {
+                if (obj.code == '0') {
+                    vm.initshopLogobusinessLicensefoodManagement();
+
+                    if (null != obj.data.company) {
+                        vm.company = obj.data.company;
+                        if (vm.company.imageEntityList != null && vm.company.imageEntityList.length > 0) {
+                            vm.company.imageEntityList.forEach(function (row, arr, idx) {
+                                if (row.code == '-1') {
+                                    vm.tempImages.shopLogo.push(row);
+                                } else if (row.code == '-2') {
+                                    vm.tempImages.businessLicense.push(row);
+                                } else if (row.code == '-3') {
+                                    vm.tempImages.foodManagement.push(row);
+                                } else if (row.code == '1') {
+                                    vm.tempImages.businessOfGoods.push(row);
+                                } else if (row.code == '2') {
+                                    vm.tempImages.logisticsBusiness.push(row);
+                                } else if (row.code == '3') {
+                                    vm.tempImages.customsDeclaration.push(row);
+                                } else if (row.code == '4') {
+                                    vm.tempImages.warehousingBusiness.push(row);
+                                } else if (row.code == '5') {
+                                    vm.tempImages.agencyBusiness.push(row);
+                                } else if (row.code == '6') {
+                                    vm.tempImages.financialBusiness.push(row);
+                                } else if (row.code == '7') {
+                                    vm.tempImages.insuranceBusiness.push(row);
+                                } else if (row.code == '13') {
+                                    vm.tempImages.otherQualifications.push(row);
+                                }
+
+                            });
+
+                            vm.setImages(vm.tempImages);
+                        } else {
+                            vm.setImages([]);
+                        }
+                    } else {
+                        vm.setImages([]);
+                    }
+                    if (obj.data.company != null) {
+                        var status = obj.data.company.auditStatus;
+                        // 审核中
+                        if ('0' == status) {
+                            msg("审核中...！");
+                        } else if ('3' == status) { // 审核不通过
+                            alert("审核不通过！请重新填写信息！");
+                        }
+                    }
+                }
+            })
+        },
+
+        setImages: function (arr) {
+            vm.company.shopLogos = arr.length == 0 ? [] : vm.tempImages.shopLogo;
+            vm.company.businessLicense = arr.length == 0 ? [] : vm.tempImages.businessLicense;
+            vm.company.foodManagement = arr.length == 0 ? [] : vm.tempImages.foodManagement;
+            vm.company.businessOfGoods = arr.length == 0 ? [] : vm.tempImages.businessOfGoods;
+            vm.company.logisticsBusiness = arr.length == 0 ? [] : vm.tempImages.logisticsBusiness;
+            vm.company.customsDeclaration = arr.length == 0 ? [] : vm.tempImages.customsDeclaration;
+            vm.company.warehousingBusiness = arr.length == 0 ? [] : vm.tempImages.warehousingBusiness;
+            vm.company.agencyBusiness = arr.length == 0 ? [] : vm.tempImages.agencyBusiness;
+            vm.company.financialBusiness = arr.length == 0 ? [] : vm.tempImages.financialBusiness;
+            vm.company.insuranceBusiness = arr.length == 0 ? [] : vm.tempImages.insuranceBusiness;
+            vm.company.otherQualifications = arr.length == 0 ? [] : vm.tempImages.otherQualifications;
+
+
+            vm.shopLogoFile = arr.length == 0 ? [] : vm.tempImages.shopLogo;
+            vm.businessLicenseFile = arr.length == 0 ? [] : vm.tempImages.businessLicense;
+            vm.foodManagementFile = arr.length == 0 ? [] : vm.tempImages.foodManagement;
+            vm.businessOfGoodsFile = arr.length == 0 ? [] : vm.tempImages.businessOfGoods;
+            vm.logisticsBusinessFile = arr.length == 0 ? [] : vm.tempImages.logisticsBusiness;
+            vm.customsDeclarationFile = arr.length == 0 ? [] : vm.tempImages.customsDeclaration;
+            vm.warehousingBusinessFile = arr.length == 0 ? [] : vm.tempImages.warehousingBusiness;
+            vm.agencyBusinessFile = arr.length == 0 ? [] : vm.tempImages.agencyBusiness;
+            vm.financialBusinessFile = arr.length == 0 ? [] : vm.tempImages.financialBusiness;
+            vm.insuranceBusinessFile = arr.length == 0 ? [] : vm.tempImages.insuranceBusiness;
+            vm.otherQualificationsFile = arr.length == 0 ? [] : vm.tempImages.otherQualifications;
+            // vm.initFileInput();
+            vm.initshopLogobusinessLicensefoodManagement();
+        },
+        getServicetype: function () {
+            $.get(baseURL + 'company/servicetype/listCheckbox?sidx=id&order=asc', function (obj) {
+                vm.serviceTypeList = obj.data;
+                vm.$nextTick(function () {
+                    $("#merchantUser").FM({'fields': merchantUser, "success": vm.saveOrUpdate});
+                })
+            })
+        },
+        getMerchantUsers: function () {
+            $.get(baseURL + '', function (obj) {
+                vm.merchantUsers = obj;
+            })
+        },
+        validFromSuccess: function (el) {
+            var bl = $('#' + el + '').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        saveOrUpdate: function () {
+            // 验证文件
+            var isFile = vm.checkFile();
+            if (!isFile) return;
+            layer.load();
+            $.ajax({
+                type: 'POST',
+                url: baseURL + 'company/merchantusers/saveOrUpdate',
+                contentType: 'application/json',
+                data: JSON.stringify(vm.company),
+                success: function (obj) {
+                    layer.closeAll();
+                    if (obj.code == '') {
+                        alert('更新成功！', function () {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(obj.msg);
+                    }
+                }
+            });
+        },
+        returnObj: function (obj, code) {
+            obj.forEach(function (item, index) {
+                let file = {};
+                file.picName = item.picName;
+                file.picUrl = item.picUrl;
+                file.type = item.type;
+                file.code = code;
+                vm.company.imageEntityList.push(file);
+                file = {};
+            });
+
+        },
+        checkFile: function () {
+            vm.company.imageEntityList = [];
+            //必传：logo，营业执照，食品许可
+            if (JSON.stringify(vm.company.shopLogos) === '[]' && JSON.stringify(vm.shopLogoFile) === '[]') {
+                alert('请上传店铺LOGO！');
+                return false;
+            }
+
+            if (JSON.stringify(vm.company.businessLicense) === '[]' && JSON.stringify(vm.businessLicenseFile) === '[]') {
+                alert('请上传营业执照或身份证附件！');
+                return false;
+            }
+
+            /*if (JSON.stringify(vm.company.foodManagement) === '[]' && JSON.stringify(vm.foodManagementFile) === '[]') {
+                alert('请上传食品经营许可证！');
+                return false;
+            }*/
+
+            vm.returnObj(vm.shopLogoFile, '-1');
+            vm.returnObj(vm.businessLicenseFile, '-2');
+            vm.returnObj(vm.foodManagementFile, '-3');
+
+
+            //1："货物"; 2:"物流", 3:"报关", 4:"仓储", 5:"代理服务", 6:"金融", 7:"保险", 8:"其他"
+            var serverTypes = vm.company.serviceType;
+            // var temp = serverTypes.forEach(function (item, arr, idx) {
+            var temp = true;
+
+            for (var i = 0; i < serverTypes.length; i++) {
+
+                if (serverTypes[i] == '1') {
+                    if (JSON.stringify(vm.company.businessOfGoods) === '[]' && JSON.stringify(vm.businessOfGoodsFile) === '[]') {
+                        alert('请上传货物营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.businessOfGoodsFile, '1');
+                    continue;
+                }
+                if (serverTypes[i] == '2') {
+                    if (JSON.stringify(vm.company.logisticsBusiness) === '[]' && JSON.stringify(vm.logisticsBusinessFile) === '[]') {
+                        alert('请上传物流营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.logisticsBusinessFile, '2');
+                    continue;
+                }
+                if (serverTypes[i] == '3') {
+                    if (JSON.stringify(vm.company.customsDeclaration) === '[]' && JSON.stringify(vm.customsDeclarationFile) === '[]') {
+                        alert('请上传报关营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.customsDeclarationFile, '3');
+                    continue;
+                }
+                if (serverTypes[i] == '4') {
+                    if (JSON.stringify(vm.company.warehousingBusiness) === '[]' && JSON.stringify(vm.warehousingBusinessFile) === '[]') {
+                        alert('请上传仓储营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.warehousingBusinessFile, '4');
+                    continue;
+                }
+                if (serverTypes[i] == '5') {
+                    if (JSON.stringify(vm.company.agencyBusiness) === '[]' && JSON.stringify(vm.agencyBusinessFile) === '[]') {
+                        alert('请上传代理营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.agencyBusinessFile, '5');
+                    continue;
+                }
+                if (serverTypes[i] == '6') {
+                    if (JSON.stringify(vm.company.financialBusiness) === '[]' && JSON.stringify(vm.financialBusinessFile) === '[]') {
+                        alert('请上传金融营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.financialBusinessFile, '6');
+                    continue;
+                }
+                if (serverTypes[i] == '7') {
+                    if (JSON.stringify(vm.company.insuranceBusiness) === '[]' && JSON.stringify(vm.insuranceBusinessFile) === '[]') {
+                        alert('请上传保险营业资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.insuranceBusinessFile, '7');
+                    continue;
+                }
+                if (serverTypes[i] == '13') {
+                    if (JSON.stringify(vm.company.otherQualifications) === '[]' && JSON.stringify(vm.otherQualificationsFile) === '[]') {
+                        alert('请上传其他资质！');
+                        temp = false;
+                        break;
+                    }
+                    vm.returnObj(vm.otherQualificationsFile, '13');
+                    continue;
+                }
+            }
+
+            return temp;
+        },
+
+        alertInfo: function (obj, msg) {
+            var temp = {};
+
+
+        },
+
+        validate: function () {
+
+        },
+        reload: function () {
+            location.reload();
+        }
+    },
+    mounted: function () {
+        this.getServicetype();
+        this.companyTypeLoad();
+        this.getDate();
+    }
+});

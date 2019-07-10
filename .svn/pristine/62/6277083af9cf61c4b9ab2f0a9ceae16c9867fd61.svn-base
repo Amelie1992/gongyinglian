@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentOfferEntity" id="agentOfferMap">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="offerCode" column="offer_code"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="valuationUnit" column="valuation_unit"/>
+        <result property="unitName" column="unit_name"></result>
+        <result property="price" column="price"/>
+        <result property="currency" column="currency"/>
+        <result property="introduction" column="introduction"/>
+        <result property="offerStatus" column="offer_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="transactionNumber" column="transaction_number"/>
+        <result property="idSourceType" column="id_source_type"/>
+        <association property="merchantCompanyEntity" column="company_id" select="com.wzlue.chain.company.dao.MerchantCompanyDao.queryObjectOfEntity"/>
+        <collection property="business" column="id" select="com.wzlue.chain.agent.dao.AgentOfferBusinessDao.queryByOfferId"/>
+        <collection property="categorys" column="id" select="com.wzlue.chain.agent.dao.AgentOfferGoodsCategoryDao.queryByOfferId"/>
+    </resultMap>
+
+    <resultMap id="businessMap" type="com.wzlue.chain.agent.entity.AgentOfferBusinessEntity">
+        <id column="bus_id" property="id"/>
+        <result column="bus_offer_id" property="offerId"/>
+        <result column="bus_service_id" property="serviceId"/>
+        <result column="bus_service_name" property="serviceName"/>
+    </resultMap>
+
+    <resultMap id="categoryMap" type="com.wzlue.chain.agent.entity.AgentOfferGoodsCategoryEntity">
+        <id column="cate_id" property="id"/>
+        <result column="cate_category_id" property="categoryId"/>
+        <result column="cate_category_name" property="categoryName"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOfferEntity">
+		SELECT * FROM agent_offer WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOfferEntity">
+        SELECT * FROM agent_offer
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_offer
+	</select>
+
+    <select id="pageList" resultMap="agentOfferMap">
+        SELECT
+        offer.id,
+        offer.title,
+        offer.offer_code,
+        offer.contact_person,
+        offer.contact_phone,
+        offer.valuation_unit,
+        offer.price,
+        offer.currency,
+        offer.introduction,
+        offer.offer_status,
+        offer.create_by,
+        offer.create_time,
+        offer.update_by,
+        offer.update_time,
+        offer.dept_id,
+        offer.company_id,
+        offer.authorizes_id,
+        offer.transaction_time,
+        offer.transaction_number,
+        offer.id_source_type
+        FROM agent_offer offer
+        WHERE
+        1=1
+        <choose>
+            <when test="status == null">
+                AND offer.offer_status IN (0,1,2)
+            </when>
+            <otherwise>
+                AND offer.offer_status IN(1)
+            </otherwise>
+        </choose>
+
+        <if test="title!=null and title.trim() !=''">
+            AND offer.title LIKE CONCAT('%',#{title},'%')
+        </if>
+        <if test="offerCode !=null and offerCode.trim() !=''">
+            AND offer_code LIKE CONCAT('%',#{offerCode},'%')
+        </if>
+        <if test="serviceId != null and serviceId.trim()!=''">
+            AND bus.service_id = #{serviceId}
+        </if>
+        <if test="null != service and service.length > 0">
+            AND offer.id  IN (SELECT ab.offer_id FROM agent_offer_business ab WHERE ab.service_name IN
+
+            <foreach collection="service" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
+        </if>
+
+        ORDER By offer.offer_status ASC, offer.create_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+
+    </select>
+
+    <select id="queryInfo" resultMap="agentOfferMap">
+	SELECT
+		DISTINCT (offer.id) AS id,
+		offer.title,
+		offer.offer_code,
+		offer.contact_person,
+		offer.contact_phone,
+		offer.valuation_unit,
+		offer.price,
+		offer.currency,
+		offer.introduction,
+		offer.offer_status,
+		offer.create_by,
+		offer.create_time,
+		offer.update_by,
+		offer.update_time,
+		offer.dept_id,
+		offer.company_id,
+		offer.authorizes_id,
+		offer.transaction_time,
+		offer.transaction_number,
+		offer.id_source_type,
+		sd.name as unit_name
+	FROM agent_offer offer
+	LEFT JOIN sys_dict sd ON offer.valuation_unit = sd. CODE
+    AND sd.type = '货物重量单位'
+	WHERE 1=1
+	AND offer.id = #{id}
+
+	</select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(offer.id)
+        FROM agent_offer offer
+        WHERE
+        1=1
+        <choose>
+            <when test="status == null">
+                AND offer.offer_status IN (0,1,2)
+            </when>
+            <otherwise>
+                AND offer.offer_status IN(1)
+            </otherwise>
+        </choose>
+
+        <if test="title!=null and title.trim() !=''">
+            AND offer.title LIKE CONCAT('%',#{title},'%')
+        </if>
+        <if test="offerCode !=null and offerCode.trim() !=''">
+            AND offer_code LIKE CONCAT('%',#{offerCode},'%')
+        </if>
+        <if test="serviceId != null and serviceId.trim()!=''">
+            AND bus.service_id = #{serviceId}
+        </if>
+        <if test="null != service and service.length > 0">
+            AND offer.id  IN (SELECT ab.offer_id FROM agent_offer_business ab WHERE ab.service_name IN
+
+            <foreach collection="service" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
+        </if>
+
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOfferEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_offer
+		(
+			`title`,
+			`offer_code`,
+			`contact_person`,
+			`contact_phone`,
+			`valuation_unit`,
+			`price`,
+			`currency`,
+			`introduction`,
+			`offer_status`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`dept_id`,
+			`company_id`,
+			`authorizes_id`,
+			`transaction_time`,
+			`transaction_number`,
+			`id_source_type`
+		)
+		VALUES
+		(
+			#{title},
+			#{offerCode},
+			#{contactPerson},
+			#{contactPhone},
+			#{valuationUnit},
+			#{price},
+			#{currency},
+			#{introduction},
+			#{offerStatus},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{deptId},
+			#{companyId},
+			#{authorizesId},
+			#{transactionTime},
+			#{transactionNumber},
+			#{idSourceType}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOfferEntity">
+        UPDATE agent_offer
+        <set>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="offerCode != null">`offer_code` = #{offerCode},</if>
+            <if test="contactPerson != null">`contact_person` = #{contactPerson},</if>
+            <if test="contactPhone != null">`contact_phone` = #{contactPhone},</if>
+            <if test="valuationUnit != null">`valuation_unit` = #{valuationUnit},</if>
+            <if test="price != null">`price` = #{price},</if>
+            <if test="currency != null">`currency` = #{currency},</if>
+            <if test="introduction != null">`introduction` = #{introduction},</if>
+            <if test="offerStatus != null">`offer_status` = #{offerStatus},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="companyId!=null">`company_id` = #{companyId},</if>
+            <if test="authorizesId!=null">`authorizes_id` = #{authorizesId},</if>
+            <if test="transactionTime!=null">`transaction_time` = #{transactionTime},</if>
+            <if test="transactionNumber!=null">`transaction_number` = #{transactionNumber},</if>
+            <if test="idSourceType!=null">`id_source_type` = #{idSourceType}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM agent_offer WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM agent_offer WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateDel">
+		UPDATE agent_offer offer SET offer.offer_status = #{offerStatus}, offer.update_time = #{updateTime} WHERE offer.id = #{id}
+	</update>
+    <!--上架-->
+    <update id="shelf">
+		UPDATE agent_offer offer SET offer.offer_status = 1 WHERE offer.id = #{id}
+	</update>
+    <!--下架-->
+    <update id="obtained">
+		UPDATE agent_offer offer SET offer.offer_status = 2 WHERE offer.id = #{id}
+	</update>
+    <!--上架or下架-->
+    <update id="shelfOrobtained" parameterType="com.wzlue.chain.agent.entity.AgentOfferEntity">
+
+        <foreach collection="list" item="item" index="index" separator=";">
+            UPDATE agent_offer
+            <trim prefix="set" suffixOverrides=",">
+                <trim prefix="offer_status = ">
+
+                    <if test="item.offerStatus == 0">
+                        1
+                    </if>
+                    <if test="item.offerStatus == 1">
+                        2
+                    </if>
+                    <if test="item.offerStatus == 2">
+                        1
+                    </if>
+                </trim>
+            </trim>
+            <where>
+                <trim prefix="id = ">
+                    #{item.id}
+                </trim>
+            </where>
+        </foreach>
+    </update>
+
+    <update id="updatedAll">
+        UPDATE agent_offer SET offer_status = #{status}
+        WHERE id in
+        <foreach collection="agentOfferList" separator="," open="(" close=")" item="item">
+            #{item.id}
+        </foreach>
+
+    </update>
+    <update id="updateNumber">
+         UPDATE agent_offer SET  transaction_number = transaction_number + 1 WHERE id = #{id} AND transaction_number = #{transactionNumber}
+
+    </update>
+
+    <select id="getListByCompanyId" resultMap="agentOfferMap">
+		SELECT
+		    offer.id,
+			offer.title,
+			offer.offer_code,
+			offer.contact_person,
+			offer.contact_phone,
+			offer.valuation_unit,
+			offer.price,
+			offer.currency,
+			offer.introduction,
+			offer.offer_status,
+			offer.create_time,
+			offer.update_time,
+			offer.dept_id,
+			offer.company_id,
+			offer.transaction_time,
+			offer.transaction_number,
+			offer.id_source_type
+
+		FROM agent_offer offer
+
+		WHERE 1=1
+		AND offer.offer_status = 1
+		AND offer.company_id = #{id}
+	</select>
+</mapper>

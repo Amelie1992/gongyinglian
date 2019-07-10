@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.OfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.OfferEntity" id="offerMap">
+        <result property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="title" column="title"/>
+        <result property="phone" column="phone"/>
+        <result property="contact" column="contact"/>
+        <result property="price" column="price"/>
+        <result property="unit" column="unit"/>
+        <result property="storageName" column="storage_name"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="county" column="county"/>
+        <result property="area" column="area"/>
+        <result property="businessIntroduction" column="business_introduction"/>
+        <result property="status" column="status"/>
+        <result property="num" column="num"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.storage.entity.OfferEntity">
+		SELECT
+		a.*,
+		(select b.province from sys_provinces b WHERE b.provinceid=a.province) provinceName,
+        (select b.city from sys_cities b WHERE b.cityid=a.city) cityName,
+        (select b.area from sys_areas b WHERE b.areaid=a.county) countyName,
+		(select b.company_name from merchant_company b WHERE b.id=a.merchant_id) companyName,
+		(select b.credit_score from merchant_company b WHERE b.id=a.merchant_id) creditScore
+		FROM storage_offer a WHERE a.id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.storage.entity.OfferEntity">
+        SELECT
+        `id`,
+        `code`,
+        `title`,
+        `phone`,
+        `contact`,
+        `price`,
+        `unit`,
+        `storage_name`,
+        `province`,
+        `city`,
+        `county`,
+        `area`,
+        `business_introduction`,
+        `status`,
+        `num`,
+        `transaction_time`,
+        `merchant_id`,
+        `dept_id`,
+        `created_by`,
+        `created_time`,
+        `updated_by`,
+        `updated_time`,
+        `del_flag`,
+        (select b.company_name from merchant_company b WHERE b.id=a.merchant_id) companyName,
+        (select b.province from sys_provinces b WHERE b.provinceid=a.province) provinceName,
+        (select b.city from sys_cities b WHERE b.cityid=a.city) cityName,
+        (select b.area from sys_areas b WHERE b.areaid=a.county) countyName
+        FROM storage_offer a
+        <where>
+            del_flag=0
+            <if test="title!=null and title!=''">and title LIKE CONCAT('%',#{title},'%')</if>
+            <if test="contact!=null and contact!=''">and contact LIKE CONCAT('%',#{contact},'%')</if>
+            <if test="phone!=null and phone!=''">and phone LIKE CONCAT('%',#{phone},'%')</if>
+            <if test="province!=null and province!=''">and province=#{province}</if>
+            <if test="city!=null and city!=''">and city=#{city}</if>
+            <if test="county!=null and county!=''">and county=#{county}</if>
+            <if test="status!=null and status!=''">and status=#{status}</if>
+            <if test="merchantId!=null and merchantId!=''">and merchant_id=#{merchantId}</if>
+            <if test="companyName!=null and companyName.trim()!=''">
+                and merchant_id IN (select b.id from merchant_company b WHERE b.company_name LIKE CONCAT('%',#{companyName},'%'))
+            </if>
+            <if test="deptId!=null and deptId!=''">and dept_id=#{deptId}</if>
+            <if test="storageName!=null and storageName!=''">and storage_name LIKE CONCAT('%',#{storageName},'%')</if>
+        </where>
+        ORDER BY updated_time desc,created_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM storage_offer
+        <where>
+            del_flag=0
+            <if test="title!=null and title!=''">and title LIKE CONCAT('%',#{title},'%')</if>
+            <if test="contact!=null and contact!=''">and contact LIKE CONCAT('%',#{contact},'%')</if>
+            <if test="phone!=null and phone!=''">and phone LIKE CONCAT('%',#{phone},'%')</if>
+            <if test="province!=null and province!=''">and province=#{province}</if>
+            <if test="city!=null and city!=''">and city=#{city}</if>
+            <if test="county!=null and county!=''">and county=#{county}</if>
+            <if test="status!=null and status!=''">and status=#{status}</if>
+            <if test="merchantId!=null and merchantId!=''">and merchant_id=#{merchantId}</if>
+            <if test="companyName!=null and companyName.trim()!=''">
+                and merchant_id IN (select b.id from merchant_company b WHERE b.company_name LIKE CONCAT('%',#{companyName},'%'))
+            </if>
+            <if test="deptId!=null and deptId!=''">and dept_id=#{deptId}</if>
+            <if test="storageName!=null and storageName!=''">and storage_name LIKE CONCAT('%',#{storageName},'%')</if>
+        </where>
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.storage.entity.OfferEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_offer
+		(
+            `code`,
+            `title`,
+            `phone`,
+            `contact`,
+            `price`,
+            `unit`,
+            `storage_name`,
+            `province`,
+            `city`,
+            `county`,
+            `area`,
+            `business_introduction`,
+            `status`,
+            `num`,
+            `transaction_time`,
+            `merchant_id`,
+            `dept_id`,
+            `created_by`,
+            `created_time`,
+            `updated_by`,
+            `updated_time`,
+            `del_flag`
+		)
+		VALUES
+		(
+            #{code},
+            #{title},
+            #{phone},
+            #{contact},
+            #{price},
+            #{unit},
+            #{storageName},
+            #{province},
+            #{city},
+            #{county},
+            #{area},
+            #{businessIntroduction},
+            #{status},
+            #{num},
+            #{transactionTime},
+            #{merchantId},
+            #{deptId},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime},
+            #{delFlag}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.OfferEntity">
+        UPDATE storage_offer
+        <set>
+            <if test="code != null">`code` = #{code},</if>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="price != null">`price` = #{price},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="storageName != null">`storage_name` = #{storageName},</if>
+            <if test="province != null">`province` = #{province},</if>
+            <if test="city != null">`city` = #{city},</if>
+            <if test="county != null">`county` = #{county},</if>
+            <if test="area != null">`area` = #{area},</if>
+            <if test="businessIntroduction != null">`business_introduction` = #{businessIntroduction},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="num != null">`num` = #{num},</if>
+            <if test="transactionTime != null">`transaction_time` = #{transactionTime},</if>
+            <if test="merchantId != null">`merchant_id` = #{merchantId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createdBy != null">`created_by` = #{createdBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updatedBy != null">`updated_by` = #{updatedBy},</if>
+            <if test="updatedTime != null">`updated_time` = #{updatedTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateList" parameterType="java.util.List">
+        <foreach collection="list" separator=";" item="item">
+            UPDATE storage_offer SET status = #{item.status} WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+		UPDATE storage_offer SET del_flag=1 WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        UPDATE storage_offer SET del_flag=1
+        WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="checkCode" parameterType="com.wzlue.chain.storage.entity.OfferEntity" resultType="com.wzlue.chain.storage.entity.OfferEntity">
+        select * from storage_offer
+        WHERE `code` = #{code}
+    </select>
+
+    <update id="updateByOrderId">
+        UPDATE storage_offer a
+        LEFT JOIN storage_order_offer b on a.id=b.offer_id
+        SET a.num=IFNULL(a.num,0)+1,a.transaction_time=NOW()
+        WHERE b.order_id=#{id}
+    </update>
+
+    <update id="updateByOrderId2">
+        UPDATE storage_offer a
+        LEFT JOIN storage_order_offer b on a.id=b.offer_id
+        SET a.num=IFNULL(a.num,1)-1
+        WHERE b.order_id=#{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,358 @@
+
+package com.wzlue.chain.web.controller.order;
+
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import com.wzlue.chain.common.utils.DateUtils;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.contract.entity.GoodsContractEntity;
+import com.wzlue.chain.contract.service.GoodsContractService;
+import com.wzlue.chain.offer.dao.GoodsOfferDao;
+import com.wzlue.chain.offer.entity.GoodsOfferEntity;
+import com.wzlue.chain.offer.service.GoodsOfferService;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.order.service.GoodsOrderService;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+
+/**
+ * 货物订单表
+ *
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-08-15 19:47:29
+ */
+@RestController
+@RequestMapping("/order/goodsorder")
+@Api(value = "期货现货买入卖出")
+public class GoodsOrderController extends AbstractController {
+    @Autowired
+    private GoodsOrderService goodsOrderService;
+
+    @Autowired
+    private GoodsOfferService goodsOfferService;
+
+    @Autowired
+    private GoodsOfferDao goodsOfferDao;
+
+    @Autowired
+    private BillService billService;
+
+    @Autowired
+    private GoodsContractService goodsContractService;
+
+
+    /**
+     * 首页展示数据查询(订单成交统计)
+     * queryBy: year season month week days
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj = new HashMap(16);
+        List<Object> dataList = new ArrayList();
+        List<Map> goodsOrder = goodsOrderService.showList(map);
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<String> itemList = (List) map.get("itemList");
+        Map temp;
+        /* 循环时期节点Array 空值处理 */
+        for (String item : itemList) {
+            temp = new HashMap(16);
+            temp.put("time", item);
+            temp.put("data", null);
+            // 遍历对比数据库的日期节点,当节点有统计值则赋值,否则默认为null;
+            for (Map goodsData : goodsOrder) {
+                String val = (String) goodsData.get("title");
+                if (val.equals(temp.get("time"))) {
+                    temp.put("data", goodsData.get("total"));
+                }
+            }
+            dataList.add(temp);
+            //todo 循环其他订单的数据进行封装处理
+        }
+        Obj.put("name", "货物订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    /**
+     * 期货现货买入卖出列表
+     */
+    @GetMapping("/goodsOrderList")
+    @ApiOperation(value = "期货现货买入卖出列表接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "owner", dataType = "int", value = "owner（买入列表传）", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "purchaserCompanyId", dataType = "int", value = "购买者公司id（买入列表传）", paramType = "query"),
+            @ApiImplicitParam(name = "sellerId", dataType = "int", value = "商家id（卖出列表传）", paramType = "query"),
+            @ApiImplicitParam(name = "token", paramType = "header", value = "token", required = true, dataType = "string")
+    })
+    public R goodsOrderList(@ApiIgnore @RequestParam Map<String, Object> params) {
+        Query query = new Query(params);
+        List<GoodsOrderEntity> goodsOrderList = goodsOrderService.queryList(query);
+        int total = goodsOrderService.queryTotal(query);
+
+        return R.page(goodsOrderList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @GetMapping("/goodsOrderInfo")
+    @ApiOperation(value = "期货现货买入卖出详情接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "orderId", dataType = "int", value = "订单id", paramType = "query"),
+            @ApiImplicitParam(name = "token", paramType = "header", value = "token", required = true, dataType = "string")
+    })
+    public R goodsOrderInfo(@ApiIgnore @RequestParam Long orderId) {
+        GoodsOrderEntity goodsOrder = goodsOrderService.queryObject(orderId);
+        return R.page(goodsOrder, 1);
+    }
+
+    /**
+     * 保存
+     */
+    @PostMapping("/save")
+//    @RequiresPermissions("order:goodsorder:save")
+    @ApiOperation(value = "期货现货买入卖出新增接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R save(@RequestBody GoodsOrderEntity goodsOrder) {
+        goodsOrderService.save(goodsOrder);
+        return R.ok();
+    }
+
+    @PostMapping("/appSave")
+//    @RequiresPermissions("order:goodsorder:save")
+    public R appSave(@RequestBody GoodsOrderEntity goodsOrder) {
+       /* if("1".equals(goodsOrder.getIsAgent())){
+            //代理订单
+            goodsOrderService.saveAgentOrder(goodsOrder);
+        }else{*/
+        if (goodsOrder.getTransactionMode().equals(1)) {  //分期支付
+            Date prePickUpTime = goodsOrder.getPrePickUpTime();
+            Date currentDate = null;
+            try {
+                currentDate = new SimpleDateFormat("yyyy-MM-dd").parse(DateUtils.format(new Date()));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            if (prePickUpTime != null && currentDate != null && prePickUpTime.before(currentDate)) {
+                return R.error(1, "预提货时间不能小于当前时间!");
+            }
+        }
+        goodsOrderService.appSave(goodsOrder);
+        // }
+        return R.ok();
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/getReviewStatus")
+//    @RequiresPermissions("order:goodsorder:info")
+    public R getReviewStatus() {
+        boolean flag = goodsOrderService.getReviewStatus();
+        return R.ok().put("flag", flag);
+    }
+
+
+    /**
+     * 修改
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping("/update")
+//    @RequiresPermissions("order:goodsorder:update")
+    @ApiOperation(value = "期货现货买入卖出修改接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R update(@RequestBody GoodsOrderEntity goodsOrder) {
+        goodsOrderService.update(goodsOrder);
+        return R.ok();
+    }
+
+    /**
+     * 接单
+     */
+    @PostMapping("/updateStatus")
+//    @RequiresPermissions("order:goodsorder:update")
+    @ApiOperation(value = "期货现货买入卖出更改状态接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R updateStatus(@RequestBody GoodsOrderEntity goodsOrder) {
+        GoodsOrderEntity goodsOrderEntity = goodsOrderService.queryObject(goodsOrder.getOrderId());
+        goodsOrderEntity.setOrderStatus(goodsOrder.getOrderStatus());
+        goodsOrderService.updateStatus(goodsOrderEntity);
+        String tbp = "tbp";
+        if (tbp.equals(goodsOrder.getOrderStatus())) {
+            //更新历史交易数量
+//            for(int i = 0; i < goodsOrder.getDetail().size(); i++){
+//                GoodsOfferEntity goodsOffer = goodsOfferService.queryOfferByNumber(goodsOrder.getDetail().get(i).getOldGoodsNumber());
+//                if(goodsOffer.getGoodsTransactionCount() == null){
+//                    goodsOffer.setGoodsTransactionCount(0);
+//                }
+//                int count = goodsOffer.getGoodsTransactionCount();
+//                goodsOffer.setGoodsTransactionCount( count + 1);
+//                goodsOfferDao.update(goodsOffer);
+//            }
+
+            //生成账单
+            BillEntity bill = new BillEntity();
+            bill.setOrderNumber(goodsOrderEntity.getOrderNumber());
+            bill.setOrderType(1);
+            billService.save(bill);
+        }
+//        if(goodsOrder.getStatusCount() != null && "cto".equals(goodsOrder.getOrderStatus())){
+//            //订单取消，历史交易数量-1
+//            //更新历史交易数量
+//            for(int i = 0; i < goodsOrder.getDetail().size(); i++){
+//                GoodsOfferEntity goodsOffer = goodsOfferService.queryOfferByNumber(goodsOrder.getDetail().get(i).getOldGoodsNumber());
+//                if(goodsOffer.getGoodsTransactionCount() == null){
+//                    goodsOffer.setGoodsTransactionCount(0);
+//                }
+//                int count = goodsOffer.getGoodsTransactionCount();
+//                goodsOffer.setGoodsTransactionCount( count - 1);
+//                goodsOfferDao.update(goodsOffer);
+//            }
+//        }
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @PostMapping("/appUpdateStatus")
+//    @RequiresPermissions("order:goodsorder:update")
+    @ApiOperation(value = "期货现货买入卖出更改状态接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R appUpdateStatus(@RequestBody GoodsOrderEntity goodsOrder) {
+        String agreementId = goodsOrder.getAgreementId();
+        if (agreementId != null) {
+            List<GoodsContractEntity> contracts = goodsContractService.queryByContractNumber(agreementId);
+            if (contracts != null && contracts.size() > 0) {
+                return R.error(1,"该合同编号已存在");
+            }
+        }
+
+        GoodsOrderEntity goodsOrderEntity = goodsOrderService.queryObject(goodsOrder.getOrderId());
+        /* goodsOrderEntity.setDepot(goodsOrder.getDepot());*/
+        goodsOrderEntity.setAgreementId(goodsOrder.getAgreementId());
+        goodsOrderEntity.setSellerBankCard(goodsOrder.getSellerBankCard());
+        goodsOrderEntity.setOrderStatus(goodsOrder.getOrderStatus());
+        goodsOrderEntity.setStatusCount(1);
+        goodsOrderEntity.setPriceVersion(goodsOrderService.getPriceVersion(goodsOrder));
+
+        goodsOrderService.updateStatus(goodsOrderEntity);
+        String tbp = "tbp";
+        if (goodsOrderEntity.getStatusCount() != null && tbp.equals(goodsOrderEntity.getOrderStatus())) {
+            //生成账单
+            BillEntity bill = new BillEntity();
+            bill.setOrderNumber(goodsOrderEntity.getOrderNumber());
+            bill.setOrderType(1);
+            billService.save(bill);
+        }
+        return R.ok();
+    }
+
+
+    /**
+     * 删除
+     */
+    @PostMapping("/delete")
+//    @RequiresPermissions("order:goodsorder:delete")
+    @ApiOperation(value = "期货现货买入卖出删除接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R delete(@RequestBody Long[] orderIds) {
+        goodsOrderService.deleteBatch(orderIds);
+
+        return R.ok();
+    }
+
+    /**
+     * 查询订单状态
+     *
+     * @param orderIds
+     * @return
+     */
+    @RequestMapping("/searchStatus")
+//    @RequiresPermissions("order:goodsorder:searchStatus")
+    public R searchStatus(@RequestBody Long[] orderIds) {
+        List<GoodsOrderEntity> goodsOrder = goodsOrderService.searchStatus(orderIds);
+
+        return R.ok().put("goodsStatus", goodsOrder);
+    }
+
+    /**
+     * 通过货物订单号查询
+     *
+     * @param orderNumber
+     * @return
+     */
+    @GetMapping("/getListByOrderNumber/{orderNumber}")
+    @ApiOperation(value = "通过货物订单号查询货物订单")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R getListByOrderNumber(@PathVariable("orderNumber") String orderNumber) {
+
+        GoodsOrderEntity goodsOrderEntity = goodsOrderService.getListByOrderNumber(orderNumber);
+        if (goodsOrderEntity != null) {
+            //查询出是否为柜 为柜的计算重量
+            for (int i = 0; i < goodsOrderEntity.getDetail().size(); i++) {
+                Integer num = null;
+                if (goodsOrderEntity.getGoodsUnit().equals("1")) {//柜
+                    num = goodsOrderEntity.getDetail().get(i).getGoodsCount() * goodsOrderEntity.getOrderCount();
+                } else if (goodsOrderEntity.getGoodsUnit().equals("2") || goodsOrderEntity.getGoodsUnit().equals("3")) {//吨 千克
+                    num = goodsOrderEntity.getOrderCount();
+                }
+                goodsOrderEntity.getDetail().get(i).setGoodsCount(num);
+            }
+        }
+
+        return R.ok().put("good", goodsOrderEntity);
+    }
+
+    /**
+     * 获取报盘公司
+     *
+     * @param params
+     * @return
+     */
+    @GetMapping("/getMerchants")
+    @ApiOperation(value = "获取报盘公司列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "query", name = "goodsType", value = "货物类型", required = true, dataType = "string"),
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R getMerchants(@ApiIgnore @RequestParam Map<String, Object> params) {
+        List<MerchantCompanyEntity> merchantCompanyEntity = goodsOrderService.getMerchants(params);
+        return R.page(merchantCompanyEntity, merchantCompanyEntity.size());
+    }
+}

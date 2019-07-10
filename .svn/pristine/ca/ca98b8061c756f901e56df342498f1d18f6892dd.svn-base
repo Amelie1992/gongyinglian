@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>商品申请</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+
+</head>
+<body>
+<div id="bodyDiv" class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('goodsApply')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.goodsName" @keyup.enter="query" :placeholder="$t('inputGoodsName')" maxlength="20">
+                </div>
+                <div class="col-xs-2">
+                    <select class="form-control" data-width="auto" v-model="params.pendingStatus">
+                        <option value="">{{$t('AuditStatus')}}</option>
+                        <option value="1">{{$t('Unaudited')}}</option>
+                        <option value="2">{{$t('approved')}}</option>
+                        <option value="3">{{$t('AuditFailed')}}</option>
+                    </select>
+                </div>
+                <button class="btn btn-default m-left-5" @click="query"><i class = "fa fa-search"></i>&nbsp;{{$t('query')}}</button>
+                <button class="btn btn-primary m-left-5" @click="add"><i class="fa fa-floppy-o"></i>&nbsp;{{$t('added')}}</button>
+                <button class="btn btn-danger m-left-5" @click="del"> <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-group" style="margin-bottom: 0px;">
+            <div class="panel panel-default m-bottom-10">
+                <div class="panel-heading">
+                    <span>{{$t('CommodityInformation')}}</span>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" :model="itemApply" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('productName')}}</div>
+                                        <div class="col-sm-10">
+                                            <input type="text" name="itemName" class="form-control" v-model="itemApply.itemName" :placeholder="$t('productName')" :disabled="disenbled"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('Categories')}}</div>
+                                        <div class="col-sm-10">
+                                            <select class="form-control selectpicker selectCategoryCode"
+                                                    :placeholder="$t('PleaseChooseTheClassificationOfGoods')" :disabled= "disenbled">
+                                                    <option value="">请选择</option>
+                                                    <option value="1">猪肉</option>
+                                                    <option value="2">牛肉</option>
+                                                    <option value="3">羊肉</option>
+                                                    <option value="4">鸡肉</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('ValuationMethod')}}</div>
+                                        <div class="col-sm-10">
+                                            <select class="form-control selectpicker selectPricingMethod" v-model="itemApply.pricingMethod"
+                                                    :placeholder="$t('PleaseChooseThePricingMethod')" :disabled= "disenbled">
+                                                <option value="0">{{$t('PleaseChooseThePricingMethod')}}</option>
+                                                <option value="1">{{$t('FromPrice')}}</option>
+                                                <option value="2">{{$t('FromQuantity')}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('FactoryNumber')}}</div>
+                                        <div class="col-sm-10">
+                                            <input type="text" name="factoryNo" class="form-control" v-model="itemApply.factoryNo" :placeholder="$t('FactoryNumber')" :disabled="disenbled"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group" v-show="title=='审核'">
+                                        <div class="col-sm-2 control-label">{{$t('AuditStatus')}}</div>
+                                        <div class="col-sm-10">
+                                            <select class="form-control selectpicker selectPendingStatus" v-model="itemApply.pendingStatus" :placeholder="$t('PleaseSelectAuditStatus')">
+                                                <option value="2">{{$t('adopt')}}</option>
+                                                <option value="3">{{$t('fail')}}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group" v-show="title=='审核'">
+                                        <div class="col-sm-2 control-label">{{$t('ReviewNotes')}}</div>
+                                        <div class="col-sm-10">
+                                            <textarea name="pendingInfo" class="form-control" v-model="itemApply.pendingInfo" :placeholder="$t('ReviewNotes')" ></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel panel-default m-bottom-10">
+                <div class="panel-heading">
+                    <span>{{$t('InformationOfOrigin')}}</span>
+                    <span class="panel-title pull-right" v-if="title!='审核'">
+                        <button class="btn btn-primary btn-sm" @click="addPlace" v-show="addPlaceShow" style="padding-top: 3px;padding-bottom: 3px;">
+                            <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+                        </button>
+                    </span>
+                    <span class="panel-title pull-right" v-else>
+                    <button class="btn btn-primary btn-sm" @click="addPlace" id="addPlaceButton" style="padding-top: 3px;padding-bottom: 3px;" disabled="true">
+                        <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+                    </button></span>
+                </div>
+                <div class="panel-body">
+                    <table id="itemPlaceTab" class="table ">
+
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-border" style="height: 50px;">
+                    <form>
+                        <div class="col-lg-3">
+                            <div class="form-group col-lg-8 row" style="padding-bottom: 10px;">
+                                <!--<input type="button" class="btn btn-primary" @click="validate" value="确定"/>-->
+                                <input type="button" class="btn btn-primary m-left-10" @click="validate" :value="$t('sure')"/>
+                                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="returnReload()" :value="$t('return')"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<script src="../../plugins/select/js/select2.js"></script>
+
+<script src="../../js/common.js"></script>
+<script src="../../js/modules/goods/item_apply.js" ></script>
+<script type="text/javascript">
+    $(".selectpicker").select2({
+        allowClear: true,
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+    });
+</script>
+</body>
+</html>

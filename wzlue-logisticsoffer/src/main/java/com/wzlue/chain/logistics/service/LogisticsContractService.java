@@ -1,0 +1,36 @@
+package com.wzlue.chain.logistics.service;
+
+import com.wzlue.chain.logistics.entity.LogisticsContractEntity;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * (物流订单)合同信息表
+ * 
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-18 16:30:22
+ */
+public interface LogisticsContractService {
+	
+	LogisticsContractEntity queryObject(Long id);
+	
+	List<LogisticsContractEntity> queryList(Map<String, Object> map);
+	
+	int queryTotal(Map<String, Object> map);
+	
+	void save(LogisticsContractEntity logisticsContract);
+	
+	void update(LogisticsContractEntity logisticsContract);
+	
+	void delete(Long id);
+	
+	void deleteBatch(Long[] ids);
+
+    int checkName(String contractNumber);
+
+    LogisticsContractEntity checkCode(LogisticsContractEntity logisticsContract);
+
+    void setExpireDateByOrderId(Long id);
+}

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>商品分类</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+
+
+</head>
+<body>
+<div id="cateDiv" class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('productCategory')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+    </section>
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.categoryName" :placeholder="$t('PleaseInputCategoryNames')" maxlength="20"/>
+            </div>
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.taxNumber" :placeholder="$t('PleaseInputDuty')" maxlength="20"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button v-if="hasPermission('item:category:save')" class="btn btn-primary m-left-5"
+                    @click="add">
+                <i class="fa fa-floppy-o"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('item:category:delete')" class="btn btn-danger m-left-5" @click="del"> <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}</button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-8">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ClassificationName')}}</div>
+                                <div class="col-sm-10">
+                                   <!-- <input type="text" id="categoryName" name="categoryName" class="form-control" v-model="itemCategory.categoryName" :placeholder="$t('ClassificationName')"/>-->
+                                    <textarea type="text" id="categoryName" name="categoryName" class="form-control" v-model="itemCategory.categoryName"
+                                              :placeholder="$t('ClassificationName')"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('TaxNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="taxNumber" class="form-control" v-model="itemCategory.taxNumber" :placeholder="$t('TaxNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ValuationMethod')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control selectpicker selectPricingMethod" v-model="itemCategory.pricingMethod" name="pricingMethod"
+                                            :placeholder="$t('PleaseSelectTheStatusOfClassification')" >
+                                        <option value="1">{{$t('FromPrice')}}</option>
+                                        <option value="2">{{$t('FromQuantity')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ClassificationState')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control selectpicker selectNowStatus" v-model="itemCategory.nowStatus" name="nowStatus"
+                                            :placeholder="$t('PleaseSelectTheStatusOfClassification')" >
+                                        <option value="1">{{$t('Enable')}}</option>
+                                        <option value="2">{{$t('Discontinuation')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('CategoryParent')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control selectpicker selectParentId" v-model="itemCategory.parentId" name="parentId"
+                                            :placeholder="$t('PleaseSelectSuperiorClassification')" >
+                                        <template v-for="(item,key,idx) in categoryList">
+                                            <option v-bind:value="item.id">{{item.categoryName}}</option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="returnReload()" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+<script src="../../plugins/select/js/select2.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/goods/item_category.js"></script>
+<script type="text/javascript">
+    $(".selectpicker").select2({
+        allowClear: false,
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+    });
+</script>
+</body>
+</html>

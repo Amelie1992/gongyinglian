@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.OrderCostDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.OrderCostEntity" id="orderCostMap">
+        <result property="id" column="id"/>
+        <result property="outId" column="out_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="money1" column="money1"/>
+        <result property="money2" column="money2"/>
+        <result property="money3" column="money3"/>
+        <result property="money4" column="money4"/>
+        <result property="money5" column="money5"/>
+        <result property="money6" column="money6"/>
+        <result property="money7" column="money7"/>
+        <result property="money8" column="money8"/>
+        <result property="money9" column="money9"/>
+        <result property="money10" column="money10"/>
+        <result property="money11" column="money11"/>
+        <result property="money12" column="money12"/>
+        <result property="money13" column="money13"/>
+        <result property="money14" column="money14"/>
+        <result property="money15" column="money15"/>
+        <result property="money16" column="money16"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+		SELECT * FROM storage_order_cost WHERE id = #{value}
+	</select>
+
+    <select id="queryObjectByOrderId" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        SELECT * FROM storage_order_cost WHERE order_id = #{value}
+    </select>
+
+    <select id="queryObjectByOutId" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        SELECT * FROM storage_order_cost WHERE out_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        SELECT * FROM storage_order_cost
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM storage_order_cost
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.storage.entity.OrderCostEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_order_cost
+		(
+		    `out_id`,
+            `order_id`,
+            `order_number`,
+            `money1`,
+            `money2`,
+            `money3`,
+            `money4`,
+            `money5`,
+            `money6`,
+            `money7`,
+            `money8`,
+            `money9`,
+            `money10`,
+            `money11`,
+            `money12`,
+            `money13`,
+            `money14`,
+            `money15`,
+            `money16`,
+            `dept_id`,
+            `create_by`,
+            `created_time`,
+            `update_by`,
+            `update_time`
+		)
+		VALUES
+		(
+            #{outId},
+            #{orderId},
+            #{orderNumber},
+            #{money1},
+            #{money2},
+            #{money3},
+            #{money4},
+            #{money5},
+            #{money6},
+            #{money7},
+            #{money8},
+            #{money9},
+            #{money10},
+            #{money11},
+            #{money12},
+            #{money13},
+            #{money14},
+            #{money15},
+            #{money16},
+            #{deptId},
+            #{createBy},
+            #{createdTime},
+            #{updateBy},
+            #{updateTime}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        UPDATE storage_order_cost
+        <set>
+            <if test="outId != null">`out_id` = #{outId},</if>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="money1 != null">`money1` = #{money1},</if>
+            <if test="money2 != null">`money2` = #{money2},</if>
+            <if test="money3 != null">`money3` = #{money3},</if>
+            <if test="money4 != null">`money4` = #{money4},</if>
+            <if test="money5 != null">`money5` = #{money5},</if>
+            <if test="money6 != null">`money6` = #{money6},</if>
+            <if test="money7 != null">`money7` = #{money7},</if>
+            <if test="money8 != null">`money8` = #{money8},</if>
+            <if test="money9 != null">`money9` = #{money9},</if>
+            <if test="money10 != null">`money10` = #{money10},</if>
+            <if test="money11 != null">`money11` = #{money11},</if>
+            <if test="money12 != null">`money12` = #{money12},</if>
+            <if test="money13 != null">`money13` = #{money13},</if>
+            <if test="money14 != null">`money14` = #{money14},</if>
+            <if test="money15 != null">`money15` = #{money15},</if>
+            <if test="money16 != null">`money16` = #{money16},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM storage_order_cost WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM storage_order_cost WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="queryByOrderId" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        SELECT * FROM storage_order_cost WHERE order_id = #{orderId}
+    </select>
+
+    <select id="queryObjectByOrderNumberAndDate" resultType="com.wzlue.chain.storage.entity.OrderCostEntity">
+        SELECT * FROM storage_order_cost WHERE `order_number` = #{orderNumber}
+        AND DATE_FORMAT(created_time,'%Y-%m-%d') = #{date}
+    </select>
+
+
+</mapper>

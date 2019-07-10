@@ -1,0 +1,300 @@
+package com.wzlue.chain.company.service.impl;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.entity.MerchantCompanyServiceEntity;
+import com.wzlue.chain.company.entity.ServiceTypeEntity;
+import com.wzlue.chain.company.service.ServiceTypeService;
+import com.wzlue.chain.sys.dao.ImageDao;
+import com.wzlue.chain.sys.dao.SysRoleDao;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysRoleEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service("merchantUsersService")
+public class MerchantCompanyServiceImpl implements MerchantCompanyService {
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private ServiceTypeService serviceTypeService;
+    @Autowired
+    private ImageDao imageDao;
+    @Autowired
+    private SysRoleDao sysRoleDao;
+
+    @Override
+    public MerchantCompanyEntity queryObject(Integer id) {
+        return merchantCompanyDao.queryObject(id);
+    }
+
+    @Override
+    public MerchantCompanyEntity queryObject2(Integer id) {
+        return merchantCompanyDao.queryObject2(id);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> queryList(Map<String, Object> map) {
+        return merchantCompanyDao.queryList(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return merchantCompanyDao.queryTotal(map);
+    }
+
+    @Override
+    public void save(MerchantCompanyEntity merchantUsers) {
+        merchantCompanyDao.save(merchantUsers);
+    }
+
+    @Override
+    public void update(MerchantCompanyEntity merchantUsers) {
+        merchantCompanyDao.update(merchantUsers);
+    }
+
+    @Override
+    public void delete(Integer id) {
+        merchantCompanyDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Integer[] ids) {
+        merchantCompanyDao.deleteBatch(ids);
+    }
+
+    @Override
+    @Transactional
+    public void register(SysUserEntity user, MerchantCompanyEntity company) {
+        merchantCompanyDao.register(company);
+
+        //设置用户与公司的关联
+        sysUserDao.updateUserCompany(user.getUserId(), company.getId(), 1);
+
+        //设置公司与服务类型关联
+        List<ServiceTypeEntity> service = serviceTypeService.getById(company.getServiceType());
+        merchantCompanyService.saveCompanyServiceType(company.getId(), service);
+    }
+
+    private List<MerchantCompanyServiceEntity> companyTypeEntityList(Long companyId, List<Long> roleIdList) {
+        List<MerchantCompanyServiceEntity> merchantCompanyTypeEntityList = null;
+        if (null != roleIdList && roleIdList.size() > 0) {
+            merchantCompanyTypeEntityList = new ArrayList<MerchantCompanyServiceEntity>();
+            for (Long l : roleIdList) {
+                MerchantCompanyServiceEntity entity = new MerchantCompanyServiceEntity();
+                entity.setCompanyId(companyId);
+                entity.setServiceId(l);
+                merchantCompanyTypeEntityList.add(entity);
+            }
+        }
+        return merchantCompanyTypeEntityList;
+    }
+
+    @Override
+    public void saveCompanyServiceType(Long id, List<ServiceTypeEntity> service) {
+        merchantCompanyDao.saveCompanyServiceType(id, service);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> pageList(Map<String, Object> map) {
+        SysUserEntity sysUser = sysUserDao.queryObject(Long.valueOf(map.get("userId").toString()));
+
+        if (null != sysUser) {
+            map.put("companyId", sysUser.getCompanyId());
+        }
+        return merchantCompanyDao.pageList(map);
+    }
+
+    @Override
+    public int pageCount(Map<String, Object> map) {
+
+        SysUserEntity sysUser = sysUserDao.queryObject(Long.valueOf(map.get("userId").toString()));
+
+        if (null != sysUser) {
+            map.put("companyId", sysUser.getCompanyId());
+        }
+        return merchantCompanyDao.pageCount(map);
+    }
+
+    @Override
+    public MerchantCompanyEntity queryByUserId(Long userId) {
+        return merchantCompanyDao.queryByUserId(userId);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> queryByUserId2(Long userId) {
+        if (userId == 1) {
+            return merchantCompanyDao.queryAll();
+        } else {
+            List<MerchantCompanyEntity> list = new ArrayList<>();
+            list.add(merchantCompanyDao.queryByUserId(userId));
+            return list;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateServiceType(MerchantCompanyEntity merchantCompanyEntity) {
+        // 先删除服务
+        List<Long> serviceTypeList = merchantCompanyEntity.getServiceType();
+        if (null != serviceTypeList && serviceTypeList.size() > 0) {
+            merchantCompanyDao.deleteServiceType(merchantCompanyEntity);
+
+            // 重新添加服
+            List<ServiceTypeEntity> service = serviceTypeService.getById(merchantCompanyEntity.getServiceType());
+            merchantCompanyService.saveCompanyServiceType(merchantCompanyEntity.getId(), service);
+
+        }
+    }
+
+    @Override
+    public boolean updateCreditType(CreditType creditType, MerchantCompanyEntity companyEntity) {
+        return merchantCompanyDao.updateCreditType(creditType, companyEntity) > 0;
+    }
+
+    @Override
+    public MerchantCompanyEntity getInfoByUser(Long userId) {
+        return merchantCompanyDao.getInfoByUser(userId);
+    }
+
+    @Override
+    public List<SysUserEntity> queryCustomerServicebyCompanyId(String companyid) {
+
+        return merchantCompanyDao.queryCustomerServicebyCompanyId(companyid);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> queryCompanysForOutByCompanyId(Long companyId) {
+        return merchantCompanyDao.queryCompanysForOutByCompanyId(companyId);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> queryAgentofferCompany(Query query) {
+        return merchantCompanyDao.queryAgentofferCompany(query);
+    }
+
+    @Override
+    public int queryAgentofferCompanyCount(Query query) {
+        return merchantCompanyDao.queryAgentofferCompanyCount(query);
+    }
+
+    @Override
+    public boolean unsubscribe(Long id, String msg) {
+        return merchantCompanyDao.updateCompanyStatus("2", id, msg) >= 1;
+    }
+
+    @Override
+    public boolean auditpass(Long id, String msg) {
+        return merchantCompanyDao.updateCompanyStatus("1", id, msg) >= 1;
+    }
+
+    @Override
+    public boolean recovery(Long id) {
+        return merchantCompanyDao.updateCompanyStatus("1", id, "") >= 1;
+    }
+
+    @Override
+    @Transactional
+    public void saveOrUpdate(MerchantCompanyEntity merchantCompanyEntity, SysUserEntity userEntity) {
+        if ("3".equals(merchantCompanyEntity.getAuditStatus()))
+            merchantCompanyEntity.setAuditStatus("0");
+        // 保存更新公司
+        merchantCompanyDao.saveOrUpdate(merchantCompanyEntity);
+
+        // 设置用户与公司的关联
+        sysUserDao.updateUserCompany(userEntity.getUserId(), merchantCompanyEntity.getId(), 0);
+
+        // 更新服务类型
+        this.updateServiceType(merchantCompanyEntity);
+
+        // 先删除 再保存
+//        imageDao.deleteCreateBy(merchantCompanyEntity.getUserId() + "");  //删除了该公司的所有图片，包括报盘、求购的
+        imageDao.deleteByCreateByAndCode(merchantCompanyEntity.getUserId() + "");
+        List<ImageEntity> imgList;
+        if ((imgList = merchantCompanyEntity.getImageEntityList()) != null || imgList.size() > 0) {
+            boolean isLogo = false;
+            for (ImageEntity img : imgList) {
+                img.setCreateBy(merchantCompanyEntity.getUserId() + "");
+                img.setCreateDate(new Date());
+                if (img.getCode() == -1)
+                    isLogo = true;
+            }
+            // 没有logo 设置默认logo
+            if (!isLogo)
+                imgList.add(new ImageEntity() {{
+                    setCreateBy(merchantCompanyEntity.getUserId() + "");
+                    setCreateDate(new Date());
+                    setCode(-1);
+                    setType("image/png");
+                    setPicName("defaultLogo.png");
+                    setPicUrl("http://test-admin.suhangline.com/defaultLogo.png");
+                }});
+            imageDao.saveList(imgList);
+        }
+
+    }
+
+    @Override
+    public int getCompanyByNameCount(String companyName) {
+        return merchantCompanyDao.getCompanyBynameCount(companyName);
+    }
+
+    @Override
+    public void saveRole(SysRoleEntity role) {
+        sysRoleDao.save(role);
+    }
+
+    @Override
+    public boolean noauditpass(Long id, String msg) {
+        return merchantCompanyDao.updateCompanyStatus("3", id, msg) >= 1;
+    }
+
+    @Override
+    public List<MerchantCompanyServiceEntity> queryCompanyServiceByCompanyId(Long id) {
+        return merchantCompanyDao.queryCompanyServiceByCompanyId(id);
+    }
+
+
+//    @Override
+//    public  MerchantCompanyEntity getByCompanyName(String companyName){
+//        return merchantCompanyDao.getByCompanyName(companyName);
+//    }
+
+
+    @Override
+    public List<MerchantCompanyEntity> getCompanyByService(Map<String, Object> param) {
+        return merchantCompanyDao.getCompanyByService(param);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> getCompanys(int companyId) {
+        return merchantCompanyDao.getCompanys(companyId);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> getRecommendCompanyList(Map<String, Object> param) {
+        return merchantCompanyDao.getRecommendCompanyList(param);
+    }
+
+    @Override
+    public MerchantCompanyEntity getCompanyPass(SysUserEntity user) {
+        return merchantCompanyDao.getCompanyPass(user);
+    }
+}

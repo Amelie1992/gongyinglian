@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysUserDao">
+
+    <resultMap id="userMap" type="com.wzlue.chain.sys.entity.SysUserEntity">
+
+    </resultMap>
+
+    <sql id="fieldAll">
+        SELECT user_id, username,nikename, password, salt, email, mobile, status, create_user_id, create_time, business_id,
+        office_id, del_flag, department_id, company_id, type_id, customer_service, data_authorizes, header,company_id_backup
+    </sql>
+    <select id="queryObject" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        <include refid="fieldAll"/>,(SELECT email FROM employee WHERE user_id = #{value}) AS email2 from sys_user
+        where user_id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        <include refid="fieldAll"/>,
+        (SELECT c.company_name FROM merchant_company c WHERE c.id = u.company_id ) AS company_name,
+        (SELECT e.email FROM employee e WHERE e.user_id = u.user_id ) AS email2
+        from sys_user u
+        <where>
+            <if test="createUserId != null">
+                and u.`create_user_id` = #{createUserId}
+            </if>
+            <if test="username != null and username.trim() != ''">
+                and u.`username` like concat('%',#{username},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+            <otherwise>
+                order by u.user_id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*) from sys_user
+        <where>
+            <if test="createUserId != null">
+                and `create_user_id` = #{createUserId}
+            </if>
+            <if test="username != null and username.trim() != ''">
+                and `username` like concat('%',#{username},'%')
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询用户的所有权限 -->
+    <select id="queryAllPerms" resultType="string">
+		select m.perms from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+			LEFT JOIN sys_menu m on rm.menu_id = m.menu_id 
+		where ur.user_id = #{userId}
+	</select>
+    <!-- 查询用户的所有权限 -->
+    <select id="queryOne" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+		select * from sys_user ur
+		where ur.user_id = #{userId}
+	</select>
+
+    <select id="queryListNotPage" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        select a.*
+        from sys_user a
+        <where>
+            a.del_flag = 0
+            and a.status = 1
+            <if test="deptId != null and deptId != ''">
+                and a.office_id = #{deptId}
+            </if>
+            <if test="list != null">
+                and a.office_id in
+                <foreach item="userId" collection="list" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询用户的所有菜单ID -->
+    <select id="queryAllMenuId" resultType="long">
+		select distinct rm.menu_id from sys_user_role ur 
+			LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id 
+		where ur.user_id = #{userId}
+	</select>
+
+    <select id="queryByUserName" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        <include refid="fieldAll"/>
+        from sys_user where username = #{username}
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.sys.entity.SysUserEntity" useGeneratedKeys="true"
+            keyProperty="userId">
+        insert into sys_user
+        ( `user_id`, `username`,`nikename`, `password`, `salt`, `email`, `mobile`, `status`, `create_user_id`,
+        `create_time`, `business_id`, `department_id`, `company_id`, `type_id`, `data_authorizes`,`customer_service`
+        )
+        values
+        ( #{userId}, #{username},#{nikename}, #{password}, #{salt}, #{email}, #{mobile}, #{status}, #{createUserId},
+        #{createTime}, #{businessId}, #{departmentId}, #{companyId},
+        <choose>
+            <when test="typeId==null">0</when>
+            <otherwise>1</otherwise>
+        </choose>
+
+        ,#{dataAuthorizes},
+
+        <choose>
+            <when test="customerService == true">1</when>
+            <otherwise>0</otherwise>
+        </choose>
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.sys.entity.SysUserEntity">
+        update sys_user
+        <set>
+            <if test="username != null">`username` = #{username},</if>
+            <if test="nikename != null">`nikename` = #{nikename},</if>
+            <if test="password != null">`password` = #{password},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="mobile != null">`mobile` = #{mobile},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="businessId!=null">business_id = #{businessId}</if>
+            <if test="departmentId != null">department_id=#{departmentId}</if>
+        </set>
+        where user_id = #{userId}
+        <!--<if test="createUserId != null">
+            and `create_user_id` = #{createUserId}
+        </if>-->
+    </update>
+
+    <update id="updatePassword" parameterType="map">
+		update sys_user set `password` = #{newPassword} 
+			where user_id = #{userId} and password = #{password}
+	</update>
+
+    <update id="updatePasswordByUserName" parameterType="map">
+		update sys_user set `password` = #{newPassword}, `salt` = #{salt}
+			where username = #{userName}
+	</update>
+
+    <update id="updatePasswordByUserId" parameterType="map">
+		update sys_user set `password` = #{newPassword} where user_id = #{userId}
+	</update>
+
+    <!--删除公司号-->
+    <update id="updateUserCompany">
+        UPDATE sys_user SET company_id = null, type_id = #{typeId}, company_id_backup = #{companyId} WHERE user_id= #{userId}
+    </update>
+
+    <!--恢复公司号-->
+    <update id="updateUserCompany2">
+        UPDATE sys_user SET company_id = #{companyIdBackup}, type_id = #{typeId}, company_id_backup = null WHERE user_id= #{userId}
+    </update>
+
+    <delete id="deleteBatch">
+        delete from sys_user where user_id in
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        ;
+        delete from sys_user_role where user_id in
+        <foreach item="userId" collection="array" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+
+    <update id="updateDataAuthorizes" parameterType="com.wzlue.chain.sys.entity.SysUserEntity">
+        UPDATE sys_user SET data_authorizes = #{dataAuthorizes} WHERE user_id = #{userId}
+    </update>
+
+    <update id="updateCustomerServiceById">
+        UPDATE sys_user
+        <trim prefix="SET customer_service = ">
+            <choose>
+                <when test="customerService==true">
+                    1
+                </when>
+                <otherwise>
+                    0
+                </otherwise>
+            </choose>
+            <where>
+                user_id = #{userId}
+            </where>
+        </trim>
+    </update>
+
+    <update id="updateHeader">
+        UPDATE sys_user SET header = #{header} WHERE user_id = #{userId}
+    </update>
+</mapper>

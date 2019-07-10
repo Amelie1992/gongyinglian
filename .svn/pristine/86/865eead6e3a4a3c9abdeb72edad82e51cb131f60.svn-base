@@ -1,0 +1,184 @@
+package com.wzlue.chain.chatMsg.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+
+
+/**
+ * 
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-11 16:00:44
+ */
+public class ChatMessageEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//
+	private Integer id;
+	//消息ID
+	private String msgId;
+	//时间戳
+	private Date timestamp;
+	//
+	private String direction;
+	//接收人
+	private String toUser;
+	//发送人
+	private String fromUser;
+	//消息
+	private String msg;
+	//类型 1 groupchat 2 chat
+	private String type;
+	//图片路径
+	private String url;
+	//图片路径
+	private Integer textType;
+
+    //发送人店铺logo
+    private String fromPic;
+    //接受人店铺logo
+    private String toPic;
+
+    public String getFromPic() {
+        return fromPic;
+    }
+
+    public void setFromPic(String fromPic) {
+        this.fromPic = fromPic;
+    }
+
+    public String getToPic() {
+        return toPic;
+    }
+
+    public void setToPic(String toPic) {
+        this.toPic = toPic;
+    }
+
+    //商家id（用于查询商家客服使用）
+	private String companyId;
+	public String getCompanyId() {
+		return companyId;
+	}
+
+	public void setCompanyId(String companyId) {
+		this.companyId = companyId;
+	}
+	/**
+	 * 设置：
+	 */
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：
+	 */
+	public Integer getId() {
+		return id;
+	}
+	/**
+	 * 设置：消息ID
+	 */
+	public void setMsgId(String msgId) {
+		this.msgId = msgId;
+	}
+	/**
+	 * 获取：消息ID
+	 */
+	public String getMsgId() {
+		return msgId;
+	}
+	/**
+	 * 设置：时间戳
+	 */
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+	/**
+	 * 获取：时间戳
+	 */
+	public Date getTimestamp() {
+		return timestamp;
+	}
+	/**
+	 * 设置：
+	 */
+	public void setDirection(String direction) {
+		this.direction = direction;
+	}
+	/**
+	 * 获取：
+	 */
+	public String getDirection() {
+		return direction;
+	}
+	/**
+	 * 设置：接收人
+	 */
+	public void setToUser(String toUser) {
+		this.toUser = toUser;
+	}
+	/**
+	 * 获取：接收人
+	 */
+	public String getToUser() {
+		return toUser;
+	}
+	/**
+	 * 设置：发送人
+	 */
+	public void setFromUser(String fromUser) {
+		this.fromUser = fromUser;
+	}
+	/**
+	 * 获取：发送人
+	 */
+	public String getFromUser() {
+		return fromUser;
+	}
+	/**
+	 * 设置：消息
+	 */
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+	/**
+	 * 获取：消息
+	 */
+	public String getMsg() {
+		return msg;
+	}
+	/**
+	 * 设置：类型 1 groupchat 2 chat
+	 */
+	public void setType(String type) {
+		this.type = type;
+	}
+	/**
+	 * 获取：类型 1 groupchat 2 chat
+	 */
+	public String getType() {
+		return type;
+	}
+	/**
+	 * 设置：图片路径
+	 */
+	public void setUrl(String url) {
+		this.url = url;
+	}
+	/**
+	 * 获取：图片路径
+	 */
+	public String getUrl() {
+		return url;
+	}
+
+	public Integer getTextType() {
+		return textType;
+	}
+
+	public void setTextType(Integer textType) {
+		this.textType = textType;
+	}
+}

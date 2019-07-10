@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.ExchangeRateDao">
+    <!--根据自己的需求定义-->
+    <resultMap type="com.wzlue.chain.sys.entity.ExchangeRateEntity" id="exchangeRateEntity">
+        <result property="id" column="id"/>
+        <result property="price" column="price"/>
+        <result property="vrtName" column="vrt_name"/>
+        <result property="vrtEnName" column="vrt_en_name"/>
+    </resultMap>
+    <!--显示所有的货币名称-->
+    <select id="getList" parameterType="com.wzlue.chain.sys.entity.ExchangeRateEntity">
+        SELECT id, REPLACE(REPLACE(vrt_name,'/人民币',''),'人民币/','') AS '货币名称'
+        FROM exchange_rate
+    </select>
+    <!--显示所有的货币名称(英文)-->
+    <select id="getListEn" parameterType="com.wzlue.chain.sys.entity.ExchangeRateEntity">
+        SELECT id, REPLACE(REPLACE(vrt_en_name,'/CNY',''),'CNY/','') AS '货币名称(EN)'
+        FROM exchange_rate
+    </select>
+    <!--根据货币名找到汇率值-->
+    <select id="getPriceByName" parameterType="com.wzlue.chain.sys.entity.ExchangeRateEntity" resultType="com.wzlue.chain.sys.entity.ExchangeRateEntity">
+        SELECT *
+        FROM exchange_rate
+        <where>
+            <if test="vrtName!=''and vrtName!=null">
+                vrt_en_name LIKE '%${vrtName}%' OR vrt_name LIKE '%${vrtName}%'
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,161 @@
+
+package com.wzlue.chain.web.controller.bill;
+
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.wzlue.chain.bill.entity.CardInfo;
+import com.wzlue.chain.bill.entity.ResquestObj;
+import com.wzlue.chain.bill.entity.ValidateAndCacheCardInfo;
+
+import com.wzlue.chain.bill.utils.UnionpayUtils;
+import com.wzlue.chain.common.enums.CardType;
+
+import org.apache.http.HttpStatus;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.bill.entity.BankCardEntity;
+import com.wzlue.chain.bill.service.BankCardService;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 绑定银行卡
+ *
+ * @author
+ * @email
+ * @date 2018-09-14 17:46:21
+ */
+@RestController
+@RequestMapping("/bill/bankcard")
+public class BankCardController extends AbstractController {
+    @Autowired
+    private BankCardService bankCardService;
+
+    // 获取银行ico
+    private static String logoUrl = "https://apimg.alipay.com/combo.png?d=cashier&t=";
+    // 根据银行卡 卡号获取信息
+    private static String carUrl = "https://ccdcapi.alipay.com/validateAndCacheCardInfo.json?_input_charset=utf-8&cardNo=cardNumber&cardBinCheck=true";
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        query.put("createBy", getUserId());
+        List<BankCardEntity> bankCardList = bankCardService.queryList(query);
+        int total = bankCardService.queryTotal(query);
+
+        return R.page(bankCardList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+//    @RequiresPermissions("bill:bankcard:info")
+    public R info(@PathVariable("id") Integer id) {
+        BankCardEntity bankCard = bankCardService.queryObject(id);
+
+        return R.ok().put("bankCard", bankCard);
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+//    @RequiresPermissions("bill:bankcard:save")
+    public R save(@RequestBody BankCardEntity bankCard) {
+        // 验证 银行卡 卡号
+        ValidateAndCacheCardInfo validateAndCacheCardInfo = checkCardNo(bankCard.getCardNo());
+        if (null != validateAndCacheCardInfo && !validateAndCacheCardInfo.getValidated())
+            return R.error("银行卡错误！");
+        // 获取 银行卡 信息
+        JSONObject object = getCardInfo(bankCard.getCardNo());
+        String respCd  = object.getString("respCd");
+        String respMsg = object.getString("respMsg");
+
+
+        if (!"0000".equals(respCd)) return R.error(HttpStatus.SC_INTERNAL_SERVER_ERROR, respMsg);
+
+        CardInfo cardInfo = JSONObject.parseObject(object.getString("data"),CardInfo.class);
+
+        if (null == cardInfo) return R.error("银行卡添加错误");
+        // 保存 银行卡
+        bankCard.setCardName(cardInfo.getIssAbbr());
+        bankCard.setBankCode(validateAndCacheCardInfo.getBank());
+        bankCard.setCardType(validateAndCacheCardInfo.getCardType());
+        bankCard.setCardTypeName(CardType.getCardName(validateAndCacheCardInfo.getCardType()));
+        bankCard.setLogo("https://apimg.alipay.com/combo.png?d=cashier&t=" + validateAndCacheCardInfo.getBank());
+        bankCard.setCreateBy(getUser().getUserId().intValue());
+        bankCard.setCompanyId(getUser().getCompanyId().intValue());
+        bankCardService.save(bankCard);
+        return R.ok();
+    }
+
+    private ValidateAndCacheCardInfo checkCardNo(String cardNo) {
+
+        ValidateAndCacheCardInfo validateAndCacheCardInfo = UnionpayUtils.validateAndCacheCardInfo(cardNo);
+        return validateAndCacheCardInfo;
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+//    @RequiresPermissions("bill:bankcard:update")
+    public R update(@RequestBody BankCardEntity bankCard) {
+        bankCardService.update(bankCard);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+//    @RequiresPermissions("bill:bankcard:delete")
+    public R delete(@RequestBody Integer[] ids) {
+        bankCardService.deleteBatch(ids);
+
+
+        return R.ok();
+    }
+
+    @RequestMapping(value = "/queryBackCard", method = RequestMethod.GET)
+//    @RequiresPermissions("bill:bankcard:info")
+    public R queryBackCard(@RequestParam("cardNo") String cardNo) {
+
+        getCardInfo(cardNo);
+
+
+        return R.ok();
+    }
+
+    private static JSONObject getCardInfo(String cardNo) {
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = UnionpayUtils.getCardInfo(cardNo);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        } finally {
+
+            return jsonObject;
+        }
+    }
+
+}

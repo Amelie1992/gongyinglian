@@ -1,0 +1,292 @@
+package com.wzlue.chain.offer.service.impl;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.utils.DateUtils;
+import com.wzlue.chain.offer.dao.GoodsOfferCommodityDao;
+import com.wzlue.chain.offer.dao.GoodsOfferDao;
+import com.wzlue.chain.offer.entity.GoodsOfferCommodityEntity;
+import com.wzlue.chain.offer.entity.GoodsOfferEntity;
+import com.wzlue.chain.offer.service.GoodsOfferService;
+import com.wzlue.chain.promotion.entity.PromotionEntity;
+import com.wzlue.chain.promotion.service.PromotionService;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysDictEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.ImageService;
+import com.wzlue.chain.sys.service.SysDictService;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import io.swagger.models.auth.In;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+
+@Service("goodsOfferService")
+public class GoodsOfferServiceImpl implements GoodsOfferService {
+    @Autowired
+    private GoodsOfferDao goodsOfferDao;
+    @Autowired
+    private GoodsOfferCommodityDao goodsOfferCommodityDao;
+    @Autowired
+    private ImageService imageService;
+    @Autowired
+    private SysDictService dictService;
+    @Autowired
+    private PromotionService promotionService;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+
+
+    @Override
+    public GoodsOfferEntity queryObject(Long id) {
+        return goodsOfferDao.queryObject(id);
+    }
+
+    @Override
+    public List<GoodsOfferEntity> queryList(Map<String, Object> map) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        if (map.get("app") == null) {
+            if (map.get("companyId") == null) {
+                map.put("companyId", user.getCompanyId());
+            }
+        }
+        List<GoodsOfferEntity> offerId = null;
+        if (map.get("overallSearch") != null && map.get("overallSearch") != "") {
+            //通过模糊商品名，产地，厂号查询报盘id
+            offerId = goodsOfferDao.getOverallOfferId(map.get("overallSearch").toString());
+        }
+        //不用sql过滤，新增页面选择商家不需要sql过滤
+        List<GoodsOfferEntity> goodsOfferEntityList = goodsOfferDao.queryListBuy(map);
+       /* for (GoodsOfferEntity goodsOfferEntity : goodsOfferEntityList) {
+            if (goodsOfferEntity.getGoodsPromotionId() != null) {
+                Integer promotionId = Integer.valueOf(goodsOfferEntity.getGoodsPromotionId());
+                PromotionEntity promotion = promotionService.queryObject(promotionId);
+                Integer ruleType = promotion.getRuleType();
+                BigDecimal price = goodsOfferEntity.getGoodsPrice();
+                Date startTime = promotion.getStartTime();
+                Date endTime = promotion.getEndTime();
+                Date current = new Date();
+                boolean flag = DateUtils.belongCalendar(current, startTime, endTime);
+                if (flag == true) {
+                    if (ruleType == 0) {
+                        goodsOfferEntity.setGoodsPromotionPrice((price.multiply(new BigDecimal(promotion.getDiscountRate()))).toString());
+                    } else {
+                        goodsOfferEntity.setGoodsPromotionPrice(price.subtract(new BigDecimal(promotion.getDiscountPrice())).toString());
+                    }
+                } else {
+                    goodsOfferEntity.setGoodsPromotionPrice(goodsOfferEntity.getGoodsPrice().toString());
+                }
+            }
+        }*/
+        return goodsOfferEntityList;
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        if (map.get("app") == null) {
+            if (map.get("companyId") == null) {
+                map.put("companyId", user.getCompanyId());
+            }
+        }
+        return goodsOfferDao.queryListBuyTotal(map);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void save(GoodsOfferEntity goodsOffer) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        goodsOffer.setGoodsState(0);
+        goodsOffer.setCreateBy(user.getUserId().toString());
+        goodsOffer.setCreateTime(new Date());
+        goodsOffer.setModifyBy(Long.toString(user.getUserId()));
+        goodsOffer.setModifyTime(new Date());
+        Long dept = user.getDepartmentId();
+        if (dept != null) {
+            goodsOffer.setDeptId(user.getDepartmentId().intValue());
+        }
+        goodsOffer.setCompanyId(user.getCompanyId().intValue());
+        String numberGoods = sysNumberRuleService.getCodeNumber("number_goods_number");
+        goodsOffer.setGoodsNumber(numberGoods);
+        goodsOffer.setGoodsState(1);
+        //初始库存为报盘数量  历史交易数量为0
+        goodsOffer.setStock(Integer.valueOf(goodsOffer.getGoodsCount()));
+        goodsOffer.setGoodsTransactionCount(0);
+        goodsOfferDao.save(goodsOffer);
+        String goodsId = goodsOffer.getId();
+        List<GoodsOfferCommodityEntity> commoditys = goodsOffer.getCommoditys();
+        if (commoditys != null && commoditys.size() > 0) {
+            for (GoodsOfferCommodityEntity item : commoditys) {
+                item.setGoodsOfferId(goodsId);
+            }
+            goodsOfferCommodityDao.saveBatch(commoditys);
+        }
+        List<ImageEntity> images = goodsOffer.getImages();
+        List<SysDictEntity> dic = dictService.queryByType("image_type_goods");
+        for (ImageEntity image : images) {
+            image.setPicType(dic.get(0).getCode());
+            image.setCode(Integer.valueOf(goodsId));
+            image.setCreateBy(user.getUserId().toString());
+            image.setCreateDate(new Date());
+        }
+        imageService.saveList(images);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(GoodsOfferEntity goodsOffer) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        goodsOffer.setModifyBy(Long.toString(user.getUserId()));
+        goodsOffer.setModifyTime(new Date());
+        List<GoodsOfferCommodityEntity> commoditys = goodsOffer.getCommoditys();
+        if (commoditys != null && commoditys.size() > 0) {
+            for (GoodsOfferCommodityEntity item : commoditys) {
+                item.setGoodsOfferId(goodsOffer.getId());
+            }
+            goodsOfferCommodityDao.deleteOld(goodsOffer.getId());
+            goodsOfferCommodityDao.saveBatch(commoditys);
+        }
+        List<ImageEntity> images = goodsOffer.getImages();
+        List<SysDictEntity> dic = dictService.queryByType("image_type_goods");
+        Map<String, Object> params = new HashMap<>();
+        params.put("code", goodsOffer.getId());
+        params.put("picType", dic.get(0).getCode());
+        imageService.deleteByCode(params);
+        for (ImageEntity image : images) {
+            image.setPicType(dic.get(0).getCode());
+            image.setCode(Integer.parseInt(goodsOffer.getId()));
+            image.setCreateBy(user.getUserId().toString());
+            image.setCreateDate(new Date());
+        }
+        imageService.saveList(images);
+        //改报盘数连带改库存
+        GoodsOfferEntity offer = goodsOfferDao.queryObject(goodsOffer.getId());
+        if (!goodsOffer.getGoodsCount().equals(offer.getGoodsCount())) {//报盘数变了
+            if (offer.getGoodsTransactionCount() < Integer.valueOf(goodsOffer.getGoodsCount())) {
+                goodsOffer.setStock(Integer.valueOf(goodsOffer.getGoodsCount()) - offer.getGoodsTransactionCount());
+            } else {
+                goodsOffer.setStock(0);
+            }
+        }
+        goodsOfferDao.update(goodsOffer);
+    }
+
+    @Override
+    public void delete(Long id) {
+        goodsOfferDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        goodsOfferDao.deleteBatch(ids);
+    }
+
+    @Override
+    public void updateStatue(Map<String, Object> ids) {
+        goodsOfferDao.updateStatue(ids);
+    }
+
+    @Override
+    public List<GoodsOfferEntity> queryRecommendList(Map<String, Object> map) {
+
+        List<GoodsOfferEntity> goodsOfferEntityList = goodsOfferDao.queryRecommendList(map);
+        for (GoodsOfferEntity goodsOfferEntity : goodsOfferEntityList) {
+            if (goodsOfferEntity.getGoodsPromotionId() != null) {
+                Integer promotionId = Integer.valueOf(goodsOfferEntity.getGoodsPromotionId());
+                PromotionEntity promotion = promotionService.queryObject(promotionId);
+                Integer ruleType = promotion.getRuleType();
+                BigDecimal price = goodsOfferEntity.getGoodsPrice();
+                Date startTime = promotion.getStartTime();
+                Date endTime = promotion.getEndTime();
+                Date current = new Date();
+                boolean flag = DateUtils.belongCalendar(current, startTime, endTime);
+                if (flag == true) {
+                    if (ruleType == 0) {
+                        goodsOfferEntity.setGoodsPromotionPrice((price.multiply(new BigDecimal(promotion.getDiscountRate()))).toString());
+                    } else {
+                        goodsOfferEntity.setGoodsPromotionPrice(price.subtract(new BigDecimal(promotion.getDiscountPrice())).toString());
+                    }
+                } else {
+                    goodsOfferEntity.setGoodsPromotionPrice(goodsOfferEntity.getGoodsPrice().toString());
+                }
+            }
+        }
+        return goodsOfferEntityList;
+    }
+
+    @Override
+    public GoodsOfferEntity queryOfferByNumber(String number) {
+        return goodsOfferDao.queryOfferByNumber(number);
+    }
+
+    @Override
+    public List<Map<String, Object>> getHistoryPriceTrend(Map<String, Object> params) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date());
+        int afterDay = c.get(Calendar.DATE);
+        c.set(Calendar.DATE, afterDay);
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        String dayZero = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(c.getTime());
+        /*String dayZero = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(new Date());*/ //查当天之前（不含当天）的7天数据
+        params.put("date", dayZero);
+        List<Map<String, Object>> priceList;
+        if (params.get("goodsName") != null) {
+            priceList = goodsOfferDao.getHistoryPriceTrend(params);
+        } else {
+            priceList = goodsOfferDao.getMarketIndex(params);
+        }
+        //整合价格趋势
+        priceList = buildPriceList(priceList, Integer.parseInt((String) params.get("day")));
+        return priceList;
+    }
+
+    @Override
+    public List<String> getOfferId(Map<String, Object> params) {
+        return goodsOfferDao.getOfferId(params);
+    }
+
+    /**
+     * priceList数据库已有历史平均价，day历史天数
+     *
+     * @param priceList
+     * @param day
+     * @return
+     */
+    private List<Map<String, Object>> buildPriceList(List<Map<String, Object>> priceList, int day) {
+        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        Calendar c = Calendar.getInstance();
+        for (int i = day; i >= 1; i--) {
+            c.setTime(new Date());
+            int nowDate = c.get(Calendar.DATE);
+            Map<String, Object> priceMap = new HashMap<String, Object>();
+            c.add(Calendar.DATE, -i);
+            String now = new SimpleDateFormat("yyyy-MM-dd")
+                    .format(c.getTime());
+            // System.out.println(now);
+            for (Map<String, Object> map : priceList) {
+                if (now.equals(map.get("date"))) {
+                    priceMap.put("date", now);
+                    priceMap.put("price", map.get("price"));
+                }
+            }
+            if (priceMap.get("date") == null) {
+                priceMap.put("date", now);
+                priceMap.put("price", 0);
+
+            }
+            list.add(priceMap);
+
+        }
+        return list;
+    }
+
+}

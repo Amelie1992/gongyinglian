@@ -1,0 +1,169 @@
+
+package com.wzlue.chain.web.controller.declare;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.declare.entity.DeclareOfferEntity;
+import com.wzlue.chain.declare.service.DeclareOfferService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+
+
+/**
+ * 报关报盘信息
+ * 
+ * @author ÎºË¼Æë
+ * @email sunlightcs@gmail.com
+ * @date 2018-08-15 16:29:28
+ */
+@RestController
+@RequestMapping("/declare/declareoffer")
+public class DeclareOfferController extends AbstractController{
+	@Autowired
+	private DeclareOfferService declareOfferService;
+
+	/**
+	 * 列表
+	 */
+	@RequestMapping("/list")
+	public R list(@RequestParam Map<String, Object> params){
+		//查询列表数据
+        Query query = new Query(params);
+        SysUserEntity user = getUser();
+        /*if(user.getCompanyId()==null){
+            return R.page(null,0);
+        }*/
+        query.put("companyId",user.getCompanyId());
+		List<DeclareOfferEntity> declareOfferList = declareOfferService.queryList(query);
+		int total = declareOfferService.queryTotal(query);
+		
+		return R.page(declareOfferList,total);
+        //查询列表数据
+	}
+
+   /**
+     * 查询当前公司下 已上架的报盘商品
+     * queryByCompanyId
+     */
+    @RequestMapping("/queryByCompanyId")
+    public R queryByCompanyId(@RequestParam Map<String, Object> params) {
+        params.put("groundingState",0);
+        List<DeclareOfferEntity> list = declareOfferService.queryList1(params);
+
+        return R.ok().put("list", list);
+    }
+
+	/**
+	 * 信息
+	 */
+	@RequestMapping("/info/{id}")
+	@RequiresPermissions("declare:declareoffer:info")
+	public R info(@PathVariable("id") Integer id){
+		DeclareOfferEntity declareOffer = declareOfferService.queryObject(id);
+		
+    		return R.ok().put("declareOffer", declareOffer);
+	}
+	
+	/**
+	 * 保存
+	 */
+	@RequestMapping("/save")
+	@RequiresPermissions("declare:declareoffer:save")
+	public R save(@RequestBody DeclareOfferEntity declareOfferEntity){
+        SysUserEntity user = getUser();
+        Date date =new Date();
+        declareOfferEntity.setDeptId(null);//部门id
+        declareOfferEntity.setDelFlag(0);
+        declareOfferEntity.setCreateBy(Math.toIntExact(getUserId()));
+        declareOfferEntity.setUpdateBy(Math.toIntExact(getUserId()));
+        declareOfferEntity.setCreateTime(date);
+        declareOfferEntity.setUpdateTime(date);
+        R r =declareOfferService.save(declareOfferEntity);
+		return r;
+	}
+	
+	/**
+	 * 修改
+	 */
+	@RequestMapping("/update")
+	@RequiresPermissions("declare:declareoffer:update")
+	public R update(@RequestBody DeclareOfferEntity declareOffer){
+		declareOfferService.update(declareOffer);
+		
+		return R.ok();
+	}
+	
+	/**
+	 * 删除
+	 */
+	@RequestMapping("/delete")
+	@RequiresPermissions("declare:declareoffer:delete")
+	public R delete(@RequestBody Integer[] ids){
+		declareOfferService.deleteBatch(ids);
+		
+		return R.ok();
+	}
+
+    /**
+     * 上架
+     */
+    @RequestMapping("/offer")
+    @RequiresPermissions("declare:declareoffer:update")
+    public R offer(@RequestBody Integer[] ids){
+        Map<String, Object> map = new HashMap<>();
+        map.put("state",0);
+        map.put("ids",ids);
+        map.put("userId",getUserId());
+        declareOfferService.offer(map);
+        return R.ok();
+    }
+
+    /**
+     * 下架
+     */
+    @RequestMapping("/disOffer")
+    @RequiresPermissions("declare:declareoffer:update")
+    public R disOffer(@RequestBody Integer[] ids){
+        Map<String, Object> map = new HashMap<>();
+        map.put("state",1);
+        map.put("ids",ids);
+        map.put("userId",getUserId());
+        declareOfferService.disOfferOffer(map);
+        return R.ok();
+    }
+
+    /**
+     * 判断商品编码是否重复
+     */
+    @RequestMapping("/checkCode")
+    @RequiresPermissions("declare:declareoffer:info")
+    public R checkCode(@RequestBody DeclareOfferEntity declareOfferEntity){
+        int count=declareOfferService.checkCode(declareOfferEntity);
+        return R.ok().put("count",count);
+    }
+
+    /**
+     * 获取某企业下的报盘信息*/
+    @RequestMapping("/getCompanyList")
+    public R getCompanyList(Long id){
+        List<DeclareOfferEntity> list = declareOfferService.getListByCompanyId(id);
+        return R.ok().put("list",list);
+    }
+}

@@ -1,0 +1,240 @@
+$(function () {
+    //列表
+    vm.initTable();
+    //表单提交
+    $("form").FM({
+        fields: vm.fields,
+        success: vm.saveOrUpdate
+
+    })
+
+});
+
+function opFormatter(value, row, index) {
+    var op = '';
+    op += '<a id="btn_detail">查看详情</a>';
+    return op;
+};
+window.opEvent = {
+    'click #btn_detail': function (event, value, row, index) {
+        vm.showList = false;
+        vm.showSure = false;
+        vm.getInfo(row.id);
+
+    }
+}
+
+var vm = new Vue({
+    el: '#rrapp',
+    i18n,
+    data: {
+        ue: UE.getEditor('myEditor', {
+            initialFrameHeight: 440,
+        }),
+        showList: true,
+        showSure: true,//确认按钮影藏
+        title: null,
+        declareDemand: {},
+        params: {
+            name: '',
+        },
+//验证字段
+        fields: {
+            type: {
+                message: '报关分类验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '请选择报关分类'
+                    },
+                },
+            }, name: {
+                message: '名称验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '名称不能为空'
+                    },
+                    stringLength: {
+                        max: 20,
+                        message: '长度必须在20之内'
+                    }
+                },
+            }, goods: {
+                message: '货物验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '填写的货物不能为空'
+                    },
+                    stringLength: {
+                        max: 20,
+                        message: '长度必须在20之内'
+                    }
+                },
+            }, number: {
+                message: '重量验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '重量不能为空'
+                    },
+                    regexp: {
+                        regexp: /(^[1-9](\d{1,10})?(\.\d{1,2})?$)|(^0$)|(^\d\.\d{1,2}$)/,
+                        message: '重量的整数位最多11位，小数位最多2位'
+                    }
+                },
+            }, unit: {
+                message: '单位  1:吨验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '单位  1:吨不能为空'
+                    },
+                },
+            }, declareInfo: {
+                message: '报关描述验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '报关描述不能为空'
+                    },
+                },
+            }
+        }
+    },
+    methods: {
+        initTable: function () {
+            $("#table").BT({
+                url: baseURL + 'declare/declaredemand/list',
+                columns: [
+                    {checkbox: true},
+                    {
+                        title: vm.$t('DeclareType'), field: 'type', formatter: function (value, row, index) {
+                            if (value == 1) {
+                                return "进口报关"
+                            } else if (value == 2) {
+                                return "出口报关"
+                            }
+                        }
+                    },
+                    {title: vm.$t('title'), field: 'name'},
+                    {title: vm.$t('Goods'), field: 'goods'},
+                    {title: vm.$t('num'), field: 'number'},
+                    {
+                        title: vm.$t('unit'), field: 'unit', formatter: function (value, row, index) {
+                            var name = '';
+                            switch (value) {
+                                case '0' :
+                                    name = '吨';
+                                    break;
+                                case '1' :
+                                    name = '千克';
+                                    break;
+                                case '2' :
+                                    name = '柜';
+                                    break;
+                            }
+                            return name;
+                        }
+                    },
+                    {title: vm.$t('OrderTime'), field: 'createTime'},
+                    // {title: '报关描述', field: 'declareInfo'},
+                    {title: vm.$t('chaozuo'), formatter: opFormatter, events: opEvent}
+                ],
+                //条件查询
+                queryParams: vm.params
+            });
+        },
+        query: function () {
+            vm.reload();
+        },
+        add: function () {
+            vm.showList = false;
+            vm.showSure = true;
+            vm.title = "新增";
+            vm.declareDemand = {};
+            vm.ue.setContent("");
+        },
+        update: function (event) {
+            var id = getSelectedRowId("id");
+            if (id == null) {
+                return;
+            }
+            vm.showList = false;
+            vm.showSure = true;
+            vm.title = "修改";
+
+            vm.getInfo(id)
+        },
+        //表单验证
+        validate: function () {
+            var bl = $('form').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        saveOrUpdate: function (event) {
+            vm.declareDemand.declareInfo = UE.utils.unhtml(this.ue.getContent());
+            var url = vm.declareDemand.id == null ? "declare/declaredemand/save" : "declare/declaredemand/update";
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(vm.declareDemand),
+                success: function (r) {
+                    if (r.code === 0) {
+                        alert('操作成功', function (index) {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
+        del: function (event) {
+            var ids = getSelectedRowsId("id");
+            if (ids == null) {
+                return;
+            }
+
+            confirm('确定要删除选中的记录？', function () {
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "declare/declaredemand/delete",
+                    contentType: "application/json",
+                    data: JSON.stringify(ids),
+                    success: function (r) {
+                        if (r.code == 0) {
+                            alert('操作成功', function (index) {
+                                vm.reload();
+                            });
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
+        getInfo: function (id) {
+            $.get(baseURL + "declare/declaredemand/info/" + id, function (r) {
+                vm.declareDemand = r.declareDemand;
+                vm.ue.setContent(UE.utils.html(vm.declareDemand.declareInfo));
+
+            });
+        },
+        reload: function (event) {
+            vm.showList = true;
+            vm.title = "";
+            //刷新 如需条件查询common.js
+            $("#table").BTF5(vm.params);
+            $("form").RF();
+        }
+    },
+    watch: {
+        '$i18n.locale': function (value) {
+            if (value == 'en') {
+                $("#table").bootstrapTable.defaults.locale = "en-US";
+            } else {
+                $("#table").bootstrapTable.defaults.locale = "zh-CN";
+            }
+            $("#table").bootstrapTable("destroy");
+            this.initTable();
+        }
+    }
+});

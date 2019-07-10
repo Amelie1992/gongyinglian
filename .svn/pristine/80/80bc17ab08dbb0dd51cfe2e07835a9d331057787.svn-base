@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.order.dao.GoodsOrderDetailDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.order.entity.GoodsOrderDetailEntity" id="goodsOrderDetailMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="goodsNumber" column="goods_number"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="goodsPrice" column="goods_price"/>
+        <result property="oldGoodsNumber" column="old_goods_number"/>
+        <result property="goodsUnit" column="goods_unit"/>
+        <result property="unitName" column="unitName"/>
+        <result property="goodsCurrency" column="goods_currency"/>
+        <result property="goodsTotalPrice" column="goods_total_price"/>
+        <result property="goodsType" column="goods_type"/>
+        <result property="goodsImageUrl" column="goods_image_url"/>
+        <result property="goodsCount" column="goods_count"/>
+        <result property="goodsCsc" column="goods_csc"/>
+        <result property="priceUnit" column="price_unit"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <!--<collection property="commoditys" select="com.wzlue.chain.order.dao.GoodsOrderCommodityDao.queryList"-->
+                    <!--column="{goodsOfferId=goods_number}"></collection>-->
+    </resultMap>
+
+    <select id="queryObject" resultMap="goodsOrderDetailMap">
+		SELECT * FROM goods_order_detail WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="goodsOrderDetailMap" parameterType="map">
+        SELECT
+        T1.*, T2.`name` AS unitName
+        FROM
+        goods_order_detail T1
+        LEFT JOIN sys_dict T2 ON T1.goods_unit = T2.`code`
+        AND T2.type = '货物重量单位'
+        <where>
+            <if test="orderId != null and orderId != ''">
+                AND T1.order_id=#{orderId}
+            </if>
+            <if test="goodsName != null and goodsName != ''">
+                <bind name="goodsName" value="'%'+goodsName+'%'"/>
+                AND T1.goods_name like #{goodsName}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY T1.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM goods_order_detail
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.order.entity.GoodsOrderDetailEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_order_detail
+        (
+        `order_id`,
+        `goods_number`,
+        `goods_name`,
+        `goods_price`,
+        `goods_unit`,
+        `old_goods_number`,
+        `goods_currency`,
+        `goods_total_price`,
+        `goods_type`,
+        `goods_count`,
+        `goods_csc`,
+        `goods_image_url`,
+        `price_unit`,
+        `commodity_country`,
+        `commodity_factory_number`,
+        `commodity_packing`
+        )
+        VALUES
+        (
+        #{orderId},
+        #{goodsNumber},
+        #{goodsName},
+        #{goodsPrice},
+        #{goodsUnit},
+        #{oldGoodsNumber},
+        #{goodsCurrency},
+        #{goodsTotalPrice},
+        #{goodsType},
+        #{goodsCount},
+        #{goodsCsc},
+        #{goodsImageUrl},
+        #{priceUnit},
+        #{commodityCountry},
+        #{commodityFactoryNumber},
+        #{commodityPacking}
+        )
+    </insert>
+    <insert id="saveBatch" parameterType="list" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_order_detail
+        (
+        `order_id`,
+        `goods_number`,
+        `goods_name`,
+        `goods_price`,
+        `goods_unit`,
+        `old_goods_number`,
+        `goods_currency`,
+        `goods_total_price`,
+        `goods_type`,
+        `goods_count`,
+        `goods_csc`,
+        `goods_image_url`,
+        `price_unit`,
+        `commodity_country`,
+        `commodity_factory_number`,
+        `commodity_packing`
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.orderId},
+            #{item.goodsNumber},
+            #{item.goodsName},
+            #{item.goodsPrice},
+            #{item.goodsUnit},
+            #{item.oldGoodsNumber},
+            #{item.goodsCurrency},
+            #{item.goodsTotalPrice},
+            #{item.goodsType},
+            #{item.goodsCount},
+            #{item.goodsCsc},
+            #{item.goodsImageUrl},
+            #{item.priceUnit},
+            #{item.commodityCountry},
+            #{item.commodityFactoryNumber},
+            #{item.commodityPacking}
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.order.entity.GoodsOrderDetailEntity">
+        UPDATE goods_order_detail
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="goodsNumber != null">`goods_number` = #{goodsNumber},</if>
+            <if test="goodsName != null">`goods_name` = #{goodsName},</if>
+            <if test="goodsPrice != null">`goods_price` = #{goodsPrice},</if>
+            <if test="goodsUnit != null">`goods_unit` = #{goodsUnit},</if>
+            <if test="oldGoodsNumber != null">`old_goods_number` = #{oldGoodsNumber},</if>
+            <if test="goodsCurrency != null">`goods_currency` = #{goodsCurrency},</if>
+            <if test="goodsTotalPrice != null">`goods_total_price` = #{goodsTotalPrice},</if>
+            <if test="goodsType != null">`goods_type` = #{goodsType},</if>
+            <if test="goodsCount != null">`goods_count` = #{goodsCount},</if>
+            <if test="goodsCsc != null">`goods_csc` = #{goodsCsc},</if>
+            <if test="goodsImageUrl != null">`goods_image_url` = #{goodsImageUrl},</if>
+            <if test="priceUnit != null">`price_unit` = #{priceUnit},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="commodity_factory_number != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodity_packing != null">`commodity_packing` = #{commodityPacking}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_order_detail WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteByOrderId">
+		DELETE FROM goods_order_detail WHERE `order_id` = #{orderId}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_order_detail WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="listByOrderNumber" resultType="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity">
+        SELECT
+        a.goods_name,
+        a.goods_count,
+        a.goods_unit,
+        b.commodity_country,
+        b.commodity_factory_number factory_no
+        FROM
+        goods_order_detail a
+        LEFT JOIN goods_order_commodity b ON a.order_id = b.goods_order_number
+        <where>
+            <if test="orderNumber!=null and orderNumber!=''">
+                a.order_id = #{orderNumber}
+            </if>
+        </where>
+    </select>
+</mapper>

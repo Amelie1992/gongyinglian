@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.goods.dao.ItemPlaceApplyDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity" id="itemPlaceApplyMap">
+        <result property="id" column="id"/>
+        <result property="place" column="place"/>
+        <result property="goodApplyId" column="good_apply_id"/>
+        <result property="numerical" column="numerical"/>
+        <result property="tariff" column="tariff"/>
+        <result property="valueAddTariff" column="value_add_tariff"/>
+        <result property="additionDuty" column="addition_duty"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity">
+        SELECT * FROM item_place_apply WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity">
+        SELECT * FROM item_place_apply
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM item_place_apply
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity"  >
+        INSERT INTO item_place_apply
+        (
+        `place`,
+        `numerical`,
+        `tariff`,
+        `value_add_tariff`,
+        `addition_duty`,
+        `good_apply_id`,
+        `remark`
+        )
+        VALUES
+        (
+        #{place},
+        #{numerical},
+        #{tariff},
+        #{valueAddTariff},
+        #{additionDuty},
+        #{goodApplyId},
+        #{remark}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity">
+        UPDATE item_place_apply
+        <set>
+            <if test="place != null">`place` = #{place}, </if>
+            <if test="goodApplyId != null">`good_apply_id` = #{goodApplyId}, </if>
+            <if test="numerical != null">`numerical` = #{numerical}, </if>
+            <if test="tariff != null">`tariff` = #{tariff}, </if>
+            <if test="valueAddTariff != null">`value_add_tariff` = #{valueAddTariff}, </if>
+            <if test="additionDuty != null">`addition_duty` = #{additionDuty}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM item_place_apply WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM item_place_apply WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

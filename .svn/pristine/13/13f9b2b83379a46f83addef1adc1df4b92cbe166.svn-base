@@ -1,0 +1,433 @@
+
+package com.wzlue.chain.web.controller.highcharts;
+
+import java.util.*;
+
+import com.wzlue.chain.agent.service.AgentOrderService;
+import com.wzlue.chain.declare.service.DeclareOrderService;
+import com.wzlue.chain.goods.entity.ItemCategoryEntity;
+import com.wzlue.chain.goods.service.ItemCategoryService;
+import com.wzlue.chain.highcharts.service.HighchartsService;
+import com.wzlue.chain.logistics.service.LogisticsOrderService;
+import com.wzlue.chain.order.service.GoodsOrderService;
+import com.wzlue.chain.storage.service.OrderService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import io.swagger.models.auth.In;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 报表
+ *
+ * @author
+ * @email
+ * @date 2019-01-14 11:21:59
+ */
+@RestController
+@RequestMapping("/reportform/highcharts")
+public class HighchartsController extends AbstractController {
+    @Autowired
+    private HighchartsService highchartsService;
+    @Autowired
+    private AgentOrderService agentOrderService;
+    @Autowired
+    private GoodsOrderService goodsOrderService;
+    @Autowired
+    private DeclareOrderService declareOrderService;
+    @Autowired
+    private LogisticsOrderService logisticsOrderService;
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private ItemCategoryService itemCategoryService;
+
+    // 订单总量
+    @RequestMapping("/getTotalOrder")
+    public R getTotalOrder() {
+
+        highchartsService.getTotalOrder();
+        return R.ok();
+    }
+
+    // 订单总量
+    @RequestMapping("/aftersale")
+    public R aftersale(@RequestBody Map<String, Object> map) {
+
+        SysUserEntity user = getUser();
+        if (user.getCompanyId() == null && user.getTypeId().equals("0") && user.getCustomerService() == false) {
+            return R.page(null, 0);
+        }
+
+        List<Map> list = new ArrayList<>();
+        map.put("buyerId", getUser().getCompanyId());
+
+        List<Map> buyer = highchartsService.aftersale(map);
+
+        map.remove("buyerId");
+        map.put("sellerId", getUser().getCompanyId());
+
+        List<Map> seller = highchartsService.aftersale(map);
+
+        List<String> itemList = (List) map.get("itemList");
+
+
+        List<Integer> buyerList = new ArrayList<>();
+        List<Integer> sellerList = new ArrayList<>();
+
+        for (String item : itemList) {
+
+            buyerList.add(complaintList(item, buyer));
+
+            sellerList.add(complaintList(item, seller));
+
+        }
+
+        Map tempMap = new HashMap();
+        tempMap.put("name", "我申请的");
+        tempMap.put("data", buyerList);
+        list.add(tempMap);
+
+        tempMap = new HashMap();
+        tempMap.put("name", "向我申请的");
+        tempMap.put("data", sellerList);
+        list.add(tempMap);
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    @RequestMapping("/complaint")
+    public R complaint(@RequestBody Map<String, Object> map) {
+
+        SysUserEntity user = getUser();
+        if (user.getCompanyId() == null && user.getTypeId().equals("0") && user.getCustomerService() == false) {
+            return R.page(null, 0);
+        }
+
+        List<Map> list = new ArrayList<>();
+        map.put("complaintFromId", getUser().getCompanyId());
+
+        List<Map> from = highchartsService.complaint(map);
+
+        map.remove("complaintFromId");
+        map.put("complaintToId", getUser().getCompanyId());
+
+        List<Map> to = highchartsService.complaint(map);
+
+        List<String> itemList = (List) map.get("itemList");
+
+
+        List<Integer> fromList = new ArrayList<>();
+        List<Integer> toList = new ArrayList<>();
+
+        for (String item : itemList) {
+
+            fromList.add(complaintList(item, from));
+
+            toList.add(complaintList(item, to));
+
+        }
+
+        Map tempMap = new HashMap();
+        tempMap.put("name", "投诉");
+        tempMap.put("data", fromList);
+        list.add(tempMap);
+
+        tempMap = new HashMap();
+        tempMap.put("name", "被投诉");
+        tempMap.put("data", toList);
+        list.add(tempMap);
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    private Integer complaintList(String item, List<Map> mapList) {
+        int count = 0;
+        if (null != mapList && mapList.size() > 0) {
+            for (Map map : mapList) {
+                if (item.equals(map.get("title").toString()))
+                    return Integer.valueOf(map.get("total").toString());
+                else
+                    return count;
+            }
+        }
+
+        return count;
+    }
+
+    @RequestMapping("/receivable")
+    public R receivable(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj;
+        Long userId = getUserId();
+        map.put("userId", userId);
+
+        List<String> itemList = (List) map.get("itemList");
+
+        List<Map> agentOrder = highchartsService.receivable(map);
+
+        List<Map> dataList = new ArrayList();
+        List<Map> dataList1 = new ArrayList();
+
+        Map temp1;
+        Map temp2;
+        for (String item : itemList) {
+
+            temp1 = new HashMap();
+            ergodicMap(agentOrder, temp1, item);
+            dataList.add(temp1);
+
+            temp2 = new HashMap();
+            ergodicMap(agentOrder, temp2, item);
+            dataList1.add(temp2);
+        }
+
+        Obj = new HashMap();
+        Obj.put("name", "应收");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "应付");
+        Obj.put("data", dataList1);
+        list.add(Obj);
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    @RequestMapping("/adduser")
+    public R adduser(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj;
+        Long userId = getUserId();
+        map.put("userId", userId);
+
+        List<String> itemList = (List) map.get("itemList");
+
+        List<Integer> agentOrder = highchartsService.adduser(map);
+
+        if (null != itemList && itemList.size() > 0 && null != agentOrder && agentOrder.size() >= 0) {
+            int num = itemList.size() - agentOrder.size();
+
+            for (int i = 0; i < num; i++)
+                agentOrder.add(0);
+        }
+
+        Series series = new Series();
+
+        series.setName("新增客户量");
+        series.setData(agentOrder);
+
+        List<Series> seriesList = new ArrayList<>();
+        seriesList.add(series);
+
+        return R.ok().put("list", seriesList).put("itemList", itemList);
+    }
+
+    /**
+     * 首页展示数据查询(订单成交统计)
+     * queryBy: year season month week days
+     * Params: Map
+     * dateType [日期类型]
+     * stime [区间开始时间]
+     * etime [..结束时间]
+     * itemList [X轴日期节点Array]
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj;
+        Long userId = getUserId();
+        map.put("userId", userId);
+
+        List<String> itemList = (List) map.get("itemList");
+
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<Map> agentOrder = agentOrderService.showList(map);
+        List<Map> goodsOrder = goodsOrderService.showList(map);
+        List<Map> declareOrder = declareOrderService.showList(map);
+        List<Map> logisticsOrder = logisticsOrderService.showList(map);
+        List<Map> storageOrder = orderService.showList(map);
+
+        Map agentTemp;
+        Map goodsTemp;
+        Map declareTemp;
+        Map logisticsTemp;
+        Map storageTemp;
+
+        List<Map> dataList = new ArrayList();
+        List<Map> dataList1 = new ArrayList();
+        List<Map> dataList2 = new ArrayList();
+        List<Map> dataList3 = new ArrayList();
+        List<Map> dataList4 = new ArrayList();
+        /* 循环时期节点Array 空值处理 */
+        for (String item : itemList) {
+
+            agentTemp = new HashMap();
+            ergodicMap(agentOrder, agentTemp, item);
+            dataList.add(agentTemp);
+
+            goodsTemp = new HashMap();
+            ergodicMap(goodsOrder, goodsTemp, item);
+            dataList1.add(goodsTemp);
+
+            declareTemp = new HashMap();
+            ergodicMap(declareOrder, declareTemp, item);
+            dataList2.add(declareTemp);
+
+            logisticsTemp = new HashMap();
+            ergodicMap(logisticsOrder, logisticsTemp, item);
+            dataList3.add(logisticsTemp);
+
+            storageTemp = new HashMap();
+            ergodicMap(storageOrder, storageTemp, item);
+            dataList4.add(logisticsTemp);
+        }
+
+        Obj = new HashMap();
+        Obj.put("name", "代理订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "货物订单");
+        Obj.put("data", dataList1);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "报关订单");
+        Obj.put("data", dataList2);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "物流订单");
+        Obj.put("data", dataList3);
+        list.add(Obj);
+
+        Obj = new HashMap();
+        Obj.put("name", "仓储订单");
+        Obj.put("data", dataList4);
+        list.add(Obj);
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    @RequestMapping("/showGoodsTypeNumber")
+    public R showGoodsTypeNumber(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj;
+        Long userId = getUserId();
+        map.put("userId", userId);
+
+        List<String> itemList = (List) map.get("itemList");
+
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<Map<String, Object>> typeNumbers = goodsOrderService.showGoodsTypeNumber(map);
+        List<Map<String, Object>> returnData = new ArrayList<>();
+        setDate(returnData, typeNumbers);
+
+
+        return R.ok().put("list", returnData);
+    }
+
+    private void setDate(List<Map<String, Object>> returnData, List<Map<String, Object>> typeNumbers) {
+        List<Map<String, Object>> obj = new ArrayList<>();
+        List<ItemCategoryEntity> itemCategorys = itemCategoryService.getTopList();
+        Map<String, Object> temp;
+        if (null != typeNumbers) {
+
+            Iterator<ItemCategoryEntity> itemIter = itemCategorys.iterator();
+            while (itemIter.hasNext()) {
+                ItemCategoryEntity next = itemIter.next();
+                Iterator<Map<String, Object>> typesIter = typeNumbers.iterator();
+                temp = new HashMap<>();
+                while (typesIter.hasNext()) {
+                    Map<String, Object> next1 = typesIter.next();
+                    if ((next.getId() + "").equals(next1.get("id") + "")) {
+
+                        temp.put("name", next.getCategoryName());
+                        temp.put("y", next1.get("y"));
+                        returnData.add(temp);
+                        break;
+                    }
+                }
+
+            }
+
+            itemIter = itemCategorys.iterator();
+            while (itemIter.hasNext()) {
+                ItemCategoryEntity next = itemIter.next();
+                Iterator<Map<String, Object>> typesIter = typeNumbers.iterator();
+                while (typesIter.hasNext()) {
+
+                    Map<String, Object> next1 = typesIter.next();
+                    if (!(next.getId() + "").equals(next1.get("id") + "")) {
+                        temp = new HashMap<>();
+                        temp.put("name", next.getCategoryName());
+                        temp.put("y", 0);
+                        returnData.add(temp);
+                        break;
+                    }
+                }
+            }
+
+        } else {
+            for (ItemCategoryEntity item : itemCategorys) {
+                temp = new HashMap<>();
+                temp.put("name", item.getCategoryName());
+                temp.put("y", 0);
+                returnData.add(temp);
+            }
+        }
+
+    }
+
+
+    private void ergodicMap(List<Map> mapList, Map temp, String item) {
+        temp.put("time", item);
+        temp.put("data", null);
+        if (null == mapList || mapList.size() == 0) {
+            temp.put("data", 0);
+
+        } else {
+            for (Map map : mapList) {
+                String val = (String) map.get("title");
+                if (val != null && val.equals(temp.get("time"))) {
+                    temp.put("data", map.get("total"));
+                } else {
+                    temp.put("data", 0);
+                }
+
+            }
+        }
+    }
+
+
+}
+
+class Series {
+    private String name;
+    private List<Integer> data;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Integer> getData() {
+        return data;
+    }
+
+    public void setData(List<Integer> data) {
+        this.data = data;
+    }
+}

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.ContractAnnexDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.ContractAnnexEntity" id="contractAnnexMap">
+        <result property="id" column="id"/>
+        <result property="contractId" column="contract_id"/>
+        <result property="contractType" column="contract_type"/>
+        <result property="fileName" column="file_name"/>
+        <result property="url" column="url"/>
+		<result property="fileType" column="file_type"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		SELECT * FROM contract_annex WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		SELECT * FROM contract_annex
+		<where>
+			<if test="contractId != null and contractId != ''">
+				contract_id=#{contractId}
+			</if>
+			<if test="contractType != null and contractType != ''">
+				contract_type=#{contractType}
+			</if>
+		</where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM contract_annex
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.ContractAnnexEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO contract_annex
+		(
+			`contract_id`,
+			`contract_type`,
+			`file_name`,
+			`url`,
+			`file_type`,
+			create_by,
+			create_time
+		)
+		VALUES
+		(
+			#{contractId},
+			#{contractType},
+			#{fileName},
+			#{url},
+			#{fileType},
+			#{createBy},
+			#{createTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		UPDATE contract_annex
+		<set>
+			<if test="contractId != null">`contract_id` = #{contractId}, </if>
+			<if test="contractType != null">`contract_type` = #{contractType}, </if>
+			<if test="fileName != null">`file_name` = #{fileName}, </if>
+			<if test="url != null">`url` = #{url}, </if>
+			<if test="fileType != null">`file_type` = #{fileType}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM contract_annex WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM contract_annex WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByContractId">
+		DELETE FROM contract_annex WHERE contract_id = #{id} AND contract_type = #{type}
+	</delete>
+
+	<select id="queryListByContractId" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		SELECT * FROM contract_annex WHERE contract_id = #{contractId} AND contract_type = 3
+	</select>
+
+	<select id="queryListByContractIdAndTypeFive" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		SELECT * FROM contract_annex WHERE contract_id = #{id} AND contract_type = 5
+	</select>
+
+	<select id="queryListByContractIdAndTypeTwo" resultType="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		SELECT
+			t1.*, t2.username
+		FROM
+			contract_annex t1
+		LEFT JOIN sys_user t2 ON t1.create_by = t2.user_id
+		WHERE t1.contract_id = #{contractId} AND t1.contract_type = 2
+	</select>
+
+</mapper>

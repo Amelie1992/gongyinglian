@@ -1,0 +1,754 @@
+package com.wzlue.chain.offer.entity;
+
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+
+/**
+ * 货物报盘
+ *
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-08-15 14:30:02
+ */
+public class GoodsOfferEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    //
+    private String id;
+    //货物名称
+    private String goodsName;
+    //货物总价格
+    private BigDecimal goodsPrice;
+    //价格单位  1：元/吨   2： 元/千克  3：美元/吨  4：美元/千克
+    private String priceUnit;
+    //货物类型0:期货1：现货
+    private Integer goodsType;
+    //货物编号
+    private String goodsNumber;
+    //报盘数量
+    private String goodsCount;
+    //数量单位 1：柜 2：吨 3：千克
+    private String goodsUnit;
+    //货物单位转义
+    private String goodsUnitName;
+
+    public String getProvinceCode() {
+        return provinceCode;
+    }
+
+    public void setProvinceCode(String provinceCode) {
+        this.provinceCode = provinceCode;
+    }
+
+    public String getCityCode() {
+        return cityCode;
+    }
+
+    public void setCityCode(String cityCode) {
+        this.cityCode = cityCode;
+    }
+
+    //提货省code
+    private String provinceCode;
+    //提货市code
+    private String cityCode;
+    //货物提货地址省
+    private String goodsPodProvince;
+    //货物提货地址城市
+    private String goodsPodCity;
+    //促销以后的价格
+    private String goodsPromotionPrice;
+    //货物仓库名称
+    private String goodsSname;
+    /*@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")*/
+    private String goodsSailingTime;
+    //可否拼柜
+    private Integer goodsCsc;
+    //货物描述
+    private String goodsDescribe;
+    //货物企业id
+    private String goodsCompanyId;
+    //报盘交易数量
+    private Integer goodsTransactionCount;
+    //货物状态0：下架1：上架
+    private Integer goodsState;
+    //产地
+    private String commodityCountry;
+    //厂号
+    private String commodityFactoryNumber;
+    //包装
+    private String commodityPacking;
+    //商品分类
+    private String commodityClassification;
+    //促销id
+    private String goodsPromotionId;
+    //创建人
+    private String createBy;
+    //创建时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date createTime;
+    //修改人
+    private String modifyBy;
+    //修改时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date modifyTime;
+    //备注
+    private String remarks;
+    //商品集合
+    private List<GoodsOfferCommodityEntity> commoditys;
+    //图片集合
+    private List<ImageEntity> images;
+    //部门Id
+    private Integer deptId;
+    //公司id
+    private Integer companyId;
+    //公司名
+    private String companyName;
+    //公司Logo
+    private String shopLogo;
+    //公司简介
+    private String companyProfile;
+    //信用分数
+    private String creditScore;
+    //联系人
+    private String contact;
+    //联系电话
+    private String contactWay;
+    private String mobile;
+    //授权Id
+    private Integer authorizesId;
+    //分类名，总
+    private String categoryName;
+    //币种 1：人民币；2：美元
+    private Integer currency;
+    //产地
+    private String countryName;
+    //库存
+    private Integer stock;
+
+    //期货：装运时间，现货：提货时间
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date time;
+    //期货：装运口岸，现货：交货地点
+    private String place;
+    //付款条件
+    private String paymentTerm;
+    //生产日期
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date productionDate;
+    //保质期
+    private Integer shelfLife;
+    //截止日期
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date expirationDate;
+    //溢短装条款
+    private String clause;
+    //成交方式：0:CFR  1:CIF  2:CPT  3:CIP  4:DAF  5:DES  6:DEQ  7:DDU  8:DDP  9:FOB  10:FCA  11:FAS  12:EXW
+    private String transactionManner;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getTime() {
+        return time;
+    }
+
+    public void setTime(Date time) {
+        this.time = time;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public String getPaymentTerm() {
+        return paymentTerm;
+    }
+
+    public void setPaymentTerm(String paymentTerm) {
+        this.paymentTerm = paymentTerm;
+    }
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getProductionDate() {
+        return productionDate;
+    }
+
+    public void setProductionDate(Date productionDate) {
+        this.productionDate = productionDate;
+    }
+
+    public Integer getShelfLife() {
+        return shelfLife;
+    }
+
+    public void setShelfLife(Integer shelfLife) {
+        this.shelfLife = shelfLife;
+    }
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getExpirationDate() {
+        return expirationDate;
+    }
+
+    public void setExpirationDate(Date expirationDate) {
+        this.expirationDate = expirationDate;
+    }
+
+    public String getClause() {
+        return clause;
+    }
+
+    public void setClause(String clause) {
+        this.clause = clause;
+    }
+
+    public String getTransactionManner() {
+        return transactionManner;
+    }
+
+    public void setTransactionManner(String transactionManner) {
+        this.transactionManner = transactionManner;
+    }
+
+    public void setPriceUnit(String priceUnit) {
+        this.priceUnit = priceUnit;
+    }
+    public String getPriceUnit() {
+        return priceUnit;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public String getCountryName() {
+        return countryName;
+    }
+
+    public void setCountryName(String countryName) {
+        this.countryName = countryName;
+    }
+
+    public Integer getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Integer currency) {
+        this.currency = currency;
+    }
+
+    /**
+     * get图片
+     */
+    public List<ImageEntity> getImages() {
+        return images;
+    }
+
+    /**
+     * set图片
+     *
+     * @param images
+     */
+    public void setImages(List<ImageEntity> images) {
+        this.images = images;
+    }
+
+    /**
+     * 商品集合
+     *
+     * @return
+     */
+    public List<GoodsOfferCommodityEntity> getCommoditys() {
+        return commoditys;
+    }
+
+    /**
+     * 商品集合
+     *
+     * @param commoditys
+     */
+    public void setCommoditys(List<GoodsOfferCommodityEntity> commoditys) {
+        this.commoditys = commoditys;
+    }
+
+    /**
+     * 设置：
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * 获取：
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * 设置：货物名称
+     */
+    public void setGoodsName(String goodsName) {
+        this.goodsName = goodsName;
+    }
+
+    /**
+     * 获取：货物名称
+     */
+    public String getGoodsName() {
+        return goodsName;
+    }
+
+    /**
+     * 设置：货物总价格
+     */
+    public void setGoodsPrice(BigDecimal goodsPrice) {
+        this.goodsPrice = goodsPrice;
+    }
+
+    /**
+     * 获取：货物总价格
+     */
+    public BigDecimal getGoodsPrice() {
+        return goodsPrice;
+    }
+
+    /**
+     * 设置：货物类型0:期货1：现货
+     */
+    public void setGoodsType(Integer goodsType) {
+        this.goodsType = goodsType;
+    }
+
+    /**
+     * 获取：货物类型0:期货1：现货
+     */
+    public Integer getGoodsType() {
+        return goodsType;
+    }
+
+    /**
+     * 设置：货物数量
+     */
+    public void setGoodsCount(String goodsCount) {
+        this.goodsCount = goodsCount;
+    }
+
+    /**
+     * 获取：货物数量
+     */
+    public String getGoodsCount() {
+        return goodsCount;
+    }
+
+    /**
+     * 设置：货物单位
+     */
+    public void setGoodsUnit(String goodsUnit) {
+        this.goodsUnit = goodsUnit;
+    }
+
+    /**
+     * 获取：货物单位
+     */
+    public String getGoodsUnit() {
+        return goodsUnit;
+    }
+
+    /**
+     * 设置：货物提货地址省
+     */
+    public void setGoodsPodProvince(String goodsPodProvince) {
+        this.goodsPodProvince = goodsPodProvince;
+    }
+
+    /**
+     * 获取：货物提货地址省
+     */
+    public String getGoodsPodProvince() {
+        return goodsPodProvince;
+    }
+
+    /**
+     * 设置：货物提货地址城市
+     */
+    public void setGoodsPodCity(String goodsPodCity) {
+        this.goodsPodCity = goodsPodCity;
+    }
+
+    /**
+     * 获取：货物提货地址城市
+     */
+    public String getGoodsPodCity() {
+        return goodsPodCity;
+    }
+
+    /**
+     * 设置：货物仓库名称
+     */
+    public void setGoodsSname(String goodsSname) {
+        this.goodsSname = goodsSname;
+    }
+
+    /**
+     * 获取：货物仓库名称
+     */
+    public String getGoodsSname() {
+        return goodsSname;
+    }
+
+    /**
+     * 设置：货物船期
+     *//*
+    public void setGoodsSailingTime(Date goodsSailingTime) {
+        this.goodsSailingTime = goodsSailingTime;
+    }
+
+    *//**
+     * 获取：货物船期
+     *//*
+    public Date getGoodsSailingTime() {
+        return goodsSailingTime;
+    }*/
+
+    public String getGoodsSailingTime() {
+        return goodsSailingTime;
+    }
+
+    public void setGoodsSailingTime(String goodsSailingTime) {
+        this.goodsSailingTime = goodsSailingTime;
+    }
+
+    /**
+     * 设置：可否拼柜
+     */
+    public void setGoodsCsc(Integer goodsCsc) {
+        this.goodsCsc = goodsCsc;
+    }
+
+    /**
+     * 获取：可否拼柜
+     */
+    public Integer getGoodsCsc() {
+        return goodsCsc;
+    }
+
+    /**
+     * 设置：货物描述
+     */
+    public void setGoodsDescribe(String goodsDescribe) {
+        this.goodsDescribe = goodsDescribe;
+    }
+
+    /**
+     * 获取：货物描述
+     */
+    public String getGoodsDescribe() {
+        return goodsDescribe;
+    }
+
+    /**
+     * 设置：货物企业id
+     */
+    public void setGoodsCompanyId(String goodsCompanyId) {
+        this.goodsCompanyId = goodsCompanyId;
+    }
+
+    /**
+     * 获取：货物企业id
+     */
+    public String getGoodsCompanyId() {
+        return goodsCompanyId;
+    }
+
+    /**
+     * 设置：货物历史交易数量
+     */
+    public void setGoodsTransactionCount(Integer goodsTransactionCount) {
+        this.goodsTransactionCount = goodsTransactionCount;
+    }
+
+    /**
+     * 获取：货物历史交易数量
+     */
+    public Integer getGoodsTransactionCount() {
+        return goodsTransactionCount;
+    }
+
+    /**
+     * 设置：货物状态0：下架1：上架
+     */
+    public void setGoodsState(Integer goodsState) {
+        this.goodsState = goodsState;
+    }
+
+    /**
+     * 获取：货物状态0：下架1：上架
+     */
+    public Integer getGoodsState() {
+        return goodsState;
+    }
+
+    /**
+     * 设置：产地
+     */
+    public void setCommodityCountry(String commodityCountry) {
+        this.commodityCountry = commodityCountry;
+    }
+
+    /**
+     * 获取：产地
+     */
+    public String getCommodityCountry() {
+        return commodityCountry;
+    }
+
+    /**
+     * 设置：厂号
+     */
+    public void setCommodityFactoryNumber(String commodityFactoryNumber) {
+        this.commodityFactoryNumber = commodityFactoryNumber;
+    }
+
+    /**
+     * 获取：厂号
+     */
+    public String getCommodityFactoryNumber() {
+        return commodityFactoryNumber;
+    }
+
+    /**
+     * 设置：包装
+     */
+    public void setCommodityPacking(String commodityPacking) {
+        this.commodityPacking = commodityPacking;
+    }
+
+    /**
+     * 获取：包装
+     */
+    public String getCommodityPacking() {
+        return commodityPacking;
+    }
+
+    /**
+     * 设置：商品分类
+     */
+    public void setCommodityClassification(String commodityClassification) {
+        this.commodityClassification = commodityClassification;
+    }
+
+    /**
+     * 获取：商品分类
+     */
+    public String getCommodityClassification() {
+        return commodityClassification;
+    }
+
+    /**
+     * 设置：创建人
+     */
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    /**
+     * 获取：创建人
+     */
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    /**
+     * 设置：创建时间
+     */
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    /**
+     * 获取：创建时间
+     */
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    /**
+     * 设置：修改人
+     */
+    public void setModifyBy(String modifyBy) {
+        this.modifyBy = modifyBy;
+    }
+
+    /**
+     * 获取：修改人
+     */
+    public String getModifyBy() {
+        return modifyBy;
+    }
+
+    /**
+     * 设置：修改时间
+     */
+    public void setModifyTime(Date modifyTime) {
+        this.modifyTime = modifyTime;
+    }
+
+    /**
+     * 获取：修改时间
+     */
+    public Date getModifyTime() {
+        return modifyTime;
+    }
+
+    /**
+     * 设置：备注
+     */
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
+    /**
+     * 获取：备注
+     */
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public String getGoodsPromotionId() {
+        return goodsPromotionId;
+    }
+
+    public void setGoodsPromotionId(String goodsPromotionId) {
+        this.goodsPromotionId = goodsPromotionId;
+    }
+
+    public String getGoodsPromotionPrice() {
+        return goodsPromotionPrice;
+    }
+
+    public void setGoodsPromotionPrice(String goodsPromotionPrice) {
+        this.goodsPromotionPrice = goodsPromotionPrice;
+    }
+
+    public Integer getDeptId() {
+        return deptId;
+    }
+
+    public void setDeptId(Integer deptId) {
+        this.deptId = deptId;
+    }
+
+    public Integer getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Integer companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getShopLogo() {
+        return shopLogo;
+    }
+
+    public void setShopLogo(String shopLogo) {
+        this.shopLogo = shopLogo;
+    }
+
+    public String getCreditScore() {
+        return creditScore;
+    }
+
+    public void setCreditScore(String creditScore) {
+        this.creditScore = creditScore;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public String getContactWay() {
+        return contactWay;
+    }
+
+    public void setContactWay(String contactWay) {
+        this.contactWay = contactWay;
+    }
+
+    public Integer getAuthorizesId() {
+        return authorizesId;
+    }
+
+    public void setAuthorizesId(Integer authorizesId) {
+        this.authorizesId = authorizesId;
+    }
+
+    public String getGoodsNumber() {
+        return goodsNumber;
+    }
+
+    public void setGoodsNumber(String goodsNumber) {
+        this.goodsNumber = goodsNumber;
+    }
+    public String getGoodsUnitName() {
+        return goodsUnitName;
+    }
+
+    public void setGoodsUnitName(String goodsUnitName) {
+        this.goodsUnitName = goodsUnitName;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getCompanyProfile() {
+        return companyProfile;
+    }
+
+    public void setCompanyProfile(String companyProfile) {
+        this.companyProfile = companyProfile;
+    }
+}

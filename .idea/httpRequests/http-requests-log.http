@@ -1,0 +1,29 @@
+POST http://a1.easemob.com/1110180904253314/huanxin/token?grant_type=password&username=15951893248&password=15951893248&timestamp=1559719870405
+Accept: */*
+Cache-Control: no-cache
+Content-Type: application/json;charset=UTF-8
+
+###
+
+POST http://a1.easemob.com/1110180904253314/huanxin/token?grant_type=password&username=15951893248&password=15951893248&timestamp=1559719870405
+Accept: */*
+Cache-Control: no-cache
+
+###
+
+POST http://a1.easemob.com/1110180904253314/huanxin/token
+Accept: */*
+Cache-Control: no-cache
+
+{"grant_type":"password", "username":"15951893248", "password":"15951893248", "timestamp":1559719870404}
+
+###
+
+POST http://a1.easemob.com/1110180904253314/huanxin/token
+Accept: */*
+Cache-Control: no-cache
+
+{"grant_type":"password","username":"15951893248","password":"15951893248","timestamp":1559719870404}
+
+###
+

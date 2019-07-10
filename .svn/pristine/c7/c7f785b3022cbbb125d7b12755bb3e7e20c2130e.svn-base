@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.contract.dao.GoodsContractDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.contract.entity.GoodsContractEntity" id="goodsContractMap">
+        <result property="id" column="id"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="partyAName" column="party_a_name"/>
+        <result property="partyBName" column="party_b_name"/>
+        <result property="partyAId" column="party_a_id"/>
+        <result property="partyBId" column="party_b_id"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="contractAmount" column="contract_amount"/>
+        <result property="storageLocation" column="storage_location"/>
+        <result property="dateOfSigning" column="date_of_signing"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="remarks" column="remarks"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="owner" column="owner"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modityBy" column="modity_by"/>
+        <result property="modityTime" column="modity_time"/>
+        <result property="automatic" column="automatic"/>
+        <collection property="file" column="{code=id,type=fileType}"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryList"></collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="goodsContractMap">
+        SELECT c.*,'goods_contract' fileType FROM goods_contract c
+        WHERE c.id = #{value}
+    </select>
+
+    <select id="queryObjectByOrder" resultType="com.wzlue.chain.contract.entity.GoodsContractEntity">
+        SELECT *,'goods_contract' fileType FROM goods_contract
+        WHERE contract_number = #{contractNumber} and order_number= #{orderNumber} and (owner=#{owner} or create_by=#{createBy})
+    </select>
+
+    <select id="queryListById" resultMap="goodsContractMap">
+        SELECT c.*,'goods_contract' fileType FROM goods_contract c
+        <where>
+            <if test="companyId != null">
+                <!--and ((party_a_id=#{companyId} or  party_b_id=#{companyId}) and owner=#{companyId})-->
+                and owner=#{companyId}
+            </if>
+            <if test="orderNumber != null">
+                and order_number LIKE concat('%',#{orderNumber},'%')
+            </if>
+            <if test="contractNumber != null and contractNumber != ''">
+                <choose>
+                    <when test="check !=null and check != ''">
+                        and contract_number = #{contractNumber}
+                    </when>
+                    <otherwise>
+                        and contract_number LIKE concat('%',#{contractNumber},'%')
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotalById" resultType="int">
+        SELECT count(*) FROM goods_contract
+        <where>
+            <if test="companyId != null">
+                <!--and ((party_a_id=#{companyId} or  party_b_id=#{companyId}) and owner=#{companyId})-->
+                and owner=#{companyId}
+            </if>
+            <if test="contractNumber != null and contractNumber != ''">
+                <choose>
+                    <when test="check !=null and check != ''">
+                        and contract_number = #{contractNumber}
+                    </when>
+                    <otherwise>
+                        and contract_number LIKE concat('%',#{contractNumber},'%')
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+
+    <insert id="save" parameterType="com.wzlue.chain.contract.entity.GoodsContractEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO goods_contract
+        (
+        `contract_number`,
+        `order_number`,
+        `contract_name`,
+        `party_a_name`,
+        `party_b_name`,
+        `party_a_id`,
+        `party_b_id`,
+        `payment_method`,
+        `contract_amount`,
+        `storage_location`,
+        `date_of_signing`,
+        `expire_date`,
+        `owner`,
+        `remarks`,
+        `dept_id`,
+        `create_by`,
+        `create_time`,
+        `modity_by`,
+        `modity_time`,
+        automatic
+        )
+        VALUES
+        (
+        #{contractNumber},
+        #{orderNumber},
+        #{contractName},
+        #{partyAName},
+        #{partyBName},
+        #{partyAId},
+        #{partyBId},
+        #{paymentMethod},
+        #{contractAmount},
+        #{storageLocation},
+        #{dateOfSigning},
+        #{expireDate},
+        #{owner},
+        #{remarks},
+        #{deptId},
+        #{createBy},
+        #{createTime},
+        #{modityBy},
+        #{modityTime},
+        #{automatic}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.contract.entity.GoodsContractEntity">
+        UPDATE goods_contract
+        <set>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="contractName != null">`contract_name` = #{contractName},</if>
+            <if test="partyAName != null">`party_a_name` = #{partyAName},</if>
+            <if test="partyBName != null">`party_b_name` = #{partyBName},</if>
+            <if test="partyAId != null">`party_a_id` = #{partyAId},</if>
+            <if test="partyBId != null">`party_b_id` = #{partyBId},</if>
+            <if test="paymentMethod != null">`payment_method` = #{paymentMethod},</if>
+            <if test="contractAmount != null">`contract_amount` = #{contractAmount},</if>
+            <if test="storageLocation != null">`storage_location` = #{storageLocation},</if>
+            <if test="dateOfSigning != null">`date_of_signing` = #{dateOfSigning},</if>
+            <if test="expireDate != null">`expire_date` = #{expireDate},</if>
+            <if test="owner != null">`owner` = #{owner},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modityBy != null">`modity_by` = #{modityBy},</if>
+            <if test="modityTime != null">`modity_time` = #{modityTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM goods_contract WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteByOrderId">
+        DELETE FROM goods_contract WHERE `order_number` = #{orderNumber}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_contract WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

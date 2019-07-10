@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>供应商</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('supplier:supplier:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('supplier:supplier:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-trash-o"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('supplier:supplier:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">商户id</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.businessId"
+                                       placeholder="商户id"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">分类id</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.categoryId"
+                                       placeholder="分类id"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">供应商名称</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.name"
+                                       placeholder="供应商名称"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">备注</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.remarks"
+                                       placeholder="备注"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">省</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.province"
+                                       placeholder="省"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">市</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.city"
+                                       placeholder="市"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">区</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.county"
+                                       placeholder="区"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">详细地址</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.address"
+                                       placeholder="详细地址"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">联系人</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.contact"
+                                       placeholder="联系人"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">联系电话</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.phone"
+                                       placeholder="联系电话"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">座机号码</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.telephone"
+                                       placeholder="座机号码"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">电子邮箱</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.email"
+                                       placeholder="电子邮箱"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">传真</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.fax"
+                                       placeholder="传真"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">邮编</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.zipCode"
+                                       placeholder="邮编"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">等级：</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.level"
+                                       placeholder="等级："/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">运输方式：</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.transportType"
+                                       placeholder="运输方式："/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">结算方式：</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.settlementType"
+                                       placeholder="结算方式："/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">发票类型：</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.invoiceType"
+                                       placeholder="发票类型："/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">开户行</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.bank"
+                                       placeholder="开户行"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">户名</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.bankName"
+                                       placeholder="户名"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">账号</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.accountNo"
+                                       placeholder="账号"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">税号</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.taxNo"
+                                       placeholder="税号"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">税率</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.taxRate"
+                                       placeholder="税率"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">注册日期</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.registerTime"
+                                       placeholder="注册日期"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">法人代表</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.representative"
+                                       placeholder="法人代表"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">营业执照号</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.businessLicenseNumber"
+                                       placeholder="营业执照号"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">企业性质：</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.nature"
+                                       placeholder="企业性质："/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">注册地址</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.registerAddress"
+                                       placeholder="注册地址"/>
+                            </div>
+                        </div>
+                                                                                <div class="form-group">
+                            <div class="col-sm-2 control-label">注册资本</div>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" v-model="supplier.registerMoney"
+                                       placeholder="注册资本"/>
+                            </div>
+                        </div>
+                                                    <div class="form-group">
+                    <div class="col-sm-2 control-label"></div>
+                    <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定"/>
+                    &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/supplier/supplier.js"></script>
+</body>
+</html>

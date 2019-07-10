@@ -1,0 +1,781 @@
+package com.wzlue.chain.storage.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.wzlue.chain.bill.service.JsonDateDeserializer;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+
+
+/**
+ * 仓储订单
+ * 
+ * @author 
+ * @email 
+ * @date 2018-08-29 17:48:31
+ */
+public class OrderEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//
+	private Long id;
+	//订单号
+	private String orderNumber;
+	//合同号
+	private String contractNumber;
+	//货物订单号
+	private String goodNumber;
+	//预计入库日期（计费日期）
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private Date intTime;
+	//预计出库日期
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private Date outTime;
+	//联系方式（买家）
+	private String phone;
+	//联系人（买家）
+	private String contact;
+	//邮箱账号（买家）
+	private String email;
+	//地址（买家）
+	private String address;
+	//备注
+	private String remarks;
+	//总价
+	private BigDecimal total;
+	//来源类型：0：没有来源单号；1：
+	private Integer numberType;
+	//来源单号
+	private String number;
+	//联系人（卖家）
+	private String merchantContact;
+	//联系方式（卖家）
+	private String merchantPhone;
+	//邮箱账号（卖家）
+	private String merchantEmail;
+	//地址（卖家）
+	private String merchantAddress;
+	//接单时间
+	private Date receiptTime;
+	//接单人部门id
+	private Long receiptDetpId;
+	//报盘公司id
+	private Long receiptMerchantId;
+	//货物的补充信息
+	private String goodRemarks;
+	//下单人公司id
+	private Long merchantId;
+	//状态:0:待确认、1:已接单、2：仓库收到货，3：已取消、4:拒绝接单、5：订单终止申请、6：订单终止同意、7：订单终止拒绝、
+	//     0:待确认、1:已接单、2：仓库收到货，3：已取消、4:拒绝接单、5：买家申请取消、6：卖家申请取消、7：订单终止拒绝、
+	//	   0:待确认、1:已接单、2：已入库，3：已取消、4：买家申请取消、5：卖家申请取消、6:已出库、7：交易完成、
+	//																				    订单无库存  款项结清
+	private Integer passStatus;
+	//状态: 0:仓储费未结清、1:仓储费已结清
+	private Integer payStatus;
+	//状态: 0:有库存、1:无库存
+	private Integer stockStatus;
+	//0:未被买家投诉；1:已被买家投诉
+	private Integer buyStatus;
+	//0：未被卖家投诉；1：已被卖家投诉
+	private Integer sellStatus;
+	//售后：0：未申请；1:已申请；2：售后已处理',
+	private Integer alterSale;
+	//到货日期
+	private Date arrivalTime;
+	//部门id
+	private Long deptId;
+	//创建人
+	private Long createdBy;
+	//创建时间
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date createdTime;
+	//修改人
+	private Long updatedBy;
+	//修改时间
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date updatedTime;
+	//删除标识 0：未删除 1：删除
+	private Integer delFlag;
+
+	private String value;
+	//买家公司名称
+	private String buyCompanyName;
+	private String saleCompanyName;
+
+	private List<OrderCommodityEntity> commodityEntityList;
+	private OrderOfferEntity orderOfferEntity;
+	private OrderCostEntity orderCostEntity;
+
+	//接单时显示仓储收费规则
+	//仓储费（仓储收费单价）
+	private BigDecimal price;
+	//单位：0，元/吨/天；1，元/托/天
+	private String unit;
+	//装卸费
+	private BigDecimal money1;
+	//处置费
+	private BigDecimal money2;
+	//重复上下架
+	private BigDecimal money3;
+	//分拣费
+	private BigDecimal money4;
+	//理货费
+	private BigDecimal money5;
+	//抄码费
+	private BigDecimal money6;
+	//复冻费
+	private BigDecimal money7;
+	//查验移箱费				不要
+	private BigDecimal money8;
+	//查验掏箱费
+	private BigDecimal money9;
+	//查验开关箱门费及铅封		不要
+	private BigDecimal money10;
+	//门到门查验费				不要
+	private BigDecimal money11;
+	//出入库费					不要
+	private BigDecimal money12;
+	//缠绕膜
+	private BigDecimal money13;
+	//箱车对倒					--改为过车费
+	private BigDecimal money14;
+	//预冷费
+	private BigDecimal money15;
+	//其他费用
+	private String money16;
+
+    public String getMoney16() {
+        return money16;
+    }
+
+    public void setMoney16(String money16) {
+        this.money16 = money16;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public BigDecimal getMoney1() {
+        return money1;
+    }
+
+    public void setMoney1(BigDecimal money1) {
+        this.money1 = money1;
+    }
+
+    public BigDecimal getMoney2() {
+        return money2;
+    }
+
+    public void setMoney2(BigDecimal money2) {
+        this.money2 = money2;
+    }
+
+    public BigDecimal getMoney3() {
+        return money3;
+    }
+
+    public void setMoney3(BigDecimal money3) {
+        this.money3 = money3;
+    }
+
+    public BigDecimal getMoney4() {
+        return money4;
+    }
+
+    public void setMoney4(BigDecimal money4) {
+        this.money4 = money4;
+    }
+
+    public BigDecimal getMoney5() {
+        return money5;
+    }
+
+    public void setMoney5(BigDecimal money5) {
+        this.money5 = money5;
+    }
+
+    public BigDecimal getMoney6() {
+        return money6;
+    }
+
+    public void setMoney6(BigDecimal money6) {
+        this.money6 = money6;
+    }
+
+    public BigDecimal getMoney7() {
+        return money7;
+    }
+
+    public void setMoney7(BigDecimal money7) {
+        this.money7 = money7;
+    }
+
+    public BigDecimal getMoney8() {
+        return money8;
+    }
+
+    public void setMoney8(BigDecimal money8) {
+        this.money8 = money8;
+    }
+
+    public BigDecimal getMoney9() {
+        return money9;
+    }
+
+    public void setMoney9(BigDecimal money9) {
+        this.money9 = money9;
+    }
+
+    public BigDecimal getMoney10() {
+        return money10;
+    }
+
+    public void setMoney10(BigDecimal money10) {
+        this.money10 = money10;
+    }
+
+    public BigDecimal getMoney11() {
+        return money11;
+    }
+
+    public void setMoney11(BigDecimal money11) {
+        this.money11 = money11;
+    }
+
+    public BigDecimal getMoney12() {
+        return money12;
+    }
+
+    public void setMoney12(BigDecimal money12) {
+        this.money12 = money12;
+    }
+
+    public BigDecimal getMoney13() {
+        return money13;
+    }
+
+    public void setMoney13(BigDecimal money13) {
+        this.money13 = money13;
+    }
+
+    public BigDecimal getMoney14() {
+        return money14;
+    }
+
+    public void setMoney14(BigDecimal money14) {
+        this.money14 = money14;
+    }
+
+    public BigDecimal getMoney15() {
+        return money15;
+    }
+
+    public void setMoney15(BigDecimal money15) {
+        this.money15 = money15;
+    }
+
+    /**
+	 * 设置：
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：订单号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：订单号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：合同号
+	 */
+	public void setContractNumber(String contractNumber) {
+		this.contractNumber = contractNumber;
+	}
+	/**
+	 * 获取：合同号
+	 */
+	public String getContractNumber() {
+		return contractNumber;
+	}
+	/**
+	 * 设置：货物订单号
+	 */
+	public void setGoodNumber(String goodNumber) {
+		this.goodNumber = goodNumber;
+	}
+	/**
+	 * 获取：货物订单号
+	 */
+	public String getGoodNumber() {
+		return goodNumber;
+	}
+	/**
+	 * 设置：入库日期（计费日期）
+	 */
+	public void setIntTime(Date intTime) {
+		this.intTime = intTime;
+	}
+	/**
+	 * 获取：入库日期（计费日期）
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	public Date getIntTime() {
+		return intTime;
+	}
+	/**
+	 * 设置：出库日期
+	 */
+	public void setOutTime(Date outTime) {
+		this.outTime = outTime;
+	}
+	/**
+	 * 获取：出库日期
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	public Date getOutTime() {
+		return outTime;
+	}
+	/**
+	 * 设置：联系方式（买家）
+	 */
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	/**
+	 * 获取：联系方式（买家）
+	 */
+	public String getPhone() {
+		return phone;
+	}
+	/**
+	 * 设置：联系人（买家）
+	 */
+	public void setContact(String contact) {
+		this.contact = contact;
+	}
+	/**
+	 * 获取：联系人（买家）
+	 */
+	public String getContact() {
+		return contact;
+	}
+	/**
+	 * 设置：邮箱账号（买家）
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	/**
+	 * 获取：邮箱账号（买家）
+	 */
+	public String getEmail() {
+		return email;
+	}
+	/**
+	 * 设置：地址（买家）
+	 */
+	public void setAddress(String address) {
+		this.address = address;
+	}
+	/**
+	 * 获取：地址（买家）
+	 */
+	public String getAddress() {
+		return address;
+	}
+	/**
+	 * 设置：备注
+	 */
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+	/**
+	 * 获取：备注
+	 */
+	public String getRemarks() {
+		return remarks;
+	}
+	/**
+	 * 设置：总价
+	 */
+	public void setTotal(BigDecimal total) {
+		this.total = total;
+	}
+	/**
+	 * 获取：总价
+	 */
+	public BigDecimal getTotal() {
+		return total;
+	}
+	/**
+	 * 设置：来源类型：0：没有来源单号；1：
+	 */
+	public void setNumberType(Integer numberType) {
+		this.numberType = numberType;
+	}
+	/**
+	 * 获取：来源类型：0：没有来源单号；1：
+	 */
+	public Integer getNumberType() {
+		return numberType;
+	}
+	/**
+	 * 设置：来源单号
+	 */
+	public void setNumber(String number) {
+		this.number = number;
+	}
+	/**
+	 * 获取：来源单号
+	 */
+	public String getNumber() {
+		return number;
+	}
+	/**
+	 * 设置：联系人（卖家）
+	 */
+	public void setMerchantContact(String merchantContact) {
+		this.merchantContact = merchantContact;
+	}
+	/**
+	 * 获取：联系人（卖家）
+	 */
+	public String getMerchantContact() {
+		return merchantContact;
+	}
+	/**
+	 * 设置：联系方式（卖家）
+	 */
+	public void setMerchantPhone(String merchantPhone) {
+		this.merchantPhone = merchantPhone;
+	}
+	/**
+	 * 获取：联系方式（卖家）
+	 */
+	public String getMerchantPhone() {
+		return merchantPhone;
+	}
+	/**
+	 * 设置：邮箱账号（卖家）
+	 */
+	public void setMerchantEmail(String merchantEmail) {
+		this.merchantEmail = merchantEmail;
+	}
+	/**
+	 * 获取：邮箱账号（卖家）
+	 */
+	public String getMerchantEmail() {
+		return merchantEmail;
+	}
+	/**
+	 * 设置：地址（卖家）
+	 */
+	public void setMerchantAddress(String merchantAddress) {
+		this.merchantAddress = merchantAddress;
+	}
+	/**
+	 * 获取：地址（卖家）
+	 */
+	public String getMerchantAddress() {
+		return merchantAddress;
+	}
+	/**
+	 * 设置：接单时间
+	 */
+	public void setReceiptTime(Date receiptTime) {
+		this.receiptTime = receiptTime;
+	}
+	/**
+	 * 获取：接单时间
+	 */
+	@JsonDeserialize(using = JsonDateDeserializer.class)
+	public Date getReceiptTime() {
+		return receiptTime;
+	}
+	/**
+	 * 设置：接单人部门id
+	 */
+	public void setReceiptDetpId(Long receiptDetpId) {
+		this.receiptDetpId = receiptDetpId;
+	}
+	/**
+	 * 获取：接单人部门id
+	 */
+	public Long getReceiptDetpId() {
+		return receiptDetpId;
+	}
+	/**
+	 * 设置：报盘公司id
+	 */
+	public void setReceiptMerchantId(Long receiptMerchantId) {
+		this.receiptMerchantId = receiptMerchantId;
+	}
+	/**
+	 * 获取：报盘公司id
+	 */
+	public Long getReceiptMerchantId() {
+		return receiptMerchantId;
+	}
+	/**
+	 * 设置：货物的补充信息
+	 */
+	public void setGoodRemarks(String goodRemarks) {
+		this.goodRemarks = goodRemarks;
+	}
+	/**
+	 * 获取：货物的补充信息
+	 */
+	public String getGoodRemarks() {
+		return goodRemarks;
+	}
+	/**
+	 * 设置：下单人公司id
+	 */
+	public void setMerchantId(Long merchantId) {
+		this.merchantId = merchantId;
+	}
+	/**
+	 * 获取：下单人公司id
+	 */
+	public Long getMerchantId() {
+		return merchantId;
+	}
+	/**
+	 * 设置：状态: 0:待确认、1:已接单、3：已取消
+	 */
+	public void setPassStatus(Integer passStatus) {
+		this.passStatus = passStatus;
+	}
+	/**
+	 * 获取：状态: 0:待确认、1:已接单、3：已取消
+	 */
+	public Integer getPassStatus() {
+		return passStatus;
+	}
+	/**
+	 * 设置：状态: 0:仓储费未结清、1:仓储费已结清
+	 */
+	public void setPayStatus(Integer payStatus) {
+		this.payStatus = payStatus;
+	}
+	/**
+	 * 获取：状态: 0:仓储费未结清、1:仓储费已结清
+	 */
+	public Integer getPayStatus() {
+		return payStatus;
+	}
+	/**
+	 * 设置：状态: 0:有库存、1:无库存
+	 */
+	public void setStockStatus(Integer stockStatus) {
+		this.stockStatus = stockStatus;
+	}
+	/**
+	 * 获取：状态: 0:有库存、1:无库存
+	 */
+	public Integer getStockStatus() {
+		return stockStatus;
+	}
+	/**
+	 * 设置：0:未被买家投诉；1:已被买家投诉
+	 */
+	public void setBuyStatus(Integer buyStatus) {
+		this.buyStatus = buyStatus;
+	}
+	/**
+	 * 获取：0:未被买家投诉；1:已被买家投诉
+	 */
+	public Integer getBuyStatus() {
+		return buyStatus;
+	}
+	/**
+	 * 设置：0：未被卖家投诉；1：已被卖家投诉
+	 */
+	public void setSellStatus(Integer sellStatus) {
+		this.sellStatus = sellStatus;
+	}
+	/**
+	 * 获取：0：未被卖家投诉；1：已被卖家投诉
+	 */
+	public Integer getSellStatus() {
+		return sellStatus;
+	}
+	/**
+	 * 设置：售后：0：未申请；1:已申请
+	 */
+	public void setAlterSale(Integer alterSale) {
+		this.alterSale = alterSale;
+	}
+	/**
+	 * 获取：售后：0：未申请；1:已申请
+	 */
+	public Integer getAlterSale() {
+		return alterSale;
+	}
+	/**
+	 * 到货日期
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	public Date getArrivalTime() {
+		return arrivalTime;
+	}
+	/**
+	 * 到货日期
+	 */
+	public void setArrivalTime(Date arrivalTime) {
+		this.arrivalTime = arrivalTime;
+	}
+	/**
+	 * 设置：部门id
+	 */
+	public void setDeptId(Long deptId) {
+		this.deptId = deptId;
+	}
+	/**
+	 * 获取：部门id
+	 */
+	public Long getDeptId() {
+		return deptId;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreatedTime(Date createdTime) {
+		this.createdTime = createdTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getCreatedTime() {
+		return createdTime;
+	}
+	/**
+	 * 设置：修改人
+	 */
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	/**
+	 * 获取：修改人
+	 */
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setUpdatedTime(Date updatedTime) {
+		this.updatedTime = updatedTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getUpdatedTime() {
+		return updatedTime;
+	}
+	/**
+	 * 设置：删除标识 0：未删除 1：删除
+	 */
+	public void setDelFlag(Integer delFlag) {
+		this.delFlag = delFlag;
+	}
+	/**
+	 * 获取：删除标识 0：未删除 1：删除
+	 */
+	public Integer getDelFlag() {
+		return delFlag;
+	}
+
+	public String getBuyCompanyName() {
+		return buyCompanyName;
+	}
+
+	public void setBuyCompanyName(String buyCompanyName) {
+		this.buyCompanyName = buyCompanyName;
+	}
+
+	public String getSaleCompanyName() {
+		return saleCompanyName;
+	}
+
+	public void setSaleCompanyName(String saleCompanyName) {
+		this.saleCompanyName = saleCompanyName;
+	}
+
+	public List<OrderCommodityEntity> getCommodityEntityList() {
+		return commodityEntityList;
+	}
+
+	public void setCommodityEntityList(List<OrderCommodityEntity> commodityEntityList) {
+		this.commodityEntityList = commodityEntityList;
+	}
+
+	public OrderOfferEntity getOrderOfferEntity() {
+		return orderOfferEntity;
+	}
+
+	public void setOrderOfferEntity(OrderOfferEntity orderOfferEntity) {
+		this.orderOfferEntity = orderOfferEntity;
+	}
+
+	public OrderCostEntity getOrderCostEntity() {
+		return orderCostEntity;
+	}
+
+	public void setOrderCostEntity(OrderCostEntity orderCostEntity) {
+		this.orderCostEntity = orderCostEntity;
+	}
+
+	public String getValue() {
+		return value;
+	}
+
+	public void setValue(String value) {
+		this.value = value;
+	}
+}

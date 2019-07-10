@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.StorageOutDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.StorageOutEntity" id="storageOutMap">
+        <result property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="companyId" column="company_id"/>
+        <result property="contact" column="contact"/>
+        <result property="phone" column="phone"/>
+        <result property="card" column="card"/>
+        <result property="vehicleNumber" column="vehicle_number"/>
+        <result property="takeTime" column="take_time"/>
+        <result property="escort" column="escort"/>
+        <result property="copeCode" column="cope_code"/>
+        <result property="remark" column="remark"/>
+        <result property="email" column="email"/>
+        <result property="status" column="status"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+		<result property="storageName" column="storage_name"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.storage.entity.StorageOutEntity">
+		SELECT
+		a.id,
+		a.code,
+		a.`company_id`,
+		a.`contact`,
+		a.`phone`,
+		a.`card`,
+		a.`vehicle_number`,
+		a.`take_time`,
+		a.`escort`,
+		a.`cope_code`,
+		a.`remark`,
+		a.`email`,
+		a.`status`,
+		a.`merchant_id`,
+		a.`dept_id`,
+		a.`create_by`,
+		a.`create_time`,
+		a.`update_by`,
+		a.`update_time`,
+		a.`storage_name`,
+		(select b.company_name from merchant_company b WHERE b.id=a.company_id) companyName,
+		(select b.company_name from merchant_company b WHERE b.id=a.merchant_id) merchantName
+		FROM storage_out a WHERE a.id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.storage.entity.StorageOutEntity">
+		SELECT
+		a.id,
+		a.code,
+		a.`company_id`,
+		a.`contact`,
+		a.`phone`,
+		a.`card`,
+		a.`vehicle_number`,
+		a.`take_time`,
+		a.`escort`,
+		a.`cope_code`,
+		a.`remark`,
+		a.`email`,
+		a.`status`,
+		a.`merchant_id`,
+		a.`dept_id`,
+		a.`create_by`,
+		a.`create_time`,
+		a.`update_by`,
+		a.`update_time`,
+		a.storage_name,
+		(select b.company_name from merchant_company b WHERE b.id=a.company_id) companyName,
+		(select b.company_name from merchant_company b WHERE b.id=a.merchant_id) merchantName
+		FROM storage_out a
+		<where>
+			a.del_flag=0
+			<if test="merchantId!=null">
+				and a.merchant_id=#{merchantId}
+			</if>
+			<if test="companyId!=null">
+				and a.company_id=#{companyId}
+			</if>
+			<if test="contact!=null and contact!=''">
+				and a.contact like concat('%',#{contact},'%')
+			</if>
+		</where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY a.take_time desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM storage_out
+		<where>
+			del_flag=0
+			<if test="merchantId!=null">
+				and merchant_id=#{merchantId}
+			</if>
+			<if test="companyId!=null">
+				and company_id=#{companyId}
+			</if>
+			<if test="contact!=null and contact!=''">
+				and contact like concat('%',#{contact},'%')
+			</if>
+		</where>
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.storage.entity.StorageOutEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO storage_out
+		(
+			`code`,
+			`company_id`,
+			`contact`,
+			`phone`,
+			`card`,
+			`vehicle_number`,
+			`take_time`,
+			`escort`,
+			`cope_code`,
+			`remark`,
+			`email`,
+			`status`,
+			`merchant_id`,
+			`dept_id`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`del_flag`,
+			storage_name
+		)
+		VALUES
+		(
+			#{code},
+			#{companyId},
+			#{contact},
+			#{phone},
+			#{card},
+			#{vehicleNumber},
+			#{takeTime},
+			#{escort},
+			#{copeCode},
+			#{remark},
+			#{email},
+			#{status},
+			#{merchantId},
+			#{deptId},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{delFlag},
+			#{storageName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.storage.entity.StorageOutEntity">
+		UPDATE storage_out
+		<set>
+			<if test="code != null">`code` = #{code}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="contact != null">`contact` = #{contact}, </if>
+			<if test="phone != null">`phone` = #{phone}, </if>
+			<if test="card != null">`card` = #{card}, </if>
+			<if test="vehicleNumber != null">`vehicle_number` = #{vehicleNumber}, </if>
+			<if test="takeTime != null">`take_time` = #{takeTime}, </if>
+			<if test="escort != null">`escort` = #{escort}, </if>
+			<if test="copeCode != null">`cope_code` = #{copeCode}, </if>
+			<if test="remark != null">`remark` = #{remark}, </if>
+			<if test="email != null">`email` = #{email}, </if>
+			<if test="status != null">`status` = #{status}, </if>
+			<if test="merchantId != null">`merchant_id` = #{merchantId}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}, </if>
+			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
+			<if test="updateTime != null">`update_time` = #{updateTime}, </if>
+			<if test="delFlag != null">`del_flag` = #{delFlag},</if>
+			<if test="storageName != null">`storage_name` = #{storageName}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM storage_out WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM storage_out WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+</mapper>

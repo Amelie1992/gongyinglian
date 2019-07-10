@@ -1,0 +1,22 @@
+package com.wzlue.chain.goods.dao;
+
+import com.wzlue.chain.goods.entity.RecommendGoodsEntity;
+import com.wzlue.chain.common.base.BaseDao;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.Map;
+
+/**
+ * 推荐商品表
+ * 
+ * @author 
+ * @email 
+ * @date 2018-11-19 19:05:20
+ */
+@Mapper
+public interface RecommendGoodsDao extends BaseDao<RecommendGoodsEntity> {
+
+    void updateStatus(RecommendGoodsEntity recommendGoods);
+
+    int getCount(Map<String, Object> map);
+}

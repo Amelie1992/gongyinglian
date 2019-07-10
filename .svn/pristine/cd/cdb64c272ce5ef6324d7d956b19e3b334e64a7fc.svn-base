@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>代理报盘信息表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+
+</head>
+<body>
+<div id="offerDiv" v-cloak class="container-fluid">
+
+    <section class="content-header">
+        <h1>
+            {{$t('agentOffer')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.title" @keyup.enter="query" :placeholder="$t('PleaseEnterTheTitleName')" maxlength="30">
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.offerCode" @keyup.enter="query" :placeholder="$t('offerCode')" maxlength="30">
+                </div>
+                <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}</button>
+                <button class="btn btn-danger" @click="delSelect"><i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}</button>
+                <button class="btn btn-primary" @click="add"><i class="fa fa-floppy-o"></i>&nbsp;{{$t('added')}}</button>
+                <!--<button class="btn btn-warning" @click="shelfOrobtained"><i></i>{{$t('UpperShelves')}}/{{$t('LowerShelves')}}</button>-->
+                <button class="btn btn-success" @click="shelfAll"><i></i>{{$t('UpperShelves')}}</button>
+                <button class="btn btn-success" @click="obtainedAll"><i></i>{{$t('LowerShelves')}}</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" :model="agentOffer">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('itemsUnderAgency')}}</div>
+                                <div class="col-sm-10">
+                                    <laebl-gruop id="serviceLab">
+                                        <label class="radio-inline" v-for="item in serviceList">
+                                            <input name="serviceId" type="checkbox" :text="item.serviceName" :value="item.id">{{item.serviceName}}
+                                        </label>
+                                    </laebl-gruop>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Taxonomy')}}</div>
+                                <div class="col-sm-10">
+                                    <laebl-gruop id="serviceLab">
+                                        <label class="radio-inline" v-for="item in categoryList">
+                                            <input name="categoryId" type="checkbox" :text="item.categoryName" :value="item.id">{{item.categoryName}}
+                                        </label>
+                                    </laebl-gruop>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('offerCode')}}</div>
+                                <div class="col-sm-10">
+                                    <input id="offerCode" type="text" name="offerCode" class="form-control"
+                                           v-model="agentOffer.offerCode" :placeholder="$t('offerCode')" disabled/>
+                                    <input type="radio" name="offerCode" ckValue="1" checked="checked" onchange="change2(this,'1')"/>{{$t('AutomaticGeneration')}}
+                                    &nbsp;&nbsp;<input type="radio" name="offerCode" ckValue="0" onchange="change2(this,'0')"/>{{$t('ManualInput')}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('title')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="title" class="form-control" v-model="agentOffer.title" :placeholder="$t('title')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('price')}}</div>
+                                <div class="col-sm-10">
+                                    <div class="col-sm-4" style="padding-left: 0px;">
+                                        <input type="number" step="0.001" min="0.001" name="price" class="form-control" v-model="agentOffer.price" style="padding-right:25px;"
+                                               :placeholder="$t('price')"/>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <select class="form-control selectpicker selectCurrencyCode" id="sltCurrency" :placeholder="$t('PleaseChooseCurrency')" :disabled="disenbled">
+                                            <option value="CNY">{{$t('RMB')}}</option>
+                                            <option value="USD">{{$t('Dollar')}}</option>
+                                            <option value="item.value" v-for="item in currencyList">{{item.name}}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <select class="form-control selectpicker selectUnitCode" id="sltValuationUnit" :placeholder="$t('unit')" :disabled="disenbled">
+                                            <option :value="item.code" v-for="item in unitList">/{{item.name}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('contact')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contactPerson" class="form-control" v-model="agentOffer.contactPerson" :placeholder="$t('contact')"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ContactInformation')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contactPhone" class="form-control" v-model="agentOffer.contactPhone" :placeholder="$t('ContactInformation')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('BusinessIntroduction')}}</div>
+                            <div class="col-sm-10">
+                                <el-textarea id="myEditor" name="introduction"
+                                             v-model="agentOffer.introduction"></el-textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label"></div>
+                            <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')" v-if="title!='详情'"/>
+                            &nbsp;&nbsp;
+                            <input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../plugins/select/js/select2.js"></script>
+<script src="../../js/components.js"></script>
+<script src="../../js/modules/agent/agent_offer.js"></script>
+
+<script type="text/javascript">
+    $(".selectpicker").select2({
+        allowClear: true,
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+    });
+</script>
+</body>
+</html>

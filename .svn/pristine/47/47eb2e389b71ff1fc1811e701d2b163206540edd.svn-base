@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>应收/应付账单</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('ReceivableBillList')}}&nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.contractNumber" :placeholder="$t('PleaseEnterTheContractNumber')" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" :placeholder="$t('PleaseInputOrderNumber')" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" data-width="auto" v-model="params.orderType">
+                    <option value="">{{$t('PleaseSelectTheSourceOfBill')}}</option>
+                    <option value="0">{{$t('DeclareOrder')}}</option>
+                    <option value="1">{{$t('GoodsOrder')}}</option>
+                    <option value="2">{{$t('LogisticsOrder')}}</option>
+                    <option value="3">{{$t('StorageOrder')}}</option>
+                    <option value="4">{{$t('AgentOrder')}}</option>
+                </select>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" data-width="auto" v-model="params.receivableStatus">
+                    <option value="">{{$t('PleaseSelectThePaymentStatus')}}</option>
+                    <option value="0">{{$t('Uncleared')}}</option>
+                    <option value="1">{{$t('ClearedUp')}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}</button>
+            <div class="row">
+                <div class="col-xs-12">
+                    <table id="table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--详情页-->
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <!--应收详情-->
+                <div>
+                    <section class="content-header">
+                        <h1>
+                            {{$t('DetailsOfReceivables')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+                        </h1>
+                    </section>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('ContractNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractNumber" class="form-control"
+                                           v-model="bill.contractNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('OrderId')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderNumber" class="form-control"
+                                           v-model="bill.orderNumber" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('PaymentMerchant')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payer" class="form-control" v-model="bill.payer"
+                                           disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AmountReceivable')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amountReceivable" class="form-control"
+                                           v-model="bill.amountReceivable" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('AmountReceived')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amountReceived" class="form-control"
+                                           v-model="bill.amountReceived" disabled/>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('SurplusAmount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="remainingAmountReceivable" class="form-control"
+                                           v-model="bill.remainingAmountReceivable" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('StateOfMoney')}}</div>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="status" class="form-control" v-model="bill.status" disabled/>-->
+                                    <select class="form-control" v-model="bill.receivableStatus" name="status"
+                                            disabled>
+                                        <option v-for="(item,index) in statusList" :value="index">{{item}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-4">
+                                <div class="col-sm-2 control-label">{{$t('CollectionTime')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="receivingTime" class="form-control"
+                                           v-model="bill.receivingTime" disabled/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-4" style="width: 81%">
+                                <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="remarks" class="form-control" v-model="bill.remarks" disabled/>-->
+                                    <textarea name="receivingRemarks" class="form-control" rows="4"
+                                              v-model="bill.receivingRemarks" disabled></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--收款记录-->
+                <div>
+                    <section class="content-header">
+                        <h1>{{$t('RecordOfReceipts')}}</h1>
+                    </section>
+                    <div class="row" style="float: right">
+                        <div class="form-group" style="float: right">
+                            <div class="col-sm-2 control-label"></div>
+                            <input v-if="!bill.validState" type="button" class="btn btn-primary" @click="showGatheringModal"
+                                   :value="$t('ConfirmationOfReceivables')"/>
+                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <table id="recordTable"></table>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <!--金额组成（费用明细） 弹框-->
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-xs-12">
+                                    <table style="table-layout:fixed" id="costTable1"></table>
+                                    <table style="table-layout:fixed" id="costTable2"></table>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+
+            <!--确认收款 弹框-->
+            <div class="modal fade" id="gatheringModal" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <form class="form-horizontal" id="gatheringForm" onkeydown="if(event.keyCode==13){return false;}">
+                                <div class="row">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('AmountCollected')}}</div>
+                                        <div class="col-sm-10">
+                                            <input type="text" name="amountCollected" class="form-control"
+                                                   style="width: 70%"
+                                                   v-model="gathering.amountCollected"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group">
+                                        <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                        <div class="col-sm-10">
+                                                    <textarea name="receivingRemarks" class="form-control" rows="5"
+                                                              style="width: 70%"
+                                                              v-model="gathering.remarks"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" @click="gatheringValidate">{{$t('confirm')}}</button>
+                            <button class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div><!-- /.modal -->
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/bill/bill_receivable.js"></script>
+</body>
+</html>

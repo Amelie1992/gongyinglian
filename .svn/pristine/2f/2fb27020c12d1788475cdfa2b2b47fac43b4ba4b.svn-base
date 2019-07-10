@@ -1,0 +1,244 @@
+$(function () {
+    vm.initTable();//----------------------------------------
+
+    //表单提交
+    $("form").FM({
+        fields: vm.fields,
+        success: vm.saveOrUpdate
+    })
+    /**货物来源订单*/
+    /**物流来源订单*/
+    /**报关来源订单*/
+    /**仓储来源订单*/
+    /**代理来源订单*/
+    /**货物当前订单*/
+    /**物流当前订单*/
+    /**报关当前订单*/
+    /**仓储当前订单*/
+    /**代理当前订单*/
+});
+
+function opFormatter(value, row, index) {//------------------------------
+    var op = '';
+    op += '<a id="btn_detail">' + vm.$t('Details') + '</a>';
+    return op;
+}
+
+window.opEvent = {
+    'click #btn_detail': function (event, value, row, index) {
+        vm.showList = false;
+        /*vm.addList = false;
+        vm.detailList = true;*/
+        vm.getInfo(row.id, vm.params.orderType, row.orderNumber, row.contractNumber);
+    }
+};//-------------------------------
+
+var vm = new Vue({
+    el: '#rrapp',
+    i18n,
+    data: {
+        //合同组件参数
+        contractParams: {
+            //合同编号
+            contractNumber: null,
+            //订单编号
+            orderNumber: null,
+            //来源订单类型
+            orderType: null,
+            //订单id
+            orderId: null,
+            //子组件监听以后去请求数据
+            showInfo: false,
+        },
+        showList: true,
+        title: null,
+        params: {
+            orderNumber: '',
+            orderType: 0,
+        },
+        //当前订单合同
+        currentContract: {},
+        //当前订单
+        currentOrder: {},
+        //来源订单为当前订单的所有关联订单
+        fatherOrder: {},
+        orderTypes: [
+            {type: 0, typeName: '货物订单'},
+            {type: 1, typeName: '物流订单'},
+            {type: 2, typeName: '报关订单'},
+            {type: 3, typeName: '仓储订单'},
+            {type: 4, typeName: '代理订单'},
+        ],
+        /**货物来源订单*/
+        /**物流来源订单*/
+        /**报关来源订单*/
+        /**仓储来源订单*/
+        /**代理来源订单*/
+        /**货物当前订单*/
+        /**物流当前订单*/
+        /**报关当前订单*/
+        /**仓储当前订单*/
+        /**代理当前订单*/
+        /**货物合同*/
+        /**物流合同*/
+        /**报关合同*/
+        /**仓储合同*/
+        /**代理合同*/
+    },
+    methods: {
+        /**货物来源订单*/
+        /**物流来源订单*/
+        /**报关来源订单*/
+        /**仓储来源订单*/
+        /**代理来源订单*/
+        /**货物当前订单*/
+        /**物流当前订单*/
+        /**报关当前订单*/
+        /**仓储当前订单*/
+        /**代理当前订单*/
+        /**货物合同*/
+        /**物流合同*/
+        /**报关合同*/
+        /**仓储合同*/
+        /**代理合同*/
+        /**
+         * 追溯列表
+         * */
+        initTable: function () {
+            //列表
+            $("#table").bootstrapTable("destroy"); //**********对于查询必不可少
+            $("#table").BT({
+                url: baseURL + 'traceBack/list',
+                columns: [
+                    {checkbox: true},
+                    {title: vm.$t("ContractNumber"), field: 'contractNumber'},
+                    {title: vm.$t("OrderNumber"), field: 'orderNumber'},
+                    {title: vm.$t("NameOfSellerCompany"), field: 'merchantCopName'},
+                    {title: vm.$t("NameOfBuyerCompany"), field: 'customsCopName'},
+                    {title: vm.$t("Founder"), field: 'createByName'},
+                    {title: vm.$t("CreationTime"), field: 'createTime'},
+                    {title: vm.$t('chaozuo'), formatter: opFormatter, events: opEvent}
+                ],
+                //条件查询
+                queryParams: vm.params
+            });
+            $("#contenTable").bootstrapTable("destroy")
+            $("#contenTable").BT({
+                height: 120,
+                pagination: false,
+                columns: [
+                    {
+                        title: '产品',
+                        valign: 'middle',
+                        align: 'center',
+                        field: 'remarks',
+                        formatter: function (value, row) {
+                            var str;
+                            str = '<div class="row container">' +
+                                /*'<div class="col-sm-12 text-center">' +*/
+                                '<img class="thumbnail col-sm-1 col-md-offset-1" style="background-color:#f9f9f9" src="' + row.goodsImageUrl + '" alt="商品图片">' +
+                                '<div class="col-sm-1 text-center" style="margin-top: 10px;">' +
+                                '<div>名称:' + row.goodsName + '</div>' +
+                                '<div>规格:' + row.goodsUnit + '</div>' +
+                                '</div>' +
+                                '</div>';
+                            return str;
+                        }
+                    },
+                    {title: '单价', valign: 'middle', align: 'center', field: 'goodsPrice'},
+                    {title: '数量', valign: 'middle', align: 'center', field: 'goodsCount'},
+                    {title: '总价', valign: 'middle', align: 'center', field: 'goodsTotalPrice'},
+                ]
+            })
+            $("#commondityTable").bootstrapTable("destroy")
+            $('#commondityTable').BT({
+                columns: [
+                    {title: '名称', field: 'commodityName'},
+                    {title: '报价', field: 'commodityPrice'},
+                    {title: '产地', field: 'commodityCountry'},
+                    {title: '厂号', field: 'commodityFactoryNumber'},
+                    {title: '数量', field: 'commodityCount'},
+                    {title: '包装', field: 'commodityPacking'},
+                ],
+            })
+        },
+
+        query: function () {
+            vm.reload();
+        },
+        //表单验证
+        validate: function () {
+            var bl = $('form').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        getInfo: function (id, orderType, orderNumber, contractNumber) {
+            vm.showList = false;
+            vm.contractParams.orderId = id;
+            if (contractNumber != null && contractNumber != null) {
+                vm.contractParams.showInfo = true;
+            }
+            vm.params.orderNumber = orderNumber;
+            var url='traceBack/queryInfo';
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(vm.params),
+                success: function (r) {
+                    if (r.code == 0) {
+                        //来源订单为当前订单的关联订单
+                        vm.fatherOrder = r.fatherOrder;
+                    }
+                }
+            });
+            /*$("#headingOne").collapse('show');*/
+            /*$('#tablist a:last').tab('show');*/
+            /* var url = 'traceBack/queryInfo';
+             $.ajax({
+                 type: "POST",
+                 url: baseURL + url,
+                 contentType: "application/json",
+                 data: JSON.stringify({id: id, orderType: orderType}),
+                 success: function (r) {
+                     if (r.code == 0) {
+                         //当前订单合同
+                         vm.currentContract = r.currentContract,
+                             //当前订单
+                             vm.currentOrder = r.currentOrder;
+                         //来源订单为当前订单的关联订单
+                         vm.fatherOrder = r.fatherOrder;
+                     }
+                 }
+             });*/
+        },
+        reload: function (event) {
+            vm.showList = true;
+            vm.title = "";
+            this.contractParams.showInfo = false;
+            this.contractParams.orderType = null;
+            //刷新 如需条件查询common.js
+            $("#table").BTF5(vm.params);
+        }
+    },
+    created: function () {
+
+    },
+    mounted: function () {
+    },
+    watch: {
+        "$i18n.locale": function (value) {
+            if (value == 'en') {
+                $("#table1").bootstrapTable.defaults.locale = "en-US";
+                $("#table2").bootstrapTable.defaults.locale = "en-US";
+            } else {
+                $("#table1").bootstrapTable.defaults.locale = "zh-CN";
+                $("#table2").bootstrapTable.defaults.locale = "zh-CN";
+            }
+            $("#table1").bootstrapTable("destroy");
+            $("#table2").bootstrapTable("destroy");
+            this.initTable();
+        },
+    }
+});

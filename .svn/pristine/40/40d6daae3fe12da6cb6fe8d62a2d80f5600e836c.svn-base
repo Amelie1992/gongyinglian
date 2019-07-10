@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.StorageOutCommodityDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.StorageOutCommodityEntity" id="storageOutCommodityMap">
+        <result property="id" column="id"/>
+        <result property="outId" column="out_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderCommodityId" column="order_commodity_id"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityNumber" column="commodity_number"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="weight" column="weight"/>
+        <result property="weightNum" column="weight_num"/>
+        <result property="outWeight" column="out_weight"/>
+        <result property="outWeightNum" column="out_weight_num"/>
+        <result property="outUnit" column="out_unit"/>
+        <result property="productionDate" column="production_date"/>
+        <result property="qualityTime" column="quality_time"/>
+        <result property="expirationDate" column="expiration_date"/>
+        <result property="inspectionNo" column="inspection_no"/>
+        <result property="containerNo" column="container_no"/>
+        <result property="unit" column="unit"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.storage.entity.StorageOutCommodityEntity">
+		SELECT * FROM storage_out_commodity WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.storage.entity.StorageOutCommodityEntity">
+        SELECT
+        a.*,
+        (CASE WHEN a.unit=1 then '吨' else '千克' END) unitName,
+        (CASE WHEN a.commodity_unit=1 then '吨' else '千克' END) commodityUnitName,
+        (SELECT c.name FROM sys_dict c WHERE a.commodity_country=c.code and c.type='国家编码') countryName,
+        (select c.arrival_time from storage_order c WHERE c.id=a.order_id) orderTime
+        FROM storage_out_commodity a
+        <where>
+            <if test="outId!=null and outId!=''">
+                a.out_id=#{outId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+    <!-- (CASE WHEN a.out_unit=0 then '吨' WHEN a.out_unit=1 then '托' else '件' END) unitName,-->
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM storage_out_commodity
+	</select>
+
+    <insert id="saveList" parameterType="com.wzlue.chain.storage.entity.StorageOutCommodityEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_out_commodity
+		(
+			`out_id`,
+            `order_id`,
+			`order_number`,
+			`order_commodity_id`,
+			`commodity_name`,
+			`commodity_number`,
+			`commodity_price`,
+			`commodity_unit`,
+			`commodity_factory_number`,
+			`commodity_country`,
+			`weight`,
+            `out_weight`,
+            `unit`,
+            `weight_num`,
+            `out_weight_num`,
+			`out_unit`,
+			`production_date`,
+			`quality_time`,
+			`expiration_date`,
+			`inspection_no`,
+			`container_no`
+		)
+		VALUES
+        <foreach collection="list" separator="," item="item" >
+		(
+			#{item.outId},
+            #{item.orderId},
+			#{item.orderNumber},
+			#{item.orderCommodityId},
+			#{item.commodityName},
+			#{item.commodityNumber},
+			#{item.commodityPrice},
+			#{item.commodityUnit},
+			#{item.commodityFactoryNumber},
+			#{item.commodityCountry},
+			#{item.weight},
+            #{item.outWeight},
+            #{item.unit},
+            #{item.weightNum},
+            #{item.outWeightNum},
+			#{item.outUnit},
+			#{item.productionDate},
+			#{item.qualityTime},
+			#{item.expirationDate},
+			#{item.inspectionNo},
+			#{item.containerNo}
+		)
+        </foreach>
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.StorageOutCommodityEntity">
+        UPDATE storage_out_commodity
+        <set>
+            <if test="outId != null">`out_id` = #{outId},</if>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="orderCommodityId != null">`order_commodity_id` = #{orderCommodityId},</if>
+            <if test="commodityName != null">`commodity_name` = #{commodityName},</if>
+            <if test="commodityNumber != null">`commodity_number` = #{commodityNumber},</if>
+            <if test="commodityPrice != null">`commodity_price` = #{commodityPrice},</if>
+            <if test="commodityUnit != null">`commodity_unit` = #{commodityUnit},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="weight != null">`weight` = #{weight},</if>
+            <if test="weightNum != null">`weight_num` = #{weightNum},</if>
+            <if test="outWeight != null">`out_weight` = #{outWeight},</if>
+            <if test="outWeightNum != null">`out_weight_num` = #{outWeightNum},</if>
+            <if test="outUnit != null">`out_unit` = #{outUnit},</if>
+            <if test="productionDate != null">`production_date` = #{productionDate},</if>
+            <if test="qualityTime != null">`quality_time` = #{qualityTime},</if>
+            <if test="expirationDate != null">`expiration_date` = #{expirationDate},</if>
+            <if test="inspectionNo != null">`inspection_no` = #{inspectionNo},</if>
+            <if test="containerNo != null">`container_no` = #{containerNo},</if>
+            <if test="unit != null">`unit` = #{unit}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateList" parameterType="com.wzlue.chain.storage.entity.StorageOutCommodityEntity">
+        <foreach collection="list" separator=";" item="item" >
+            UPDATE storage_out_commodity
+            <set>
+                <if test="item.outId != null">`out_id` = #{item.outId},</if>
+                <if test="item.orderId != null">`order_id` = #{item.orderId},</if>
+                <if test="item.orderNumber != null">`order_number` = #{item.orderNumber},</if>
+                <if test="item.orderCommodityId != null">`order_commodity_id` = #{item.orderCommodityId},</if>
+                <if test="item.commodityName != null">`commodity_name` = #{item.commodityName},</if>
+                <if test="item.commodityNumber != null">`commodity_number` = #{item.commodityNumber},</if>
+                <if test="item.commodityPrice != null">`commodity_price` = #{item.commodityPrice},</if>
+                <if test="item.commodityUnit != null">`commodity_unit` = #{item.commodityUnit},</if>
+                <if test="item.commodityFactoryNumber != null">`commodity_factory_number` = #{item.commodityFactoryNumber},</if>
+                <if test="item.commodityCountry != null">`commodity_country` = #{item.commodityCountry},</if>
+                <if test="item.weight != null">`weight` = #{item.weight},</if>
+                <if test="item.weightNum != null">`weight_num` = #{item.weightNum},</if>
+                <if test="item.outWeight != null">`out_weight` = #{item.outWeight},</if>
+                <if test="item.outWeightNum != null">`out_weight_num` = #{item.outWeightNum},</if>
+                <if test="item.outUnit != null">`out_unit` = #{item.outUnit},</if>
+                <if test="item.productionDate != null">`production_date` = #{item.productionDate},</if>
+                <if test="item.qualityTime != null">`quality_time` = #{item.qualityTime},</if>
+                <if test="item.expirationDate != null">`expiration_date` = #{item.expirationDate},</if>
+                <if test="item.inspectionNo != null">`inspection_no` = #{item.inspectionNo},</if>
+                <if test="item.containerNo != null">`container_no` = #{item.containerNo},</if>
+                <if test="item.unit != null">`unit` = #{item.unit}</if>
+            </set>
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+		DELETE FROM storage_out_commodity WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM storage_out_commodity WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByOutId">
+        DELETE FROM storage_out_commodity WHERE out_id=#{outId}
+    </delete>
+
+</mapper>

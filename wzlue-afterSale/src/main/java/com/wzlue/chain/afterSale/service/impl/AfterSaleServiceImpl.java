@@ -1,0 +1,324 @@
+package com.wzlue.chain.afterSale.service.impl;
+
+import com.wzlue.chain.afterSale.dao.AfterSaleGoodsDao;
+import com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity;
+import com.wzlue.chain.agent.dao.AgentOrderDao;
+import com.wzlue.chain.agent.entity.AgentOrderEntity;
+import com.wzlue.chain.common.exception.RRException;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.declare.dao.DeclareOrderDao;
+import com.wzlue.chain.declare.entity.DeclareOrderEntity;
+import com.wzlue.chain.logistics.dao.LogisticsOrderDao;
+import com.wzlue.chain.logistics.entity.LogisticsOrderEntity;
+import com.wzlue.chain.order.dao.GoodsOrderDao;
+import com.wzlue.chain.order.entity.GoodsOrderDetailEntity;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.storage.dao.OrderDao;
+import com.wzlue.chain.storage.entity.OrderEntity;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysDictEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.ImageService;
+import com.wzlue.chain.sys.service.SysDictService;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import io.swagger.models.auth.In;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.afterSale.dao.AfterSaleDao;
+import com.wzlue.chain.afterSale.entity.AfterSaleEntity;
+import com.wzlue.chain.afterSale.service.AfterSaleService;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service("afterSaleService")
+public class AfterSaleServiceImpl implements AfterSaleService {
+    @Autowired
+    private AfterSaleDao afterSaleDao;
+    @Autowired
+    private DeclareOrderDao declareOrderDao;
+    @Autowired
+    private ImageService imageService;
+    @Autowired
+    private SysDictService dictService;
+    @Autowired
+    private SysNumberRuleService numberRuleService;
+    @Autowired
+    private GoodsOrderDao goodsOrderDao;
+    @Autowired
+    private LogisticsOrderDao logisticsOrderDao;
+    @Autowired
+    private AgentOrderDao agentOrderDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private OrderDao orderDao;
+    @Autowired
+    private AfterSaleGoodsDao afterSaleGoodsDao;
+
+
+    @Override
+    public AfterSaleEntity queryObject(String id) {
+        return afterSaleDao.queryObject(id);
+    }
+
+    @Override
+    public List<AfterSaleEntity> queryList(Map<String, Object> map) {
+        return afterSaleDao.queryList(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return afterSaleDao.queryTotal(map);
+    }
+
+    @Override
+    @Transactional
+    public void save(AfterSaleEntity afterSale) {
+        String orderId = afterSale.getOrderId();
+        //一个订单仅能申请一次售后
+        AfterSaleEntity afterSaleEntity = afterSaleDao.queryByOrderId(orderId);
+        if (afterSaleEntity == null) {
+            apply(afterSale);       //该订单没有售后记录，可以去申请
+        } else {
+            throw new RRException("该订单已申请过售后，请勿重复申请！");
+        }
+
+    }
+
+    //申请售后的方法体
+    private void apply(AfterSaleEntity afterSale) {
+        Integer orderType = afterSale.getOrderType();       //订单类型 0：报关 1：货物 2：物流 3：仓储 4：代理'
+        String orderId = afterSale.getOrderId();
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        Date currentTime = new Date();
+        //修改订单的售后状态——
+        MerchantCompanyEntity merchantBuy = null;//买家
+        MerchantCompanyEntity merchanSell = null;//卖家
+        GoodsOrderEntity goodsOrderEntity = null;
+        switch (orderType) {
+            case 0: {
+                DeclareOrderEntity declareOrderEntity = declareOrderDao.queryByOrderNumber(orderId);
+                if (declareOrderEntity != null) {
+                    DeclareOrderEntity order = new DeclareOrderEntity();
+                    order.setId(declareOrderEntity.getId());
+                    order.setAlterSale(1);//设置售后状态- 1:未处理 2:已处理
+                    order.setUpdateTime(new Date());
+                    order.setUpdateBy(user.getUserId());
+                    declareOrderDao.update(order);
+                    merchantBuy = merchantCompanyDao.queryObject(declareOrderEntity.getBuyCompanyId());
+                    merchanSell = merchantCompanyDao.queryObject(declareOrderEntity.getMerchantCompanyId());
+                }
+                break;
+            }
+            case 1: {
+                if (afterSale.getBuyerId() == null) {
+                    goodsOrderEntity = goodsOrderDao.getListByOrderNumber(afterSale.getOrderId());
+                    if (goodsOrderEntity != null){
+                        GoodsOrderEntity goodsOrder = new GoodsOrderEntity();
+                        goodsOrder.setOrderId(goodsOrderEntity.getOrderId());
+                        goodsOrder.setAfterSale(1);
+                        goodsOrder.setModifyBy(user.getUserId().toString());
+                        goodsOrder.setModifyTime(new Date());
+                        goodsOrderDao.update(goodsOrder);
+                        merchantBuy = merchantCompanyDao.queryObject(goodsOrderEntity.getPurchaserCompanyId());
+                        merchanSell = merchantCompanyDao.queryObject(goodsOrderEntity.getSellerId());
+                    }
+                }
+                break;
+            }
+            case 2: {
+                LogisticsOrderEntity logisticsOrderEntity = logisticsOrderDao.queryByOrderNumber(orderId);
+                if (logisticsOrderEntity != null) {
+                    LogisticsOrderEntity logisticsOrder = new LogisticsOrderEntity();
+                    logisticsOrder.setId(logisticsOrderEntity.getId());
+                    logisticsOrder.setAlterSale(1);//售后状态改为已售后
+                    logisticsOrder.setUpdatedTime(new Date());
+                    logisticsOrder.setUpdatedBy(user.getUserId());
+                    logisticsOrderDao.update(logisticsOrder);
+                    merchantBuy = merchantCompanyDao.queryObject(logisticsOrderEntity.getCompanyId());
+                    merchanSell = merchantCompanyDao.queryObject(logisticsOrderEntity.getMerchantCompanyId());
+                }
+                break;
+            }
+            case 3: {
+                OrderEntity orderEntity = orderDao.queryObjectByOrderNumber(orderId);
+                if (orderEntity != null) {
+                    OrderEntity order = new OrderEntity();
+                    order.setId(orderEntity.getId());
+                    order.setAlterSale(1);//设置售后状态- 0：未申请；1:已申请；2：售后已处理
+                    order.setUpdatedTime(new Date());
+                    order.setUpdatedBy(user.getUserId());
+                    orderDao.update(order);
+                    merchantBuy = merchantCompanyDao.queryObject(orderEntity.getMerchantId());
+                    merchanSell = merchantCompanyDao.queryObject(orderEntity.getReceiptMerchantId());
+                }
+                break;
+            }
+            case 4: {
+                AgentOrderEntity agentOrder = agentOrderDao.queryByOrderNum(afterSale.getOrderId());
+                if (null != agentOrder) {
+                    AgentOrderEntity agent = new AgentOrderEntity();
+                    agent.setId(agentOrder.getId());
+                    agent.setAfterStatus(1);
+                    agent.setUpdateBy(user.getUserId());
+                    agent.setUpdateTime(new Date());
+                    agentOrderDao.update(agent);
+                    merchantBuy = merchantCompanyDao.queryObject(agentOrder.getContactCompanyId());
+                    merchanSell = merchantCompanyDao.queryObject(agentOrder.getMerchantCompanyId());
+                }
+                break;
+            }
+        }
+
+        if (merchantBuy != null && merchanSell != null) {
+            afterSale.setBuyer(merchantBuy.getCompanyName());
+            afterSale.setSeller(merchanSell.getCompanyName());
+            afterSale.setBuyerId(merchantBuy.getId().intValue());
+            afterSale.setSellerId(merchanSell.getId().intValue());
+        }
+        afterSale.setCode(numberRuleService.getCodeNumberByPrefix("GDOD"));     //编码规则产生的售后编号
+        afterSale.setApplicationDate(currentTime);
+        afterSale.setStatus(0);     //0：待处理
+        afterSale.setCompanyId(user.getCompanyId().intValue());
+        afterSale.setCreateBy(user.getUserId().intValue());
+        afterSale.setCreatedTime(currentTime);
+        afterSale.setUpdateBy(user.getUserId().intValue());
+        afterSale.setUpdateTime(currentTime);
+        afterSaleDao.save(afterSale);
+
+        List<ImageEntity> images = afterSale.getImages();
+        for (ImageEntity image : images) {
+            image.setType("after_sale");
+            image.setCode(afterSale.getId());
+            image.setCreateBy(user.getUserId().toString());
+            image.setCreateDate(currentTime);
+        }
+        imageService.saveList(images);
+
+        //货物订单 插入 售后的商品信息
+        List<AfterSaleGoodsEntity> goods = afterSale.getGoods();
+        if (goods != null) {
+            if (goodsOrderEntity != null){
+                List<GoodsOrderDetailEntity> detail = goodsOrderEntity.getDetail();
+                for (AfterSaleGoodsEntity good : goods) {
+                    good.setGoodsName(detail.get(0).getGoodsName());
+                    good.setCommodityCountry(detail.get(0).getCommodityCountry());
+                    good.setCommodityFactoryNumber(detail.get(0).getCommodityFactoryNumber());
+                    String goodsUnit = goodsOrderEntity.getGoodsUnit();
+                    Integer number = null;
+                    if (goodsUnit.equals("1")){ //柜
+                        number = goodsOrderEntity.getOrderCount()*detail.get(0).getGoodsCount();
+                    }else if (goodsUnit.equals("2")||goodsUnit.equals("3")){
+                        number = goodsOrderEntity.getOrderCount();
+                    }
+                    good.setNumber(number.toString());
+                    good.setUnit(detail.get(0).getGoodsUnit());
+                    good.setCommodityPacking(detail.get(0).getCommodityPacking());
+                    good.setAfterSaleId(afterSale.getId());
+                    good.setCreateBy(user.getUserId().intValue());
+                    good.setCreatedTime(currentTime);
+                }
+            }
+            afterSaleGoodsDao.saveList(goods);
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public void update(AfterSaleEntity afterSale) {
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        Date currentTime = new Date();
+
+        afterSale.setUpdateBy(user.getUserId().intValue());
+        afterSale.setUpdateTime(currentTime);
+        afterSaleDao.update(afterSale);
+
+        List<ImageEntity> images = afterSale.getImages();
+        List<SysDictEntity> dic = dictService.queryByType("image_type_goods");
+        Map<String, Object> params = new HashMap<>();
+        params.put("code", afterSale.getId());
+        params.put("picType", dic.get(0).getCode());
+        imageService.deleteByCode(params);
+        for (ImageEntity image : images) {
+            image.setPicType(dic.get(0).getCode());
+            image.setCode(afterSale.getId());
+            image.setCreateBy(user.getUserId().toString());
+            image.setCreateDate(currentTime);
+        }
+        imageService.saveList(images);
+    }
+
+    @Override
+    public void delete(String id) {
+        afterSaleDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(String[] ids) {
+        afterSaleDao.deleteBatch(ids);
+    }
+
+    @Override
+    public void handle(AfterSaleEntity afterSale) {
+        //更改处理状态 0：待处理 1： 已处理
+        afterSale.setStatus(1);
+        Date currentTime = new Date();
+        SysUserEntity user = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+        afterSale.setUpdateBy(user.getUserId().intValue());
+        afterSale.setUpdateTime(currentTime);
+        afterSaleDao.handle(afterSale);
+        Integer orderType = afterSale.getOrderType();       //订单类型 0：报关 1：货物 2：物流 3：仓储 4：代理
+        String orderId = afterSale.getOrderId();            //订单编号
+        switch (orderType) {
+            case 0: {
+                break;
+            }
+            case 1: {
+                break;
+            }
+            case 2: {
+                LogisticsOrderEntity logisticsOrderEntity = logisticsOrderDao.queryByOrderNumber(orderId);
+                if (logisticsOrderEntity != null) {
+                    logisticsOrderEntity.setAlterSale(2);// //售后：0：未申请；1:已申请；2：售后已处理',
+                    logisticsOrderEntity.setUpdatedTime(new Date());
+                    logisticsOrderEntity.setUpdatedBy(user.getUserId());
+                    logisticsOrderDao.update(logisticsOrderEntity);
+                }
+                break;
+            }
+            case 3: {
+                OrderEntity orderEntity = orderDao.queryObjectByOrderNumber(orderId);
+                if (orderEntity != null) {
+                    orderEntity.setAlterSale(2);    //售后：0：未申请；1:已申请；2：售后已处理',
+                    orderEntity.setUpdatedBy(user.getUserId());
+                    orderEntity.setUpdatedTime(currentTime);
+                    orderDao.update(orderEntity);
+                }
+                break;
+            }
+            case 4: {
+                break;
+            }
+        }
+    }
+
+    @Override
+    public int getAfter(String id) {
+        return afterSaleDao.getAfter(id);
+    }
+
+    @Override
+    public AfterSaleEntity queryByOrderId(String orderId) {
+        return afterSaleDao.queryByOrderId(orderId);
+    }
+
+}

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.ImageDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.sys.entity.ImageEntity" id="imageMap">
+        <result property="id" column="id"/>
+        <result property="picName" column="pic_name"/>
+        <result property="picUrl" column="pic_url"/>
+        <result property="picType" column="pic_type"/>
+        <result property="type" column="type"/>
+        <result property="remark" column="remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="username" column="username"/>
+        <result property="createDate" column="create_date"/>
+        <result property="sort" column="sort"/>
+        <result property="code" column="code"/>
+    </resultMap>
+
+    <select id="queryByCreateBy" resultType="com.wzlue.chain.sys.entity.ImageEntity">
+        SELECT
+        id, pic_name, pic_url, pic_type, `type`, remark, create_by, create_date, sort, code
+        FROM
+        sys_image
+        WHERE
+        create_by = #{value}
+
+    </select>
+
+    <select id="queryCompanyLogo" resultType="com.wzlue.chain.sys.entity.ImageEntity">
+        SELECT * FROM sys_image WHERE create_by = #{value} AND code = -1
+
+    </select>
+
+    <select id="queryObject" resultType="com.wzlue.chain.sys.entity.ImageEntity">
+		SELECT * FROM sys_image WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="imageMap">
+        SELECT
+          t1.*, t2.username
+        FROM
+        sys_image t1
+        LEFT JOIN sys_user t2 ON t1.create_by = t2.user_id
+        <where>
+            <if test="code != null">
+                t1.code= #{code}
+            </if>
+            <if test="type != null">
+                and t1.type=#{type}
+            </if>
+            <if test="picType != null">
+                and t1.pic_type=#{picType}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY t1.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM sys_image
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.sys.entity.ImageEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO sys_image
+		(
+		`id`,
+		`pic_name`,
+		`pic_url`,
+		`pic_type`,
+		`type`,
+		`remark`,
+		`create_by`,
+		`create_date`,
+		`sort`,
+		 `code`
+		)
+		VALUES
+		(
+			#{id},
+			#{picName},
+	  		#{picUrl},
+			#{picType},
+			#{type},
+			#{remark},
+			#{createBy},
+			#{createDate},
+			#{sort},
+			#{code}
+		)
+	</insert>
+    <insert id="saveList" parameterType="java.util.List">
+        INSERT INTO sys_image
+        (
+        `pic_name`,
+        `pic_url`,
+        `pic_type`,
+        `type`,
+        `remark`,
+        `create_by`,
+        `create_date`,
+        `sort`,
+        `code`
+        )
+        VALUES
+        <foreach item="item" collection="list" separator=",">
+            (
+            #{item.picName},
+            #{item.picUrl},
+            #{item.picType},
+            #{item.type},
+            #{item.remark},
+            #{item.createBy},
+            #{item.createDate},
+            #{item.sort},
+            #{item.code}
+            )
+        </foreach>
+    </insert>
+    <update id="update" parameterType="com.wzlue.chain.sys.entity.ImageEntity">
+        UPDATE sys_image
+        <set>
+            <if test="picName != null">`pic_name` = #{picName},</if>
+            <if test="picUrl != null">`pic_url` = #{picUrl},</if>
+            <if test="picType != null">`pic_type` = #{picType},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="remark != null">`remark` = #{remark},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createDate != null">`create_date` = #{createDate},</if>
+            <if test="sort != null">`sort` = #{sort}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM sys_image WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM sys_image WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteByCode">
+        DELETE FROM sys_image WHERE code =#{code} and pic_type=#{picType}
+    </delete>
+    <delete id="deleteByCodeBatch" parameterType="java.util.List">
+        DELETE FROM sys_image WHERE code in
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item.code}
+        </foreach>
+        and pic_type in
+        <foreach item="item" collection="list" open="(" separator="," close=")">
+            #{item.picType}
+        </foreach>
+    </delete>
+
+    <delete id="deleteCreateBy">
+          DELETE FROM sys_image WHERE create_by = #{id}
+    </delete>
+
+    <delete id="deleteById">
+        DELETE FROM sys_image WHERE id  in
+        <foreach collection="array" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>

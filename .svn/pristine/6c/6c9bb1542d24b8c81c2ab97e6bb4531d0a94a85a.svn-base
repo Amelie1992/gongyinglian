@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentDemandDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentDemandEntity" id="agentDemandMap">
+        <result property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="contacts" column="contacts"/>
+        <result property="mobile" column="mobile"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="weight" column="weight"/>
+        <result property="unit" column="unit"/>
+        <result property="description" column="description"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+		<association property="merchantCompanyEntity" column="company_id" select="com.wzlue.chain.company.dao.MerchantCompanyDao.queryObjectOfEntity"/>
+		<collection property="categorys" column="id" select="com.wzlue.chain.agent.dao.AgentDemandGoodsCategoryDao.queryByDemandId"/>
+		<collection property="business" column="id" select="com.wzlue.chain.agent.dao.AgentDemandBusinessDao.queryByDemandId"/>
+
+	</resultMap>
+
+	<resultMap id="busMap" type="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity">
+		<id column="b_id" property="id"/>
+		<result column="b_bus_id" property="busId"/>
+		<result column="b_bus_name" property="busName"/>
+	</resultMap>
+
+	<resultMap id="categoryMap" type="com.wzlue.chain.agent.entity.AgentDemandGoodsCategoryEntity">
+		<id column="c_id" property="id"/>
+		<result column="c_category_id" property="categoryId"/>
+		<result column="c_category_name" property="categoryName"/>
+	</resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentDemandEntity">
+		SELECT * FROM agent_demand WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentDemandEntity">
+		SELECT * FROM agent_demand
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="pageList" resultMap="agentDemandMap">
+		SELECT
+			ad.`id`,
+			ad.`title`,
+			ad.`contacts`,
+			ad.`mobile`,
+			ad.`goods_name`,
+			ad.`weight`,
+			ad.`unit`,
+			ad.`description`,
+			ad.`del_flag`,
+			ad.`create_by`,
+			ad.`create_time`,
+			ad.`update_by`,
+			ad.`update_time`,
+			ad.`company_id`,
+			ad.`dept_id`,
+			ad.`authorizes_id`
+		FROM agent_demand ad
+		WHERE 1=1
+		AND ad.del_flag = 0
+		<if test="companyId != null and companyId !=''">
+			AND	ad.company_id = #{companyId}
+		</if>
+		<if test="title !=null and title!='' ">
+			AND ad.title LIKE CONCAT ('%', #{title},'%')
+		</if>
+		<if test="goodsName != null and goodsName !=''">
+			AND ad.goods_name LIKE CONCAT ('%', #{goodsName}, '%')
+		</if>
+		<if test="null != business and business.length > 0">
+			AND ad.id  IN (SELECT ab.demand_id FROM agent_demand_business ab WHERE ab.bus_name IN
+
+			<foreach collection="business" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+			)
+		</if>
+		ORDER  By ad.create_time desc
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="pageCount" resultType="java.lang.Integer">
+		SELECT
+			COUNT(DISTINCT(ad.id))
+		FROM agent_demand ad
+		WHERE 1=1
+		AND ad.del_flag = 0
+		<if test="companyId != null and companyId !=''">
+			AND	ad.company_id = #{companyId}
+		</if>
+		<if test="title !=null and title!='' ">
+			AND ad.title LIKE CONCAT ('%', #{title},'%')
+		</if>
+		<if test="goodsName != null and goodsName !=''">
+			AND ad.goods_name LIKE CONCAT ('%', #{goodsName}, '%')
+		</if>
+		<if test="null != business and business.length > 0">
+			AND ad.id  IN (SELECT ab.demand_id FROM agent_demand_business ab WHERE ab.bus_name IN
+
+			<foreach collection="business" item="item" open="(" separator="," close=")">
+				#{item}
+			</foreach>
+			)
+		</if>
+	</select>
+
+	<select id="queryDetail" resultMap="agentDemandMap">
+		SELECT
+			ad.`id`,
+			ad.`title`,
+			ad.`contacts`,
+			ad.`mobile`,
+			ad.`goods_name`,
+			ad.`weight`,
+			ad.`unit`,
+			ad.`description`,
+			ad.`del_flag`,
+			ad.`create_by`,
+			ad.`create_time`,
+			ad.`update_by`,
+			ad.`update_time`,
+			ad.`company_id`,
+			ad.`dept_id`,
+			ad.`authorizes_id`
+		FROM agent_demand ad
+
+		WHERE 1=1
+		AND ad.id = #{id}
+	</select>
+
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_demand
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentDemandEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_demand
+		(
+			`title`,
+			`contacts`,
+			`mobile`,
+			`goods_name`,
+			`weight`,
+			`unit`,
+			`description`,
+			`del_flag`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`dept_id`,
+			`company_id`,
+			`authorizes_id`
+		)
+		VALUES
+		(
+			#{title},
+			#{contacts},
+			#{mobile},
+			#{goodsName},
+			#{weight},
+			#{unit},
+			#{description},
+			#{delFlag},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{deptId},
+			#{companyId},
+			#{authorizesId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentDemandEntity">
+		UPDATE agent_demand
+		<set>
+			<if test="title != null">`title` = #{title}, </if>
+			<if test="contacts != null">`contacts` = #{contacts}, </if>
+			<if test="mobile != null">`mobile` = #{mobile}, </if>
+			<if test="goodsName != null">`goods_name` = #{goodsName}, </if>
+			<if test="weight != null">`weight` = #{weight}, </if>
+			<if test="unit != null">`unit` = #{unit}, </if>
+			<if test="description != null">`description` = #{description}, </if>
+			<if test="delFlag != null">`del_flag` = #{delFlag}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}, </if>
+			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
+			<if test="updateTime != null">`update_time` = #{updateTime}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM agent_demand WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM agent_demand WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<update id="updateDel">
+		UPDATE agent_demand SET del_flag = 1, update_time = now(), update_by = #{userId} where id = #{id};
+	</update>
+</mapper>

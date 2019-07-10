@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agreement.dao.AgreeMentGlDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agreement.entity.AgreeMentGlEntity" id="agreeMentGlMap">
+        <result property="xieyiglId" column="xieyigl_id"/>
+        <result property="xieyiglGuid" column="xieyigl_guid"/>
+		<result property="xieyiglUid" column="xieyigl_uid"/>
+		<result property="xieyiglXid" column="xieyigl_xid"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agreement.entity.AgreeMentGlEntity">
+		SELECT * FROM agree_ment_gl WHERE xieyigl_id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agreement.entity.AgreeMentGlEntity">
+		SELECT * FROM agree_ment_gl
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY xieyigl_id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agree_ment_gl
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agreement.entity.AgreeMentGlEntity">
+		INSERT INTO agree_ment_gl
+		(
+			`xieyigl_guid`,
+			`xieyigl_uid`,
+			`xieyigl_xid`
+									)
+		VALUES
+		(
+			#{xieyiglGuid},
+			#{xieyiglUid},
+			#{xieyiglXid}
+
+									)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agreement.entity.AgreeMentGlEntity">
+		UPDATE agree_ment_gl
+		<set>
+				<if test="xieyiglGuid != null">`xieyigl_guid` = #{xieyiglGuid}</if>
+		</set>
+		WHERE xieyigl_id = #{xieyiglId}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM agree_ment_gl WHERE xieyigl_id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM agree_ment_gl WHERE xieyigl_id IN
+		<foreach item="xieyiglId" collection="array" open="(" separator="," close=")">
+			#{xieyiglId}
+		</foreach>
+	</delete>
+
+</mapper>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.company.dao.ReceivingAddressDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.company.entity.ReceivingAddressEntity" id="receivingaddressMap">
+        <result property="id" column="id"/>
+        <result property="addresshear" column="addresshear"/>
+        <result property="consignee" column="consignee"/>
+        <result property="region" column="region"/>
+        <result property="detailedaddress" column="detailedaddress"/>
+        <result property="specificaddress" column="detailedaddress"/>
+        <result property="phonenumber" column="phonenumber"/>
+        <result property="zipcode" column="zipcode"/>
+        <result property="defaultaddress" column="defaultaddress"/>
+        <result property="sortnum" column="sortnum"/>
+        <result property="createBy" column="create_by"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.company.entity.ReceivingAddressEntity">
+		SELECT * FROM receiving_address WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.company.entity.ReceivingAddressEntity">
+        SELECT * FROM receiving_address
+        WHERE 1=1
+        <if test="userId!=null and userId > 0">
+            AND create_by = #{userId}
+        </if>
+        <if test="addressTitle != null and addressTitle != ''">
+            AND addresshear like concat ('%',#{addressTitle},'%')
+        </if>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM receiving_address
+        WHERE
+        1=1
+        <if test="userId!=null and userId > 0">
+            AND create_by = #{userId}
+        </if>
+        <if test="addressTitle != null and addressTitle != ''">
+            AND addresshear like concat ('%',#{addressTitle},'%')
+        </if>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.company.entity.ReceivingAddressEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO receiving_address
+		( `id`,`addresshear`, `consignee`, `region`, `detailedaddress`,`specificaddress`, `phonenumber`, `zipcode`,`defaultaddress`,`sortnum`,company_id,create_by)
+		VALUES
+		(#{id}, #{addresshear}, #{consignee}, #{region}, #{detailedaddress}, #{specificaddress},#{phonenumber}, #{zipcode},#{defaultaddress},#{sortnum},#{companyId},#{createBy} )
+		ON DUPLICATE KEY UPDATE
+		  region = VALUES(region),
+		  addresshear = VALUES(addresshear),
+		  consignee = VALUES(consignee),
+		  detailedaddress=VALUES(detailedaddress),
+		  specificaddress=VALUES(specificaddress),
+		  phonenumber=VALUES(phonenumber),
+		  zipcode=VALUES(zipcode)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.company.entity.ReceivingAddressEntity">
+        UPDATE receiving_address
+        <set>
+            <if test="addresshear != null">`addresshear` = #{addresshear},</if>
+            <if test="consignee != null">`consignee` = #{consignee},</if>
+            <if test="region != null">`region` = #{region},</if>
+            <if test="detailedaddress != null">`detailedaddress` = #{detailedaddress},</if>
+            <if test="specificaddress != null">`specificaddress` = #{specificaddress},</if>
+            <if test="phonenumber != null">`phonenumber` = #{phonenumber},</if>
+            <if test="zipcode != null">`zipcode` = #{zipcode}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <update id="setDefatultAddress">
+        UPDATE receiving_address SET defaultaddress = null WHERE create_by = #{userId} ;
+        UPDATE receiving_address SET defaultaddress = 1 WHERE create_by = #{userId} AND id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM receiving_address WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM receiving_address WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="cancelDetailAddress">
+        UPDATE
+          receiving_address
+        SET defaultaddress = null
+        WHERE id = #{id}
+
+    </delete>
+
+</mapper>

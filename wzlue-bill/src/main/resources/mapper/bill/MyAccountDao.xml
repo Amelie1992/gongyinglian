@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.bill.dao.MyAccountDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.bill.entity.MyAccountEntity" id="myAccountMap">
+        <result property="id" column="id"/>
+        <result property="account" column="account"/>
+        <result property="password" column="password"/>
+        <result property="salt" column="salt"/>
+        <result property="balance" column="balance"/>
+        <result property="createBy" column="create_by"/>
+        <result property="companyId" column="company_id"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="resultInfo">
+        id, account, balance,update_time
+    </sql>
+
+    <select id="queryMyAccount" resultType="com.wzlue.chain.bill.entity.MyAccountEntity">
+        SELECT
+        <include refid="resultInfo"/>
+        FROM my_account WHERE create_by = #{create_by}
+    </select>
+
+    <select id="queryObject" resultType="com.wzlue.chain.bill.entity.MyAccountEntity">
+		SELECT * FROM my_account WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.bill.entity.MyAccountEntity">
+        SELECT * FROM my_account
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM my_account
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.bill.entity.MyAccountEntity" useGeneratedKeys="true" keyProperty="id">
+
+        <selectKey keyProperty="count" resultType="int" order="BEFORE">
+          SELECT count(1) FROM my_account WHERE create_by = #{createBy}
+        </selectKey>
+
+        <if test="count == 0">
+            INSERT INTO my_account
+            ( `account`, `balance`, `create_by`, `company_id`, `update_time` ,`password`,`salt`)
+            VALUES ( #{account}, #{balance}, #{createBy},#{companyId}, #{updateTime}, #{password}, #{salt} )
+        </if>
+
+        <if test="count > 0">
+            SELECT 1 FROM DUAL
+        </if>
+
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.bill.entity.MyAccountEntity">
+        UPDATE my_account
+        <set>
+            <if test="account != null">`account` = #{account},</if>
+            <if test="balance != null">`balance` = #{balance},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="password != null">`password` = #{password}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM my_account WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM my_account WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--根据公司id查公司账户-->
+    <select id="queryObjectByCompanyId" resultType="com.wzlue.chain.bill.entity.MyAccountEntity">
+		SELECT * FROM my_account WHERE `company_id` = #{companyId}
+	</select>
+
+</mapper>

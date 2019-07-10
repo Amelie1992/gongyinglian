@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.order.dao.GoodsOrderCinfoDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.order.entity.GoodsOrderCinfoEntity" id="goodsOrderCinfoMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="consigneeId" column="consignee_id"/>
+        <result property="consigneeName" column="consignee_name"/>
+        <result property="consigneePhone" column="consignee_phone"/>
+        <result property="consigneeAddress" column="consignee_address"/>
+        <result property="consigneeArea" column="consignee_area"/>
+        <result property="consigneeZipCode" column="consignee_zip_code"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyEnglishName" column="company_english_name"/>
+        <result property="companyEra" column="company_era"/>
+        <result property="companyUscc" column="company_uscc"/>
+        <result property="companyAddressAlias" column="company_address_alias"/>
+        <result property="companyPod" column="company_pod"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.order.entity.GoodsOrderCinfoEntity">
+		SELECT * FROM goods_order_cinfo WHERE order_id = #{orderId}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.order.entity.GoodsOrderCinfoEntity">
+        SELECT * FROM goods_order_cinfo
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM goods_order_cinfo
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.order.entity.GoodsOrderCinfoEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO goods_order_cinfo
+		(
+																				`order_id`, 
+																	`consignee_id`, 
+																	`consignee_name`, 
+																	`consignee_phone`, 
+																	`consignee_address`, 
+																	`consignee_area`, 
+																	`consignee_zip_code`, 
+																	`company_name`, 
+																	`company_english_name`, 
+																	`company_era`, 
+																	`company_uscc`, 
+																	`company_address_alias`, 
+																	`company_pod`
+									)
+		VALUES
+		(
+																				#{orderId}, 
+																	#{consigneeId}, 
+																	#{consigneeName}, 
+																	#{consigneePhone}, 
+																	#{consigneeAddress}, 
+																	#{consigneeArea}, 
+																	#{consigneeZipCode}, 
+																	#{companyName}, 
+																	#{companyEnglishName}, 
+																	#{companyEra}, 
+																	#{companyUscc}, 
+																	#{companyAddressAlias}, 
+																	#{companyPod}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.order.entity.GoodsOrderCinfoEntity">
+        UPDATE goods_order_cinfo
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="consigneeId != null">`consignee_id` = #{consigneeId},</if>
+            <if test="consigneeName != null">`consignee_name` = #{consigneeName},</if>
+            <if test="consigneePhone != null">`consignee_phone` = #{consigneePhone},</if>
+            <if test="consigneeAddress != null">`consignee_address` = #{consigneeAddress},</if>
+            <if test="consigneeArea != null">`consignee_area` = #{consigneeArea},</if>
+            <if test="consigneeZipCode != null">`consignee_zip_code` = #{consigneeZipCode},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="companyEnglishName != null">`company_english_name` = #{companyEnglishName},</if>
+            <if test="companyEra != null">`company_era` = #{companyEra},</if>
+            <if test="companyUscc != null">`company_uscc` = #{companyUscc},</if>
+            <if test="companyAddressAlias != null">`company_address_alias` = #{companyAddressAlias},</if>
+            <if test="companyPod != null">`company_pod` = #{companyPod}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_order_cinfo WHERE id = #{value}
+	</delete>
+    <delete id="deleteByOrderId">
+		DELETE FROM goods_order_cinfo WHERE `order_id` = #{orderId}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_order_cinfo WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

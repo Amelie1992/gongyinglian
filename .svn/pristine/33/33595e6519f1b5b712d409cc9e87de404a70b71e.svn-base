@@ -1,0 +1,49 @@
+package com.wzlue.chain.web.controller.traceback;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+import com.wzlue.chain.traceback.entity.TraceBackEntity;
+import com.wzlue.chain.traceback.service.TraceBackService;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 追溯Controller
+ *
+ * @author Administrator
+ * @date 2018/09/29
+ */
+@RestController
+@RequestMapping("/traceBack")
+public class TraceBackController extends AbstractController {
+    @Autowired
+    private TraceBackService traceBackService;
+
+    @RequestMapping("/list")
+    public R queryList(@RequestParam Map<String, Object> params) {
+        params.put("companyId", getUser().getCompanyId());
+        Query query = new Query(params);
+        List<TraceBackEntity> list = traceBackService.queryList(query);
+        return R.page(list, traceBackService.queryTotal(query));
+    }
+
+    @RequestMapping("/queryInfo")
+    public R queryInfo(@RequestBody Map<String, Object> params) {
+        /*Map<String, Object> map = traceBackService.queryInfo(params);*/
+      /*  params.put("companyId",getUser().getCompanyId());
+        Query query = new Query(params);
+        List<TraceBackEntity> list = traceBackService.queryList(query);
+        return R.page(list,traceBackService.queryTotal(query));*/
+        /*return R.ok().put("params", map);*/
+        return null;
+    }
+}

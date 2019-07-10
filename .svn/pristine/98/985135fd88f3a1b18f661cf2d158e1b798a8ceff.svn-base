@@ -1,0 +1,108 @@
+
+package com.wzlue.chain.web.controller.marketing;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.marketing.entity.MarketBidRecordEntity;
+import com.wzlue.chain.marketing.service.MarketBidRecordService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 拍卖出价记录表
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-26 13:48:09
+ */
+@RestController
+@RequestMapping("/marketing/marketbidrecord")
+public class MarketBidRecordController extends AbstractController {
+    @Autowired
+    private MarketBidRecordService marketBidRecordService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        Long companyId = getUser().getCompanyId();
+        if (companyId != null) {
+            query.put("companyId",companyId);
+        }
+        List<MarketBidRecordEntity> marketBidRecordList = marketBidRecordService.queryList(query);
+        int total = marketBidRecordService.queryTotal(query);
+
+        return R.page(marketBidRecordList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+//    @RequiresPermissions("marketing:marketbidrecord:info")
+    public R info(@PathVariable("id") Long id) {
+        MarketBidRecordEntity marketBidRecord = marketBidRecordService.queryObject(id);
+
+        return R.ok().put("marketBidRecord", marketBidRecord);
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+//    @RequiresPermissions("marketing:marketbidrecord:save")
+    public R save(@RequestBody MarketBidRecordEntity marketBidRecord) {
+        Long companyId = getUser().getCompanyId();
+        if (companyId == null) {    //管理员登录
+            return R.error("请以公司角色进行拍卖");
+        } else {
+            marketBidRecordService.save(marketBidRecord);
+            return R.ok();
+        }
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+//    @RequiresPermissions("marketing:marketbidrecord:update")
+    public R update(@RequestBody MarketBidRecordEntity marketBidRecord) {
+        marketBidRecordService.update(marketBidRecord);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+//    @RequiresPermissions("marketing:marketbidrecord:delete")
+    public R delete(@RequestBody Long[] ids) {
+        marketBidRecordService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+}

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentDemandBusinessDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity" id="agentDemandBusinessMap">
+        <result property="id" column="id"/>
+        <result property="demandId" column="demand_id"/>
+        <result property="busId" column="bus_id"/>
+        <result property="busName" column="bus_name"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity">
+		SELECT * FROM agent_demand_business WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity">
+		SELECT * FROM agent_demand_business
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_demand_business
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_demand_business
+		(
+			`demand_id`,
+			`bus_id`,
+			`bus_name`
+		)
+		VALUES
+		(
+			#{demandId},
+			#{busId},
+			#{busName}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentDemandBusinessEntity">
+		UPDATE agent_demand_business
+		<set>
+			<if test="demandId != null">`demand_id` = #{demandId}, </if>
+			<if test="busId != null">`bus_id` = #{busId}, </if>
+			<if test="busName != null">`bus_name` = #{busName}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM agent_demand_business WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM agent_demand_business WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByDemandId">
+		DELETE FROM agent_demand_business WHERE demand_id = #{demandId}
+	</delete>
+
+	<select id="queryByDemandId" resultMap="agentDemandBusinessMap">
+		SELECT * FROM agent_demand_business WHERE demand_id = #{demandId}
+	</select>
+</mapper>

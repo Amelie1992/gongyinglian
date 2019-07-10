@@ -1,0 +1,916 @@
+package com.wzlue.chain.order.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.depot.entity.GoodsOrderDepotEntity;
+import com.wzlue.chain.ship.entity.GoodsOrderShipEntity;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+
+/**
+ * 货物订单表
+ *
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-08-15 19:47:29
+ */
+public class GoodsOrderEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 订单id
+     */
+    private Long orderId;
+    /**
+     * 订单编号
+     */
+    private String orderNumber;
+    /**
+     * 商家id
+     */
+    private String sellerId;
+    //商家名称
+    private String sellerName;
+    //商家联系方式
+    private String sellerContact;
+    //购买者公司id
+    private String purchaserCompanyId;
+    //购买者公司名称
+    private String purchaserCompanyName;
+    //购买者名称
+    private String purchaserName;
+    //购买者联系方式
+    private String purchaserContact;
+    //卖家投诉状态
+    private Integer complaintP;
+    //买家投诉状态
+    private Integer complaintS;
+    //默认商品总价格
+    private BigDecimal totalPrice;
+    //运费
+    private BigDecimal transportationExpenses;
+    //订单数量
+    private Integer orderCount;
+    //    /**
+//     * 交易方式
+//     */
+//    private String transactionManner;
+    //实付款
+    private BigDecimal actualPayment;
+    //配送方式 如果商家有服务则0：商家安排1：自行安排
+    private Integer distributionMode;
+    //付款方式
+    private String transactionMode;
+    //支付方式 如果商家有服务则0：商家安排1：自行安排
+    private Integer paymentMethod;
+    //报关方式如果商家有服务则0：商家安排1：自行安排
+    private Integer customsDeclaration;
+    //仓储方式如果商家有服务则0：商家安排1：自行安排
+    private Integer storageMode;
+    //货物参保0：商家安排1：自行安装
+    private Integer insuranceMethod;
+    //分期付款方式如果商家有服务则0：商家安排1：自行安排
+    private Integer modeOfPayment;
+    //首付金额
+    private BigDecimal downPayment;
+    //预提货时间
+    private Date prePickUpTime;
+    //发货时间
+    private Date shipTime;
+    //订单状态0：待支付1：已付款2：待发货3：已发货4：待收货5：交易完成
+    private String orderStatus;
+    //状态步数
+    private Integer statusCount;
+    //状态所有者
+    private Integer statusOwner;
+    //货物类型0：期货1：现货
+    private Integer orderGoodsType;
+    //合同id
+    private String agreementId;
+    //创建人
+    private String createBy;
+    //创建时间
+    private Date createTime;
+    //修改人id
+    private String modifyBy;
+    //修改时间
+    private Date modifyTime;
+    /**
+     * 删除标识
+     */
+    private Integer delFlag;
+    //备注
+    private String remarks;
+    //是否拼柜
+    private Integer goodsCsc;
+    //发货详情
+    private GoodsOrderShipEntity ship;
+    //收货人信息
+    private GoodsOrderCinfoEntity cinfo;
+    // 货物id 集合
+    private List<Map<String, Object>> detailIds;
+    //货物详情
+    private List<GoodsOrderDetailEntity> detail;
+    //部门Id
+    private String deptId;
+    //公司用户
+    private String companyId;
+    //授权用户
+    private String authorizesId;
+    //报关对象
+    private Map<String, Object> files;
+    //仓库信息
+    private GoodsOrderDepotEntity depot;
+    //是否代理
+    private String isAgent;
+    //代理订单编号
+    private String agentOrderNumber;
+    //是否垫付
+    private String isPayment;
+    //币种 1：人民币；2：美元
+    private Integer currency;
+
+    //买家银行卡号
+    private String buyerBankCard;
+    //卖家银行卡号
+    private String sellerBankCard;
+    //单据要求
+    private String documentsRequired;
+    //目的口岸
+    private String destination;
+    //报盘id
+    private String offerId;
+    //期货：装运时间，现货：提货时间
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date time;
+    //期货：装运口岸，现货：交货地点
+    private String place;
+    //付款条件
+    private String paymentTerm;
+    //生产日期
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date productionDate;
+    //保质期
+    private Integer shelfLife;
+    //溢短装条款
+    private String clause;
+    //成交方式：0:CFR  1:CIF  2:CPT  3:CIP  4:DAF  5:DES  6:DEQ  7:DDU  8:DDP  9:FOB  10:FCA  11:FAS  12:EXW
+    private String transactionManner;
+
+    //购买数量的单位 1：柜 2：吨 3：千克
+    private String goodsUnit;
+
+    //商家地址
+    private String sellerAddress;
+    //买家地址
+    private String buyerAddress;
+
+    //最大购买数量（报盘库存）
+    private Integer maxSellNum;
+
+    public Integer getMaxSellNum() {
+        return maxSellNum;
+    }
+
+    public void setMaxSellNum(Integer maxSellNum) {
+        this.maxSellNum = maxSellNum;
+    }
+
+    public String getSellerAddress() {
+        return sellerAddress;
+    }
+
+    public void setSellerAddress(String sellerAddress) {
+        this.sellerAddress = sellerAddress;
+    }
+
+    public String getBuyerAddress() {
+        return buyerAddress;
+    }
+
+    public void setBuyerAddress(String buyerAddress) {
+        this.buyerAddress = buyerAddress;
+    }
+
+    public String getBuyerBankCard() {
+        return buyerBankCard;
+    }
+
+    public void setBuyerBankCard(String buyerBankCard) {
+        this.buyerBankCard = buyerBankCard;
+    }
+
+    public String getSellerBankCard() {
+        return sellerBankCard;
+    }
+
+    public void setSellerBankCard(String sellerBankCard) {
+        this.sellerBankCard = sellerBankCard;
+    }
+
+    public String getDocumentsRequired() {
+        return documentsRequired;
+    }
+
+    public void setDocumentsRequired(String documentsRequired) {
+        this.documentsRequired = documentsRequired;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
+    public String getOfferId() {
+        return offerId;
+    }
+
+    public void setOfferId(String offerId) {
+        this.offerId = offerId;
+    }
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getTime() {
+        return time;
+    }
+
+    public void setTime(Date time) {
+        this.time = time;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public String getPaymentTerm() {
+        return paymentTerm;
+    }
+
+    public void setPaymentTerm(String paymentTerm) {
+        this.paymentTerm = paymentTerm;
+    }
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getProductionDate() {
+        return productionDate;
+    }
+
+    public void setProductionDate(Date productionDate) {
+        this.productionDate = productionDate;
+    }
+
+    public Integer getShelfLife() {
+        return shelfLife;
+    }
+
+    public void setShelfLife(Integer shelfLife) {
+        this.shelfLife = shelfLife;
+    }
+
+    public String getClause() {
+        return clause;
+    }
+
+    public void setClause(String clause) {
+        this.clause = clause;
+    }
+
+    public String getTransactionManner() {
+        return transactionManner;
+    }
+
+    public void setTransactionManner(String transactionManner) {
+        this.transactionManner = transactionManner;
+    }
+
+    public String getGoodsUnit() {
+        return goodsUnit;
+    }
+
+    public void setGoodsUnit(String goodsUnit) {
+        this.goodsUnit = goodsUnit;
+    }
+
+    public Integer getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Integer currency) {
+        this.currency = currency;
+    }
+
+    public List<OrderPriceVersionEntity> getPriceVersion() {
+        return priceVersion;
+    }
+
+    public void setPriceVersion(List<OrderPriceVersionEntity> priceVersion) {
+        this.priceVersion = priceVersion;
+    }
+
+    //改价记录
+    private List<OrderPriceVersionEntity> priceVersion;
+
+    /**
+     * 设置：订单id
+     */
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    /**
+     * 获取：订单id
+     */
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    /**
+     * 设置：订单编号
+     */
+    public void setOrderNumber(String orderNumber) {
+        this.orderNumber = orderNumber;
+    }
+
+    /**
+     * 获取：订单编号
+     */
+    public String getOrderNumber() {
+        return orderNumber;
+    }
+
+    /**
+     * 设置：商家id
+     */
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
+
+    /**
+     * 获取：商家id
+     */
+    public String getSellerId() {
+        return sellerId;
+    }
+
+    /**
+     * 设置：商家名称
+     */
+    public void setSellerName(String sellerName) {
+        this.sellerName = sellerName;
+    }
+
+    /**
+     * 获取：商家名称
+     */
+    public String getSellerName() {
+        return sellerName;
+    }
+
+    /**
+     * 设置：商家联系方式
+     */
+    public void setSellerContact(String sellerContact) {
+        this.sellerContact = sellerContact;
+    }
+
+    /**
+     * 获取：商家联系方式
+     */
+    public String getSellerContact() {
+        return sellerContact;
+    }
+
+    /**
+     * 设置：购买者公司id
+     */
+    public void setPurchaserCompanyId(String purchaserCompanyId) {
+        this.purchaserCompanyId = purchaserCompanyId;
+    }
+
+    /**
+     * 获取：购买者公司id
+     */
+    public String getPurchaserCompanyId() {
+        return purchaserCompanyId;
+    }
+
+    /**
+     * 设置：购买者公司名称
+     */
+    public void setPurchaserCompanyName(String purchaserCompanyName) {
+        this.purchaserCompanyName = purchaserCompanyName;
+    }
+
+    /**
+     * 获取：购买者公司名称
+     */
+    public String getPurchaserCompanyName() {
+        return purchaserCompanyName;
+    }
+
+    /**
+     * 设置：购买者名称
+     */
+    public void setPurchaserName(String purchaserName) {
+        this.purchaserName = purchaserName;
+    }
+
+    /**
+     * 获取：购买者名称
+     */
+    public String getPurchaserName() {
+        return purchaserName;
+    }
+
+    /**
+     * 设置：购买者联系方式
+     */
+    public void setPurchaserContact(String purchaserContact) {
+        this.purchaserContact = purchaserContact;
+    }
+
+    /**
+     * 获取：购买者联系方式
+     */
+    public String getPurchaserContact() {
+        return purchaserContact;
+    }
+
+    /**
+     * 设置：默认商品总价格
+     */
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    /**
+     * 获取：默认商品总价格
+     */
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    /**
+     * 设置：运费
+     */
+    public void setTransportationExpenses(BigDecimal transportationExpenses) {
+        this.transportationExpenses = transportationExpenses;
+    }
+
+    /**
+     * 获取：运费
+     */
+    public BigDecimal getTransportationExpenses() {
+        return transportationExpenses;
+    }
+
+    /**
+     * 获取：订单数量
+     */
+    public Integer getOrderCount() {
+        return orderCount;
+    }
+
+    /**
+     * 设置：订单数量
+     */
+    public void setOrderCount(Integer orderCount) {
+        this.orderCount = orderCount;
+    }
+
+    /**
+     * 设置：实付款
+     */
+    public void setActualPayment(BigDecimal actualPayment) {
+        this.actualPayment = actualPayment;
+    }
+
+    /**
+     * 获取：实付款
+     */
+    public BigDecimal getActualPayment() {
+        return actualPayment;
+    }
+
+    /**
+     * 设置：配送方式 如果商家有服务则0：商家安排1：自行安排
+     */
+    public void setDistributionMode(Integer distributionMode) {
+        this.distributionMode = distributionMode;
+    }
+
+    public Integer getInsuranceMethod() {
+        return insuranceMethod;
+    }
+
+    public void setInsuranceMethod(Integer insuranceMethod) {
+        this.insuranceMethod = insuranceMethod;
+    }
+
+    /**
+     * 获取：配送方式 如果商家有服务则0：商家安排1：自行安排
+     */
+    public Integer getDistributionMode() {
+        return distributionMode;
+    }
+
+    /**
+     * 设置：付款方式
+     */
+    public void setTransactionMode(String transactionMode) {
+        this.transactionMode = transactionMode;
+    }
+
+    /**
+     * 获取：付款方式
+     */
+    public String getTransactionMode() {
+        return transactionMode;
+    }
+
+    /**
+     * 设置：支付方式 如果商家有服务则0：商家安排1：自行安排
+     */
+    public void setPaymentMethod(Integer paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    /**
+     * 获取：支付方式 如果商家有服务则0：商家安排1：自行安排
+     */
+    public Integer getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    /**
+     * 设置：报关方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public void setCustomsDeclaration(Integer customsDeclaration) {
+        this.customsDeclaration = customsDeclaration;
+    }
+
+    /**
+     * 获取：报关方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public Integer getCustomsDeclaration() {
+        return customsDeclaration;
+    }
+
+    /**
+     * 设置：仓储方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public void setStorageMode(Integer storageMode) {
+        this.storageMode = storageMode;
+    }
+
+    /**
+     * 获取：仓储方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public Integer getStorageMode() {
+        return storageMode;
+    }
+
+    /**
+     * 设置：分期付款方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public void setModeOfPayment(Integer modeOfPayment) {
+        this.modeOfPayment = modeOfPayment;
+    }
+
+    /**
+     * 获取：分期付款方式如果商家有服务则0：商家安排1：自行安排
+     */
+    public Integer getModeOfPayment() {
+        return modeOfPayment;
+    }
+
+    /**
+     * 设置：首付金额
+     */
+    public void setDownPayment(BigDecimal downPayment) {
+        this.downPayment = downPayment;
+    }
+
+    /**
+     * 获取：首付金额
+     */
+    public BigDecimal getDownPayment() {
+        return downPayment;
+    }
+
+    /**
+     * 设置：预提货时间
+     */
+    public void setPrePickUpTime(Date prePickUpTime) {
+        this.prePickUpTime = prePickUpTime;
+    }
+
+    /**
+     * 获取：预提货时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    public Date getPrePickUpTime() {
+        return prePickUpTime;
+    }
+
+    /**
+     * 设置：订单状态0：待支付1：已付款2：待发货3：已发货4：待收货5：交易完成
+     */
+    public void setOrderStatus(String orderStatus) {
+        this.orderStatus = orderStatus;
+    }
+
+    /**
+     * 获取：订单状态0：待支付1：已付款2：待发货3：已发货4：待收货5：交易完成
+     */
+    public String getOrderStatus() {
+        return orderStatus;
+    }
+
+    /**
+     * 设置：货物类型0：期货1：现货
+     */
+    public void setOrderGoodsType(Integer orderGoodsType) {
+        this.orderGoodsType = orderGoodsType;
+    }
+
+    /**
+     * 获取：货物类型0：期货1：现货
+     */
+    public Integer getOrderGoodsType() {
+        return orderGoodsType;
+    }
+
+    /**
+     * 设置：合同id
+     */
+    public void setAgreementId(String agreementId) {
+        this.agreementId = agreementId;
+    }
+
+    /**
+     * 获取：合同id
+     */
+    public String getAgreementId() {
+        return agreementId;
+    }
+
+    /**
+     * 设置：创建人
+     */
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    /**
+     * 获取：创建人
+     */
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    /**
+     * 设置：创建时间
+     */
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    /**
+     * 获取：创建时间
+     */
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    /**
+     * 设置：修改人id
+     */
+    public void setModifyBy(String modifyBy) {
+        this.modifyBy = modifyBy;
+    }
+
+    /**
+     * 获取：修改人id
+     */
+    public String getModifyBy() {
+        return modifyBy;
+    }
+
+    /**
+     * 设置：修改时间
+     */
+    public void setModifyTime(Date modifyTime) {
+        this.modifyTime = modifyTime;
+    }
+
+    /**
+     * 获取：修改时间
+     */
+    public Date getModifyTime() {
+        return modifyTime;
+    }
+
+    /**
+     * 设置：备注
+     */
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
+    /**
+     * 获取：备注
+     */
+    public String getRemarks() {
+        return remarks;
+    }
+
+    /**
+     * 获取：收货人信息
+     */
+    public GoodsOrderCinfoEntity getCinfo() {
+        return cinfo;
+    }
+
+    /**
+     * 设置：收货人信息
+     */
+    public void setCinfo(GoodsOrderCinfoEntity cinfo) {
+        this.cinfo = cinfo;
+    }
+
+    /**
+     * 获取：货物详情
+     *
+     * @return
+     */
+    public List<GoodsOrderDetailEntity> getDetail() {
+        return detail;
+    }
+
+    /**
+     * 设置：货物详情
+     *
+     * @param detail
+     */
+    public void setDetail(List<GoodsOrderDetailEntity> detail) {
+        this.detail = detail;
+    }
+
+    public Integer getGoodsCsc() {
+        return goodsCsc;
+    }
+
+    public void setGoodsCsc(Integer goodsCsc) {
+        this.goodsCsc = goodsCsc;
+    }
+
+    public String getDeptId() {
+        return deptId;
+    }
+
+    public void setDeptId(String deptId) {
+        this.deptId = deptId;
+    }
+
+    public String getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getAuthorizesId() {
+        return authorizesId;
+    }
+
+    public void setAuthorizesId(String authorizesId) {
+        this.authorizesId = authorizesId;
+    }
+
+    public Integer getStatusOwner() {
+        return statusOwner;
+    }
+
+    public void setStatusOwner(Integer statusOwner) {
+        this.statusOwner = statusOwner;
+    }
+
+    public Integer getStatusCount() {
+        return statusCount;
+    }
+
+    public void setStatusCount(Integer statusCount) {
+        this.statusCount = statusCount;
+    }
+
+    public Integer getComplaintP() {
+        return complaintP;
+    }
+
+    public void setComplaintP(Integer complaintP) {
+        this.complaintP = complaintP;
+    }
+
+    public Integer getComplaintS() {
+        return complaintS;
+    }
+
+    public void setComplaintS(Integer complaintS) {
+        this.complaintS = complaintS;
+    }
+
+    public Date getShipTime() {
+        return shipTime;
+    }
+
+    public void setShipTime(Date shipTime) {
+        this.shipTime = shipTime;
+    }
+
+    public GoodsOrderShipEntity getShip() {
+        return ship;
+    }
+
+    public void setShip(GoodsOrderShipEntity ship) {
+        this.ship = ship;
+    }
+
+    public Map<String, Object> getFiles() {
+        return files;
+    }
+
+    public void setFiles(Map<String, Object> files) {
+        this.files = files;
+    }
+
+//    public String getTransactionManner() {
+//        return transactionManner;
+//    }
+//
+//    public void setTransactionManner(String transactionManner) {
+//        this.transactionManner = transactionManner;
+//    }
+
+    public GoodsOrderDepotEntity getDepot() {
+        return depot;
+    }
+
+    public void setDepot(GoodsOrderDepotEntity depot) {
+        this.depot = depot;
+    }
+
+    public Integer getDelFlag() {
+        return delFlag;
+    }
+
+    public void setDelFlag(Integer delFlag) {
+        this.delFlag = delFlag;
+    }
+
+    public String getIsAgent() {
+        return isAgent;
+    }
+
+    public void setIsAgent(String isAgent) {
+        this.isAgent = isAgent;
+    }
+
+    public String getAgentOrderNumber() {
+        return agentOrderNumber;
+    }
+
+    public void setAgentOrderNumber(String agentOrderNumber) {
+        this.agentOrderNumber = agentOrderNumber;
+    }
+
+    public String getIsPayment() {
+        return isPayment;
+    }
+
+    public void setIsPayment(String isPayment) {
+        this.isPayment = isPayment;
+    }
+
+    public List<Map<String, Object>> getDetailIds() {
+        return detailIds;
+    }
+
+    public void setDetailIds(List<Map<String, Object>> detailIds) {
+        this.detailIds = detailIds;
+    }
+}

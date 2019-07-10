@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>收货人信息</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('order:goodsordercinfo:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('order:goodsordercinfo:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('order:goodsordercinfo:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">关联订单id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderId" class="form-control" v-model="goodsOrderCinfo.orderId" placeholder="关联订单id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货人Id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneeId" class="form-control" v-model="goodsOrderCinfo.consigneeId" placeholder="收货人Id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货人名称</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneeName" class="form-control" v-model="goodsOrderCinfo.consigneeName" placeholder="收货人名称"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货人电话</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneePhone" class="form-control" v-model="goodsOrderCinfo.consigneePhone" placeholder="收货人电话"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货地址</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneeAddress" class="form-control" v-model="goodsOrderCinfo.consigneeAddress" placeholder="收货地址"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货人所在区域</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneeArea" class="form-control" v-model="goodsOrderCinfo.consigneeArea" placeholder="收货人所在区域"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收货人邮编</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="consigneeZipCode" class="form-control" v-model="goodsOrderCinfo.consigneeZipCode" placeholder="收货人邮编"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">公司名称</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyName" class="form-control" v-model="goodsOrderCinfo.companyName" placeholder="公司名称"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">公司英文名称</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyEnglishName" class="form-control" v-model="goodsOrderCinfo.companyEnglishName" placeholder="公司英文名称"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">企业注册地址</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyEra" class="form-control" v-model="goodsOrderCinfo.companyEra" placeholder="企业注册地址"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">企业社会统一代码</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyUscc" class="form-control" v-model="goodsOrderCinfo.companyUscc" placeholder="企业社会统一代码"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">企业地址别名</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyAddressAlias" class="form-control" v-model="goodsOrderCinfo.companyAddressAlias" placeholder="企业地址别名"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">企业目的港</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyPod" class="form-control" v-model="goodsOrderCinfo.companyPod" placeholder="企业目的港"/>
+                                </div>
+                            </div>
+                        </div>
+                                                    <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" value="确定"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/order/goodsordercinfo.js"></script>
+</body>
+</html>

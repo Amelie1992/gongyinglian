@@ -1,0 +1,370 @@
+package com.wzlue.chain.declare.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.agent.entity.ContractAnnexEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+
+
+/**
+ * (订单)合同信息表
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-17 10:57:26
+ */
+public class DeclareContractEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//自增主键,id
+	private Long id;
+	//合同编号
+	private String contractNumber;
+	//订单编号
+	private String orderNumber;
+	//合同创建来源 1.订单创建 2.自主录入
+	//存放位置
+	private String location;
+	private Integer dataSource;
+	//合同名称
+	private String contractName;
+	//甲方企业名称
+	private String customsCopName;
+	//乙方企业名称
+	private String merchantCopName;
+	//付款方式
+	private Integer payMethod;
+	//合同金额
+	private BigDecimal contractAmount;
+	//甲方企业合同存放位置
+	private String customsStorageLocation;
+	//客户公司id
+	private Long cusCompanyId;
+	//客户部门id
+	private Long cusDeptId;
+	//乙方企业合同存放位置
+	private String merchantStorageLocation;
+	//商家公司id
+	private Long merCompanyId;
+	//商家部门id
+	private Long merDeptId;
+	//备注
+	private String remarks;
+	//签订日期
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date dateOfSigning;
+	//到期日期
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date expireDate;
+	//创建人
+	private Long createBy;
+	//创建时间
+	private Date createTime;
+	//修改用户id
+	private Long updateBy;
+	//修改时间
+	private Date updateTime;
+    //合同文件
+    private List<ContractAnnexEntity> file;
+    //归属人
+    private String owner;
+    /**
+	 * 设置：自增主键,id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：自增主键,id
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：合同编号
+	 */
+	public void setContractNumber(String contractNumber) {
+		this.contractNumber = contractNumber;
+	}
+	/**
+	 * 获取：合同编号
+	 */
+	public String getContractNumber() {
+		return contractNumber;
+	}
+	/**
+	 * 设置：订单编号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：订单编号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：合同创建来源 1.订单创建 2.自主录入
+	 */
+	public void setDataSource(Integer dataSource) {
+		this.dataSource = dataSource;
+	}
+	/**
+	 * 获取：合同创建来源 1.订单创建 2.自主录入
+	 */
+	public Integer getDataSource() {
+		return dataSource;
+	}
+	/**
+	 * 设置：合同名称
+	 */
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
+	}
+	/**
+	 * 获取：合同名称
+	 */
+	public String getContractName() {
+		return contractName;
+	}
+	/**
+	 * 设置：甲方企业名称
+	 */
+	public void setCustomsCopName(String customsCopName) {
+		this.customsCopName = customsCopName;
+	}
+	/**
+	 * 获取：甲方企业名称
+	 */
+	public String getCustomsCopName() {
+		return customsCopName;
+	}
+	/**
+	 * 设置：乙方企业名称
+	 */
+	public void setMerchantCopName(String merchantCopName) {
+		this.merchantCopName = merchantCopName;
+	}
+	/**
+	 * 获取：乙方企业名称
+	 */
+	public String getMerchantCopName() {
+		return merchantCopName;
+	}
+	/**
+	 * 设置：付款方式
+	 */
+	public void setPayMethod(Integer payMethod) {
+		this.payMethod = payMethod;
+	}
+	/**
+	 * 获取：付款方式
+	 */
+	public Integer getPayMethod() {
+		return payMethod;
+	}
+	/**
+	 * 设置：合同金额
+	 */
+	public void setContractAmount(BigDecimal contractAmount) {
+		this.contractAmount = contractAmount;
+	}
+	/**
+	 * 获取：合同金额
+	 */
+	public BigDecimal getContractAmount() {
+		return contractAmount;
+	}
+	/**
+	 * 设置：甲方企业合同存放位置
+	 */
+	public void setCustomsStorageLocation(String customsStorageLocation) {
+		this.customsStorageLocation = customsStorageLocation;
+	}
+	/**
+	 * 获取：甲方企业合同存放位置
+	 */
+	public String getCustomsStorageLocation() {
+		return customsStorageLocation;
+	}
+	/**
+	 * 设置：客户公司id
+	 */
+	public void setCusCompanyId(Long cusCompanyId) {
+		this.cusCompanyId = cusCompanyId;
+	}
+	/**
+	 * 获取：客户公司id
+	 */
+	public Long getCusCompanyId() {
+		return cusCompanyId;
+	}
+	/**
+	 * 设置：客户部门id
+	 */
+	public void setCusDeptId(Long cusDeptId) {
+		this.cusDeptId = cusDeptId;
+	}
+	/**
+	 * 获取：客户部门id
+	 */
+	public Long getCusDeptId() {
+		return cusDeptId;
+	}
+	/**
+	 * 设置：乙方企业合同存放位置
+	 */
+	public void setMerchantStorageLocation(String merchantStorageLocation) {
+		this.merchantStorageLocation = merchantStorageLocation;
+	}
+	/**
+	 * 获取：乙方企业合同存放位置
+	 */
+	public String getMerchantStorageLocation() {
+		return merchantStorageLocation;
+	}
+	/**
+	 * 设置：商家公司id
+	 */
+	public void setMerCompanyId(Long merCompanyId) {
+		this.merCompanyId = merCompanyId;
+	}
+	/**
+	 * 获取：商家公司id
+	 */
+	public Long getMerCompanyId() {
+		return merCompanyId;
+	}
+	/**
+	 * 设置：商家部门id
+	 */
+	public void setMerDeptId(Long merDeptId) {
+		this.merDeptId = merDeptId;
+	}
+	/**
+	 * 获取：商家部门id
+	 */
+	public Long getMerDeptId() {
+		return merDeptId;
+	}
+	/**
+	 * 设置：备注
+	 */
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+	/**
+	 * 获取：备注
+	 */
+	public String getRemarks() {
+		return remarks;
+	}
+	/**
+	 * 设置：签订日期
+	 */
+	public void setDateOfSigning(Date dateOfSigning) {
+		this.dateOfSigning = dateOfSigning;
+	}
+	/**
+	 * 获取：签订日期
+	 */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getDateOfSigning() {
+		return dateOfSigning;
+	}
+	/**
+	 * 设置：到期日期
+	 */
+	public void setExpireDate(Date expireDate) {
+		this.expireDate = expireDate;
+	}
+	/**
+	 * 获取：到期日期
+	 */
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    public Date getExpireDate() {
+		return expireDate;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreateBy(Long createBy) {
+		this.createBy = createBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Long getCreateBy() {
+		return createBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	public Date getCreateTime() {
+		return createTime;
+	}
+	/**
+	 * 设置：修改用户id
+	 */
+	public void setUpdateBy(Long updateBy) {
+		this.updateBy = updateBy;
+	}
+	/**
+	 * 获取：修改用户id
+	 */
+	public Long getUpdateBy() {
+		return updateBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+
+    /**
+     * 获取：合同附件
+     */
+    public List<ContractAnnexEntity> getFile() {
+        return file;
+    }
+    /**
+     *设置：合同附件
+     */
+    public void setFile(List<ContractAnnexEntity> file) {
+        this.file = file;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+	public String getLocation() {
+		return location;
+	}
+
+	public void setLocation(String location) {
+		this.location = location;
+	}
+}

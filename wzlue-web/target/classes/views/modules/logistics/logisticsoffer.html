@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>商品库物流报盘</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/jqgrid/ui.jqgrid-bootstrap.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <link rel="stylesheet" href="../../plugins/select/css/select2.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('zhubiaoti')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.title" :placeholder="$t('PleaseEnterTheTitleName')" maxlength="30"/>
+            </div>
+            <div class="col-xs-2">
+                <div class="form-group">
+                    <select class="form-control" :title="$t('whole')" data-width="auto"
+                            v-model="params.categoryId">
+                        <option value="">{{$t('transporttype')}}</option>
+                        <option v-for="item in categoryOptions" :value="item.value">
+                            {{item.label}}
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" v-model="params.status" name="status" >
+                    <option value="">{{$t('ShelfState')}}</option>
+                    <option value="0">{{$t('UpperShelves')}}</option>
+                    <option value="1">{{$t('LowerShelves')}}</option>
+                </select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsoffer:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsoffer:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="hasPermission('logistics:logisticsoffer:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o">&nbsp;{{$t('delete')}}</i>
+            </button>
+            <button class="btn btn-success"
+                    @click="updateStateUp">
+                <i class="fa fa-edit"></i>&nbsp;{{$t("UpperShelves")}}
+            </button>
+            <button class="btn btn-success"
+                    @click="updateStateDown">
+                <i class="fa fa-edit"></i>&nbsp;{{$t("LowerShelves")}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table" class="table text-nowrap"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default">
+        <div class="panel-heading">
+            <span class="panel-title">{{$t('wuliuxixnxi')}}</span>
+        </div>
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('commodityCode')}}</label>
+                            <div class="col-sm-10 ">
+                                <input id="commodityCode" type="text" name="commodityCode" class="form-control" onblur="checkCode(this.value)"
+                                       v-model="logisticsOffer.commodityCode" :placeholder="$t('commodityCode')" disabled="disabled"/>
+                                <!--<input type="radio" name="commodityCode" value="1" checked="checked" onchange="change2(this)"/>{{$t('AutomaticGeneration')}}
+                              &nbsp;&nbsp;<input type="radio" name="commodityCode" value="0" onchange="change2(this)"/>{{$t('ManualInput')}}-->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('status')}}</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" v-model="logisticsOffer.status" name="status">
+                                    <option value="0">{{$t('UpperShelves')}}</option>
+                                    <option value="1">{{$t('LowerShelves')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('price')}}</label>
+                            <div class="col-sm-10 input-group">
+                                <input style="width: 56%" type="text" name="price" class="form-control"
+                                       v-model="logisticsOffer.price" :placeholder="$t('price')"/>
+                                <select style="width: 40%" class="form-control" v-model="logisticsOffer.unit"
+                                        name="unit">
+                                    <option value="0">{{$t('Yuan')}}/m³</option>
+                                    <option value="1">{{$t('Dollar')}}/m³</option>
+                                    <option value="2">{{$t('Yuan')}}/柜</option>
+                                    <option value="3">{{$t('Yuan')}}/车</option>
+                                    <option value="4">{{$t('Dollar')}}/票</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('title')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="title" class="form-control"
+                                       v-model="logisticsOffer.title" :placeholder="$t('title')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--<div class="row">-->
+                <!--<div class="col-sm-12">-->
+                    <!--<div class="col-sm-4">-->
+                        <!--<div class="form-group">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('num')}}</div>-->
+                            <!--<div class="col-sm-10">-->
+                                <!--<input type="text" name="num" class="form-control"-->
+                                       <!--v-model="logisticsOffer.num" :placeholder="$t('num')"/>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="col-sm-4">-->
+                        <!--<div class="form-group">-->
+                            <!--<div class="col-sm-2 control-label">{{$t('status')}}</div>-->
+                            <!--<div class="col-sm-10">-->
+                                <!--<select class="form-control" v-model="logisticsOffer.status" name="status">-->
+                                    <!--<option value="0">{{$t('UpperShelves')}}</option>-->
+                                    <!--<option value="1">{{$t('LowerShelves')}}</option>-->
+                                <!--</select>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('type1')}}</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" v-model="logisticsOffer.type" @change="changeType"
+                                        name="type">
+                                    <option value="0">{{$t('DomesticLogistics')}}</option>
+                                    <option value="1">{{$t('InternationalLogistics')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('categoryId')}}</label>
+                            <div class="col-sm-10">
+                                <select class="form-control" v-model="logisticsOffer.categoryId" name="categoryId">
+                                    <option value="0">{{$t('Ship')}}</option>
+                                    <option value="1">{{$t('Car')}}</option>
+                                    <option value="2">{{$t('Aviation')}}</option>
+                                    <option value="3">{{$t('Train')}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('contact')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="contact" class="form-control"
+                                       v-model="logisticsOffer.contact" :placeholder="$t('contact')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('phone')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="phone" class="form-control" maxlength="11"
+                                       v-model="logisticsOffer.phone" :placeholder="$t('ContactInformation')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国内运输线路start-->
+            <div class="row" v-show="logisticsOffer.type == 0">
+                <input v-if="showBtn" type="button" class="btn btn-primary" @click="addRow" :value="$t('tianjialuxian')"/>
+                <div class="panel panel-default" v-for="(item,index) in logisticsOfferAddressList">
+                    <div class="panel-body">
+                        <div class="col-sm-12">
+                            <div class="col-sm-8">
+                                <div class="form-group required">
+                                    <div class="col-sm-2" style="width:120px;"><span class="label label-default">{{$t('transportlinein')}}</span>
+
+                                    </div>
+                                    <input v-if="showBtn" type="button" class="btn btn-primary" @click="removeRow(item,index,$event)"
+                                           :value="$t('RemoveRoute')"/>
+                                    <label class="col-sm-2 control-label">{{$t('departure')}}</label>
+                                    <div class="col-sm-8">
+                                        <vm-select :options="provinces" :title="$t('PleaseChooseTheUrbanArea')" search="true"
+                                                   v-model="item.province" :childidx="item"
+                                                   name="city" @input="provincesChange"></vm-select>
+                                        <vm-select :options="item.cities" :title="$t('PleaseChooseTheUrbanArea')" search="true"
+                                                   v-model="item.city"
+                                                   name="city"></vm-select>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="form-group required">
+                                    <div class="col-sm-2" style="width:120px;"></div>
+                                    <label class="col-sm-2 control-label">{{$t('destination')}}</label>
+                                    <div class="col-sm-8">
+                                        <vm-select :options="provinces" :title="$t('PleaseChooseTheUrbanArea')" search="true"
+                                                   v-model="item.provinceEnd" :childidx="item"
+                                                   name="city" @input="provincesChange1"></vm-select>
+                                        <vm-select :options="item.cities1" :title="$t('PleaseChooseTheUrbanArea')" search="true"
+                                                   v-model="item.cityEnd"
+                                                   name="city"></vm-select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国内运输线路end-->
+
+            <!--国际运输线路start-->
+            <div class="row" v-show="logisticsOffer.type == 1">
+                <input v-if="showBtn" type="button" class="btn btn-primary" @click="addRow1" :value="$t('tianjialuxian')"/>
+                *tips:国际线路拟用输入方式
+                <div class="panel panel-default guoji" v-for="(item,index) in logisticsOfferAddressList1">
+                    <div class="panel-body">
+                        <div class="col-sm-12">
+                            <div class="col-sm-8">
+                                <div class="col-sm-2" style="width:120px;"><span class="label label-default">{{$t('transportlineout')}}</span>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group required">
+                                        <label class="col-sm-2 control-label">{{$t('departure')}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" name="province" class="form-control"
+                                                   v-model="item.province" :placeholder="$t('inputCountryName')" maxlength="20"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-7">
+                                            <input type="text" name="city" class="form-control"
+                                                   v-model="item.city" :placeholder="$t('inputCityName')" maxlength="20"/>
+                                        </div>
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        <input v-if="showBtn" type="button" class="btn btn-primary" @click="removeRow1(index,$event)" :value="$t('RemoveRoute')"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-8">
+                                <div class="col-sm-2 control-label"></div>
+                                <div class="col-sm-4">
+                                    <div class="form-group required">
+                                        <label class="col-sm-2 control-label">{{$t('destination')}}</label>
+                                        <div class="col-sm-7">
+                                            <input type="text" name="provinceEnd" class="form-control"
+                                                   v-model="item.provinceEnd" :placeholder="$t('inputCountryName')" maxlength="20"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <div class="col-sm-7">
+                                            <input type="text" name="cityEnd" class="form-control"
+                                                   v-model="item.cityEnd" :placeholder="$t('inputCityName')" maxlength="20"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--国际运输线路end-->
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-1">
+                        <div class="form-group required">
+                            <label class="col-sm-2 control-label">{{$t('businessIntroduction')}}</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="form-group">
+                            <el-textarea id="myEditor" name="businessIntroduction"
+                                         v-model="logisticsOffer.businessIntroduction"></el-textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="form-group">
+            <div class="col-sm-2 control-label"></div>
+            <input type="button" class="btn btn-primary" v-if="backShow" @click="validate" :value="$t('sure')"/>
+            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<script src="../../libs/uiv.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+
+
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<!--<script src="../../plugins/select/js/select2.js"></script>-->
+
+<script src="../../js/modules/logistics/logisticsoffer.js"></script>
+</body>
+</html>

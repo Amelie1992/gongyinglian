@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储求购表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-editable/css/bootstrap-editable.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('StoragePurchaseList')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.title" :placeholder="$t('title')"/>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" v-model="params.status" name="status">
+                    <option value="">{{$t('whole')}}</option>
+                    <option value="0">{{$t('display')}}</option>
+                    <option value="1">{{$t('hide')}}</option>
+                </select>
+            </div>
+
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <button v-if="hasPermission('storage:demand:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('storage:demand:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="hasPermission('storage:demand:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}
+            </button>
+            <button v-if="hasPermission('storage:demand:update')" class="btn btn-success"
+                    @click="updateStatus">
+                <i></i>{{$t('display')}}/{{$t('hide')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('title')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="title" class="form-control" v-model="demand.title"
+                                   :placeholder="$t('title')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-8">
+                        <div class="col-sm-2 control-label">{{$t('address')}}</div>
+                        <div class="col-sm-10">
+                            <vm-select :options="provinces" :title="$t('selectProvince')" search="true"
+                                       v-model="demand.province"
+                                       name="province" :method="provincesChange" :value="demand.province"></vm-select>
+                            <vm-select :options="cities" :title="$t('selectCities')" search="true"
+                                       v-model="demand.city"
+                                       name="city" :method="cityChange" :value="demand.city"></vm-select>
+                            <vm-select :options="areas" title="请选择区县" search="true"
+                                       v-model="demand.county"
+                                       name="county" :value="demand.county"></vm-select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('Goods')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="goodsName" class="form-control" v-model="demand.goodsName"
+                                   :placeholder="$t('Goods')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('Weight')}}</div>
+                        <div class="col-sm-10 input-group">
+                            <input style="width: 65%" type="text" name="weight" class="form-control" v-model="demand.weight"
+                                   :placeholder="$t('Weight')"/>
+                            <select style="width: 31%" name="unit" class="form-control" v-model="demand.unit">
+                                <option value="1">{{$t('ton')}}</option>
+                                <option value="2">{{$t('kg')}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('contact')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="contact" class="form-control" v-model="demand.contact"
+                                   :placeholder="$t('contact')"/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('ContactInformation')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="phone" class="form-control" v-model="demand.phone"
+                                   :placeholder="$t('ContactInformation')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('EstimatedStorageDate')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control select-box-input" id="datetimepicker"
+                                   name="intTime" readonly
+                                   v-model="demand.intTime" data-date-format="yyyy-mm-dd"
+                                   :placeholder="$t('EstimatedStorageDate')">
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('status')}}</div>
+                        <div class="col-sm-10">
+                            <select class="form-control" v-model="demand.status" name="status">
+                                <option value="0">{{$t('display')}}</option>
+                                <option value="1">{{$t('hide')}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <div class="col-sm-2 control-label">{{$t('WarehouseDescription')}}</div>
+                        <div class="col-sm-10">
+                            <el-textarea id="myEditor" name="storageInfo"></el-textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group  col-sm-12">
+                        <div class="col-sm-2 control-label"></div>
+                        <input v-if="!detail" type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+<script src="../../plugins/ueditor/lang/en/en.js"></script>
+<script src="../../plugins/ueditor/lang/zh-cn/zh-cn.js"></script>
+
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/storage/demand.js"></script>
+</body>
+</html>

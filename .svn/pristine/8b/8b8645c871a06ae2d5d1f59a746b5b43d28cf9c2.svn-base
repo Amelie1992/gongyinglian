@@ -1,0 +1,346 @@
+package com.wzlue.chain.company.entity;
+
+import com.wzlue.chain.grade.entity.GradeEntity;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+
+/**
+ * 商户注册公司关联表
+ *
+ * @author
+ * @email
+ * @date 2018-08-17 11:27:53
+ */
+public class MerchantCompanyEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    // 主键
+    private Long id;
+    // 用户id
+    private Long userId;
+    // 公司名称
+    private String companyName;
+    // 公司类型
+    private String companyType;
+    private CompanyTypeEntity companyTypeEntity;
+    //联系人
+    private String contact;
+    //联系手机号码
+    private String mobile;
+    //服务类型
+    private List<Long> serviceType;
+
+    private List<ServiceTypeEntity> typeEntity;
+    //统一社会信用代码
+    private String unifiedSocialCreditCode;
+    //法人姓名
+    private String legalPersonName;
+    //银行账号
+    private String bankAccount;
+    //开户行
+    private String openingBank;
+    //公司简介
+    private String companyProfile;
+    // 邮箱
+    private String email;
+    // 法人身份证
+    private String cardNo;
+    // 公司所在地
+    private String companylocation;
+    // 详细地址
+    private String area;
+
+    public String getCompanylocation() {
+        return companylocation;
+    }
+
+    public void setCompanylocation(String companylocation) {
+        this.companylocation = companylocation;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getCardNo() {
+        return cardNo;
+    }
+
+    public void setCardNo(String cardNo) {
+        this.cardNo = cardNo;
+    }
+
+    //店铺logo
+   private String shopLogo;
+    /*
+   //营业执照
+   private String businessLicense;
+   //食品经营许可证
+   private String foodManagement;
+   //货物营业资质
+   private String businessOfGoods;
+   //物流营业资质
+   private String logisticsBusiness;
+   //报关营业资质
+   private String customsDeclaration;
+   //仓储营业资质
+   private String warehousingBusiness;
+   //代理营业资质
+   private String agencyBusiness;
+   //金融营业资质
+   private String financialBusiness;
+   //保险营业资质
+   private String insuranceBusiness;
+   //其他资质
+   private String otherQualifications;*/
+    //推荐码
+    private String recommenDationCode;
+
+    //信用分数
+    private Integer creditScore;
+    //额度
+    private String quota;
+    //审核状态
+    // 0默认状态， 1审核通过，2注销
+    private String auditStatus;
+
+    private SysUserEntity userEntity;
+
+    private int count;
+
+    private String fixedTelephone;
+    private String grade;
+    private String msg;
+    private GradeEntity gradeEntity;
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public String getFixedTelephone() {
+        return fixedTelephone;
+    }
+
+    public void setFixedTelephone(String fixedTelephone) {
+        this.fixedTelephone = fixedTelephone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    // 附件
+    private List<ImageEntity> imageEntityList;
+
+    public List<ImageEntity> getImageEntityList() {
+        return imageEntityList;
+    }
+
+    public void setImageEntityList(List<ImageEntity> imageEntityList) {
+        this.imageEntityList = imageEntityList;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public SysUserEntity getUserEntity() {
+        return userEntity;
+    }
+
+    public void setUserEntity(SysUserEntity userEntity) {
+        this.userEntity = userEntity;
+    }
+
+    public CompanyTypeEntity getCompanyTypeEntity() {
+        return companyTypeEntity;
+    }
+
+    public void setCompanyTypeEntity(CompanyTypeEntity companyTypeEntity) {
+        this.companyTypeEntity = companyTypeEntity;
+    }
+
+    public List<ServiceTypeEntity> getTypeEntity() {
+        return typeEntity;
+    }
+
+    public void setTypeEntity(List<ServiceTypeEntity> typeEntity) {
+        this.typeEntity = typeEntity;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getCompanyType() {
+        return companyType;
+    }
+
+    public void setCompanyType(String companyType) {
+        this.companyType = companyType;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public List<Long> getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(List<Long> serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public String getUnifiedSocialCreditCode() {
+        return unifiedSocialCreditCode;
+    }
+
+    public void setUnifiedSocialCreditCode(String unifiedSocialCreditCode) {
+        this.unifiedSocialCreditCode = unifiedSocialCreditCode;
+    }
+
+    public String getLegalPersonName() {
+        return legalPersonName;
+    }
+
+    public void setLegalPersonName(String legalPersonName) {
+        this.legalPersonName = legalPersonName;
+    }
+
+    public String getBankAccount() {
+        return bankAccount;
+    }
+
+    public void setBankAccount(String bankAccount) {
+        this.bankAccount = bankAccount;
+    }
+
+    public String getOpeningBank() {
+        return openingBank;
+    }
+
+    public void setOpeningBank(String openingBank) {
+        this.openingBank = openingBank;
+    }
+
+
+    public String getCompanyProfile() {
+        return companyProfile;
+    }
+
+    public void setCompanyProfile(String companyProfile) {
+        this.companyProfile = companyProfile;
+    }
+
+
+    public String getRecommenDationCode() {
+        return recommenDationCode;
+    }
+
+    public void setRecommenDationCode(String recommenDationCode) {
+        this.recommenDationCode = recommenDationCode;
+    }
+
+    public String getGrade() {
+        return grade;
+    }
+
+    public void setGrade(String grade) {
+        this.grade = grade;
+    }
+
+    public GradeEntity getGradeEntity() {
+        return gradeEntity;
+    }
+
+    public void setGradeEntity(GradeEntity gradeEntity) {
+        this.gradeEntity = gradeEntity;
+    }
+
+    public Integer getCreditScore() {
+        return creditScore;
+    }
+
+    public void setCreditScore(Integer creditScore) {
+        this.creditScore = creditScore;
+    }
+
+    public String getAuditStatus() {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(String auditStatus) {
+        this.auditStatus = auditStatus;
+    }
+
+
+    public String getQuota() {
+        return quota;
+    }
+
+    public void setQuota(String quota) {
+        this.quota = quota;
+    }
+
+    public String getShopLogo() {
+        return shopLogo;
+    }
+
+    public void setShopLogo(String shopLogo) {
+        this.shopLogo = shopLogo;
+    }
+}

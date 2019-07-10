@@ -1,0 +1,223 @@
+
+package com.wzlue.chain.web.controller.bill;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.agent.entity.AgentOrderEntity;
+import com.wzlue.chain.agent.service.AgentOrderService;
+import com.wzlue.chain.bill.entity.MyAccountEntity;
+import com.wzlue.chain.bill.service.MyAccountService;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.declare.entity.DeclareOrderEntity;
+import com.wzlue.chain.declare.service.DeclareOrderService;
+import com.wzlue.chain.logistics.entity.LogisticsOrderEntity;
+import com.wzlue.chain.logistics.service.LogisticsOrderService;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.order.service.GoodsOrderService;
+import com.wzlue.chain.storage.entity.OfferEntity;
+import com.wzlue.chain.storage.entity.OrderEntity;
+import com.wzlue.chain.storage.service.OrderService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.bill.entity.IncomeExpenditureDetailEntity;
+import com.wzlue.chain.bill.service.IncomeExpenditureDetailService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 收支明细
+ *
+ * @author
+ * @email
+ * @date 2018-09-27 10:24:37
+ */
+@RestController
+@RequestMapping("/bill/incomeexpendituredetail")
+public class IncomeExpenditureDetailController extends AbstractController {
+    @Autowired
+    private IncomeExpenditureDetailService incomeExpenditureDetailService;
+    @Autowired
+    private MyAccountService myAccountService;
+    @Autowired
+    private DeclareOrderService declareOrderService;
+    @Autowired
+    private GoodsOrderService goodsOrderService;
+    @Autowired
+    private LogisticsOrderService logisticsOrderService;
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private AgentOrderService agentOrderService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    @Autowired
+    private SysNumberRuleService numberRuleService;
+
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+//        MyAccountEntity myAccountEntity = myAccountService.queryMyAccount(getUserId());
+//        query.put("accountNo", myAccountEntity.getAccount());
+        query.put("companyId", getUser().getCompanyId());
+        List<IncomeExpenditureDetailEntity> incomeExpenditureDetailList = incomeExpenditureDetailService.queryList(query);
+        int total = incomeExpenditureDetailService.queryTotal(query);
+
+        return R.page(incomeExpenditureDetailList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+//    @RequiresPermissions("bill:incomeexpendituredetail:info")
+    public R info(@PathVariable("id") Integer id) {
+        IncomeExpenditureDetailEntity incomeExpenditureDetail = incomeExpenditureDetailService.queryObject(id);
+
+        return R.ok().put("incomeExpenditureDetail", incomeExpenditureDetail);
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+//    @RequiresPermissions("bill:incomeexpendituredetail:save")
+    public R save(@RequestBody IncomeExpenditureDetailEntity incomeExpenditureDetail) {
+        String serialNumber = numberRuleService.getCodeNumber("ACCD");//付款流水号
+        incomeExpenditureDetail.setPaymentType(0);
+        incomeExpenditureDetail.setSerialNumber(serialNumber);
+        Long payeeId = incomeExpenditureDetail.getPayeeId();
+        if (payeeId!=null){
+            MerchantCompanyEntity company = merchantCompanyService.queryObject(payeeId.intValue());
+            incomeExpenditureDetail.setPayeeName(company.getCompanyName());
+        }
+        incomeExpenditureDetail.setCompanyId(getUser().getCompanyId());
+        incomeExpenditureDetail.setCreateBy(getUserId());
+        incomeExpenditureDetail.setCreatedTime(new Date());
+        incomeExpenditureDetailService.save(incomeExpenditureDetail);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+//    @RequiresPermissions("bill:incomeexpendituredetail:update")
+    public R update(@RequestBody IncomeExpenditureDetailEntity incomeExpenditureDetail) {
+        incomeExpenditureDetailService.update(incomeExpenditureDetail);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+//    @RequiresPermissions("bill:incomeexpendituredetail:delete")
+    public R delete(@RequestBody Integer[] ids) {
+        incomeExpenditureDetailService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+    //检查 关联的订单号是否存在
+    @RequestMapping("/checkOrdN")
+//    @RequiresPermissions("bill:incomeexpendituredetail:info")
+    public R checkOrdN(@RequestBody String orderNumber) {
+        DeclareOrderEntity declareOrder = declareOrderService.queryByOrderNumber(orderNumber);
+        if (declareOrder == null) {
+            GoodsOrderEntity goodsOrder = goodsOrderService.getListByOrderNumber(orderNumber);
+            if (goodsOrder == null) {
+                LogisticsOrderEntity logisticsOrder = logisticsOrderService.queryByOrderNumber(orderNumber);
+                if (logisticsOrder == null) {
+                    OrderEntity storageOrder = orderService.queryByOrderNumber(orderNumber);
+                    if (storageOrder == null) {
+                        AgentOrderEntity agentOrder = agentOrderService.queryByOrderNumber(orderNumber);
+                        if (agentOrder == null) {
+                            return R.ok().put("order", null);
+                        } else {
+                            return R.ok().put("order", agentOrder);
+                        }
+                    } else {
+                        return R.ok().put("order", storageOrder);
+                    }
+                } else {
+                    return R.ok().put("order", logisticsOrder);
+                }
+            } else {
+                return R.ok().put("order", goodsOrder);
+            }
+        } else {
+            return R.ok().put("order", declareOrder);
+        }
+
+    }
+
+    //检查 收款方公司名称是否存在
+//    @RequestMapping("/checkComN")
+//    @RequiresPermissions("bill:incomeexpendituredetail:info")
+//    public R checkComN(@RequestBody String companyName) {
+//        MerchantCompanyEntity company = merchantCompanyService.getByCompanyName(companyName);
+//
+//        return R.ok().put("count", company);
+//    }
+
+    /**
+     * 获取所有注册公司
+     *
+     * @return
+     */
+    @RequestMapping("/getCompanys")
+    public R getCompanys() {
+        List<MerchantCompanyEntity> companys = merchantCompanyService.queryList(new HashMap<>());
+//        for (MerchantCompanyEntity company:companys) { 会报ConcurrentModificationException异常
+        for (int i = 0; i < companys.size(); i++) {
+            if (companys.get(i).getId() == getUser().getCompanyId()) {
+                companys.remove(i);
+            }
+        }
+        return R.ok().put("companys", companys);
+    }
+
+    /**
+     * 获取当前注册公司所有银行账号
+     * @param params
+     * @return
+     */
+    @RequestMapping("/getCompanysByUser")
+    public R getCompanysByUser(@RequestParam Map<String, Object> params) {
+        Query query = new Query(params);
+        SysUserEntity user = getUser();
+        if(user.getCompanyId() == null){
+            return R.page(null, 0);
+        }
+        //查询本公司所有银行账号
+        query.put("id",user.getCompanyId());
+        List<MerchantCompanyEntity> companys = merchantCompanyService.queryList(query);
+
+        return R.ok().put("companys", companys);
+    }
+
+
+}

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysPushMessageDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.sys.entity.SysPushMessageEntity" id="sysPushMessageMap">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="type" column="type"/>
+        <result property="message" column="message"/>
+        <result property="url" column="url"/>
+        <result property="flag" column="flag"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="content" column="content"/>
+        <result property="readerFlag" column="reader_flag"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.sys.entity.SysPushMessageEntity">
+		SELECT * FROM sys_push_message WHERE id = #{value}
+	</select>
+    <select id="queryPushMag" resultType="com.wzlue.chain.sys.entity.SysPushMessageEntity">
+		SELECT * FROM sys_push_message order by create_date desc limit 1
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.sys.entity.SysPushMessageEntity">
+        SELECT * FROM sys_push_message
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM sys_push_message
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.sys.entity.SysPushMessageEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO sys_push_message
+        (
+        `user_id`,
+        `type`,
+        `message`,
+        `url`,
+        `flag`,
+        `create_date`,
+        `update_date`,
+        `content`,
+        `reader_flag`
+        )
+        VALUES
+        (
+        #{userId},
+        #{type},
+        #{message},
+        #{url},
+        #{flag},
+        #{createDate},
+        #{updateDate},
+        #{content},
+        #{readerFlag}
+        )
+    </insert>
+    <update id="update" parameterType="com.wzlue.chain.sys.entity.SysPushMessageEntity">
+        UPDATE sys_push_message
+        <set>
+            <if test="userId != null">`user_id` = #{userId},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="message != null">`message` = #{message},</if>
+            <if test="url != null">`url` = #{url},</if>
+            <if test="flag != null">`flag` = #{flag},</if>
+            <if test="createDate != null">`create_date` = #{createDate},</if>
+            <if test="updateDate != null">`update_date` = #{updateDate},</if>
+            <if test="content != null">`content` = #{content},</if>
+            <if test="readerFlag != null">`reader_flag` = #{readerFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM sys_push_message WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM sys_push_message WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

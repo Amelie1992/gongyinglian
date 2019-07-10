@@ -1,0 +1,233 @@
+package com.wzlue.chain.declare.service.impl;
+
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.declare.dao.*;
+import com.wzlue.chain.declare.entity.*;
+import com.wzlue.chain.declare.service.DeclareOrderService;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+
+@Service("declareOrderService")
+public class DeclareOrderServiceImpl implements DeclareOrderService {
+    @Autowired
+    private DeclareOrderDao declareOrderDao;
+    @Autowired
+    private DeclareOrderCommodityDao declareOrderCommodityDao;
+    @Autowired
+    private DeclareOfferDao declareOfferDao;
+    @Autowired
+    private DeclareOrderOfferDao orderOfferDao;
+    @Autowired
+    private DeclareContractDao declareContractDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private SysUserDao sysUserDao;
+
+    @Override
+    public DeclareOrderEntity queryObject(Integer id) {
+        return declareOrderDao.queryObject(id);
+    }
+
+    protected SysUserEntity getUser() {
+        return (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+    }
+
+    //买入订单列表
+    @Override
+    public List<DeclareOrderEntity> queryList(Map<String, Object> map) {
+        map.put("buyCompanyId", getUser().getCompanyId());
+        return declareOrderDao.queryList(map);
+    }
+
+    //卖出订单列表
+    @Override
+    public List<DeclareOrderEntity> queryList1(Query query) {
+        return declareOrderDao.queryList(query);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return declareOrderDao.queryTotal(map);
+    }
+
+    @Override
+    public void save(DeclareOrderEntity declareOrder) {
+        //获取商家的报盘信息
+        DeclareOrderOfferEntity orderOfferEntity = declareOrder.getOrderOfferEntity();
+        DeclareOfferEntity offer = declareOfferDao.queryObject(orderOfferEntity.getOfferId());
+        //生成编码
+        declareOrder.setOrderNumber(sysNumberRuleService.getCodeNumber("number_order_declare"));
+        if (StringUtils.isBlank(declareOrder.getContractNumber())) {
+            declareOrder.setContractNumber(sysNumberRuleService.getCodeNumber("number_contract_declare"));
+        }
+
+        //买家
+        MerchantCompanyEntity merchantBuy = merchantCompanyDao.queryObject(declareOrder.getCompanyId());
+        declareOrder.setBuyCompanyName(merchantBuy.getCompanyName());//买方公司名称
+        declareOrder.setMerchantCompanyId(offer.getCompanyId());
+        declareOrder.setMerchantCompanyName(offer.getCompanyName());//卖方公司名称
+        declareOrder.setMerchantContacts(offer.getContacts());//获取卖方公司的联系人
+        declareOrder.setMerchantPhone(offer.getContactWay());//获取卖方公司的联系方式
+        declareOrder.setUnit(Long.valueOf(offer.getUnit()));
+        declareOrder.setOrderState(0);//'订单状态 0：待确认 1：已确认 2：处理订单 3：申报成功 4：订单完结 5:取消',
+        if (declareOrder.getGoodsNumber() == null || declareOrder.getGoodsNumber().trim() == "") {
+            declareOrder.setGoodsType(0);//来源类型：0没有来源单号
+        } else {
+            declareOrder.setGoodsType(1);//来源类型：0没有来源单号
+        }
+        declareOrder.setPayState(0); //0:待付款 1：已付款
+        declareOrder.setBuyStatus(0);//买家是否对卖家投诉
+        declareOrder.setSellStatus(0);//卖家是否对买家投诉
+        declareOrder.setAlterSale(0);//售后
+        declareOrder.setDelFlag(0);
+        declareOrder.setBuyCompanyId(declareOrder.getCompanyId());
+        declareOrderDao.save(declareOrder);
+
+       /*备份报盘信息 */
+
+        if (null != offer) {
+            orderOfferEntity.setOrderId(Math.toIntExact(declareOrder.getId()));
+            orderOfferEntity.setCompanyId(offer.getCompanyId());
+            orderOfferEntity.setTitle(offer.getTitle());
+            orderOfferEntity.setBusinessInfo(offer.getBusinessInfo());
+            orderOfferEntity.setContacts(offer.getContacts());
+            orderOfferEntity.setContactWay(offer.getContactWay());
+            orderOfferEntity.setCommodityCode(offer.getCommodityCode());
+            orderOfferEntity.setBusinessInfo(offer.getBusinessInfo());
+            orderOfferEntity.setDeclareType(String.valueOf(offer.getDeclareType()));
+            orderOfferEntity.setChargeRules(String.valueOf(offer.getChargeRules()));
+            orderOfferEntity.setUnit(offer.getUnit());
+            orderOfferEntity.setTransactionTime(offer.getTransactionTime());
+            orderOfferEntity.setCreateTime(offer.getCreateTime());
+            orderOfferEntity.setCreateBy(offer.getCreateBy());
+            orderOfferEntity.setUpdateBy(offer.getUpdateBy());
+            orderOfferEntity.setUpdateTime(offer.getUpdateTime());
+            orderOfferDao.save(orderOfferEntity);
+        }
+
+        /*新增订单商品信息*/
+        if (declareOrder.getGoods().size() > 0 && declareOrder.getGoods().get(0) != null) {
+            for (DeclareOrderCommodityEntity item : declareOrder.getGoods()) {
+                item.setDeclareOrderId(declareOrder.getId());
+                declareOrderCommodityDao.save(item);
+            }
+        }
+    }
+
+    @Override
+    public void update(DeclareOrderEntity   declareOrder) {
+        String buyCompanyId = String.valueOf(declareOrder.getBuyCompanyId());
+        String merchantCompanyId = String.valueOf(declareOrder.getMerchantCompanyId());
+        //生成合同
+        if (declareOrder.getOrderState() == 1) {
+            newContract(declareOrder, buyCompanyId);//生成买方合同
+            newContract(declareOrder, merchantCompanyId);//生成卖方合同
+            //订单结束，并对出售的报盘产品进行自增
+            declareOrderDao.updateByOrderId(declareOrder.getId());
+        }
+/*        if(declareOrder.getOrderState()==7){
+            DeclareOrderEntity declareOrderEntity = declareOrderDao.queryObject(declareOrder.getId());
+            declareContractDao.deleteByOrderNumberAndContractNumber(declareOrderEntity.getOrderNumber(),declareOrderEntity.getContractNumber());
+        }*/
+        if (declareOrder.getOrderState() == 6) {
+            MerchantCompanyEntity companyEntity = merchantCompanyDao.queryByUserId(getUser().getUserId());
+            merchantCompanyDao.updateCreditType(CreditType.COMPLETEORDER, companyEntity);
+        }
+        if (declareOrder.getOrderState() == 7) {
+            //订单结束，并对出售的报盘产品进行自增
+            DeclareOrderEntity declareOrderEntity = declareOrderDao.queryObject(declareOrder.getId());
+            if (declareOrderEntity.getOrderState() != 0) {
+                declareOrderDao.updateByOrderIdLess(declareOrder.getId());
+            }
+        }
+        declareOrderDao.update(declareOrder);
+        /*新增订单商品信息*/
+        if (declareOrder.getGoods() != null && declareOrder.getGoods().size() > 0 && declareOrder.getGoods().get(0) != null) {
+            declareOrderCommodityDao.deleteByOrder(declareOrder.getId());
+            for (DeclareOrderCommodityEntity item : declareOrder.getGoods()) {
+                item.setDeclareOrderId(declareOrder.getId());
+                item.setId(null);
+                declareOrderCommodityDao.save(item);
+            }
+        }
+    }
+
+    private void newContract(DeclareOrderEntity d, String owner) {
+        DeclareContractEntity dc = new DeclareContractEntity();
+        dc.setContractNumber(d.getContractNumber());//合同编号
+        dc.setOrderNumber(d.getOrderNumber());//订单编号
+        dc.setDataSource(1);//合同创建来源 1.订单创建 2.自主录入
+        dc.setCustomsCopName(d.getBuyCompanyName());//设置甲方公司名称
+        dc.setMerchantCopName(d.getMerchantCompanyName());
+        dc.setPayMethod(1);
+        dc.setContractAmount(d.getTotal());
+        dc.setCusCompanyId(Long.valueOf(d.getBuyCompanyId()));
+        dc.setMerCompanyId(Long.valueOf(d.getMerchantCompanyId()));
+        dc.setOwner(owner);
+        dc.setDateOfSigning(new Date());
+        dc.setCreateBy(merchantCompanyDao.getCompanyByCompnayid(owner).getUserId());
+
+        declareContractDao.save(dc);
+    }
+
+    @Override
+    public void delete(Integer id) {
+        declareOrderDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Integer[] ids) {
+        declareOrderDao.deleteBatch(ids);
+    }
+
+    @Override
+    public void updateOrderState(Map<String, Object> map) {
+        declareOrderDao.updateOrderState(map);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> getCompanys(Long companyId) {
+        return declareOrderDao.getCompanys(companyId);
+    }
+
+    @Override
+    public List showList(Map<String, Object> map) {
+        if (null != map.get("userId").toString()) {
+            SysUserEntity sysUserEntity = sysUserDao.queryObject(Long.valueOf(map.get("userId").toString()));
+            if (null != sysUserEntity) {
+                map.put("companyId", sysUserEntity.getCompanyId());
+            }
+        }
+        return declareOrderDao.showList(map);
+    }
+
+    @Override
+    public DeclareOrderEntity queryByOrderNumber(String orderNumber) {
+        return declareOrderDao.queryByOrderNumber(orderNumber);
+    }
+
+    @Override
+    public void updatePrice(DeclareOrderEntity declareOrder) {
+        declareOrderDao.update(declareOrder);
+    }
+}

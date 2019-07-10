@@ -1,0 +1,60 @@
+package com.wzlue.chain.marketing.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.marketing.dao.MarketBidRecordDao;
+import com.wzlue.chain.marketing.entity.MarketBidRecordEntity;
+import com.wzlue.chain.marketing.service.MarketBidRecordService;
+
+
+
+@Service("marketBidRecordService")
+public class MarketBidRecordServiceImpl implements MarketBidRecordService {
+	@Autowired
+	private MarketBidRecordDao marketBidRecordDao;
+	
+	@Override
+	public MarketBidRecordEntity queryObject(Long id){
+		return marketBidRecordDao.queryObject(id);
+	}
+	
+	@Override
+	public List<MarketBidRecordEntity> queryList(Map<String, Object> map){
+		return marketBidRecordDao.queryList(map);
+	}
+	
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return marketBidRecordDao.queryTotal(map);
+	}
+	
+	@Override
+	public void save(MarketBidRecordEntity marketBidRecord){
+		marketBidRecordDao.save(marketBidRecord);
+	}
+	
+	@Override
+	public void update(MarketBidRecordEntity marketBidRecord){
+		marketBidRecordDao.update(marketBidRecord);
+	}
+	
+	@Override
+	public void delete(Long id){
+		marketBidRecordDao.delete(id);
+	}
+	
+	@Override
+	public void deleteBatch(Long[] ids){
+		marketBidRecordDao.deleteBatch(ids);
+	}
+
+	@Override
+	public int queryTotals(Long auctionId) {
+		return marketBidRecordDao.queryTotals(auctionId);
+	}
+
+}

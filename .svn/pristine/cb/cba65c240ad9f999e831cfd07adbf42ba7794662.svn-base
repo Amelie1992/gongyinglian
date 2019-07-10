@@ -1,0 +1,61 @@
+server:
+    port: 8089
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driverClassName: com.mysql.jdbc.Driver
+        druid:
+            first:  #数据源1
+                url: jdbc:mysql://119.3.57.186:3306/supply_chain?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: suhang2018
+            second:  #数据源2
+                url: jdbc:mysql://119.3.57.186:3306/supply_chain?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+                username: root
+                password: suhang2018
+            initial-size: 5
+            max-active: 100
+            min-idle: 10
+            max-wait: 60000
+            timeBetweenEvictionRunsMillis: 6000
+            pool-prepared-statements: true
+            max-pool-prepared-statement-per-connection-size: 20
+            time-between-eviction-runs-millis: 60000
+            min-evictable-idle-time-millis: 300000
+            validation-query: SELECT 1 FROM DUAL
+            test-while-idle: true
+            test-on-borrow: false
+            test-on-return: false
+            stat-view-servlet:
+                enabled: true
+                url-pattern: /druid/*
+                #login-username: admin
+                #login-password: admin
+            filter:
+                stat:
+                    log-slow-sql: true
+                    slow-sql-millis: 1000
+                    merge-sql: true
+                wall:
+                    config:
+                        multi-statement-allow: true
+
+# 文件上传
+fileupload:
+    server: http://localhost:8080/fileupload
+    filepath: d://file
+#合同模板下载
+templateDownload:
+    filepath: D:\work\workSpace\gyl\wzlue-web\src\main\resources\templateDownload
+ueditor:
+    imageActionName: uploadimage
+    imageUrlPrefix: http://localhost:8080/ueditor
+    localSavePathPrefix: "D://wzlue-logs/wzlue-web"
+    imagePath: /ueditor/
+    imageFieldName: upfile
+    imageMaxSize: 2048
+# 日志
+logback:
+    logdir: D://wzlue-logs/wzlue-imports-web
+    appname: wzlue-web
+    logCount: 10000 #日志阈值

@@ -1,0 +1,650 @@
+package com.wzlue.chain.agent.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+
+
+/**
+ * 代理(订单)表
+ * 
+ * @author 
+ * @email 
+ * @date 2018-08-30 15:40:41
+ */
+public class AgentOrderEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	/**自增主键,id*/
+	private Long id;
+	/**代理订单编号*/
+	private String orderNumber;
+	/**合同编号*/
+	private String contractNumber;
+	/**联系方式(买家)*/
+	private String contactPhone;
+	/**联系人(买家)*/
+	private String contactPerson;
+	/**电子邮箱(买家)*/
+	private String contactEmail;
+	/**地址(买家)*/
+	private String contactAddress;
+	/**公司id(买家)*/
+	private Long contactCompanyId;
+
+	private String contactCompanyName;
+	/**权限部门id(买家)*/
+	private Long contactDeptId;
+	/**订单总价*/
+	private BigDecimal totalPrice;
+	/**币种*/
+	private String currency;
+	/**代理费用单价*/
+	private BigDecimal unitPrice;
+	/**代理费用数量*/
+	private Integer outlayQuantity;
+	/**来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单*/
+	private Integer originFlag;
+	/**来源单号*/
+	private String originNumber;
+	/**联系方式(商家)*/
+	private String merchantPhone;
+	/**联系人(商家)*/
+	private String merchantPerson;
+	/**电子邮箱(商家)*/
+	private String merchantEmail;
+	/**联系地址(商家)*/
+	private String merchantAddress;
+	/**公司id(商家)*/
+	private Long merchantCompanyId;
+
+	private String merchantCompanyName;
+	/**权限部门id(商家)*/
+	private Long merchantDeptId;
+	/**订单状态 0.待确认 1.已确认 2.订单结束*/
+	private Integer orderStatus;
+	/**支付状态 0 未支付, 1. 部分支付 2.已支付*/
+	private Integer payStatus;
+	/**下单时间*/
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date submitTime;
+	/**接单时间*/
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date receiptTime;
+	/**支付时间*/
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date payTime;
+	/**订单结束时间*/
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date endTime;
+	/**删除标识 0.未删除 1.已删除*/
+	private Integer delFlag;
+	//创建人
+	private Long createBy;
+	//创建时间
+	private Date createTime;
+	//修改人
+	private Long updateBy;
+	//修改时间
+	private Date updateTime;
+	//备注
+	private String remark;
+
+	private String goodsMoreRemark;
+
+	private Long offerId;
+	
+	private Long deptId;
+
+	private Long companyId;
+
+	private Long authorizesId;
+
+	//是否垫付来源货物订单货款
+	private Integer originPayType;
+
+	//卖家被投诉状态(买家操作投诉)
+	private Integer cusComplaintStatus;
+
+	//买家被投诉状态(卖家操作投诉)
+	private Integer merComplaintStatus;
+
+	//售后服务状态
+	private Integer afterStatus;
+
+	private List<AgentOrderGoodsEntity> goods;
+
+	private List<AgentOrderBusinessEntity> business;
+
+	private AgentOfferEntity offer;
+
+	private GoodsOrderEntity goodsOrderEntity;
+
+	public GoodsOrderEntity getGoodsOrderEntity() {
+		return goodsOrderEntity;
+	}
+
+	public void setGoodsOrderEntity(GoodsOrderEntity goodsOrderEntity) {
+		this.goodsOrderEntity = goodsOrderEntity;
+	}
+
+	/**
+	 * 设置：自增主键,id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：自增主键,id
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：代理订单编号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：代理订单编号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：合同编号
+	 */
+	public void setContractNumber(String contractNumber) {
+		this.contractNumber = contractNumber;
+	}
+	/**
+	 * 获取：合同编号
+	 */
+	public String getContractNumber() {
+		return contractNumber;
+	}
+	/**
+	 * 设置：联系方式(买家)
+	 */
+	public void setContactPhone(String contactPhone) {
+		this.contactPhone = contactPhone;
+	}
+	/**
+	 * 获取：联系方式(买家)
+	 */
+	public String getContactPhone() {
+		return contactPhone;
+	}
+	/**
+	 * 设置：联系人(买家)
+	 */
+	public void setContactPerson(String contactPerson) {
+		this.contactPerson = contactPerson;
+	}
+	/**
+	 * 获取：联系人(买家)
+	 */
+	public String getContactPerson() {
+		return contactPerson;
+	}
+	/**
+	 * 设置：电子邮箱(买家)
+	 */
+	public void setContactEmail(String contactEmail) {
+		this.contactEmail = contactEmail;
+	}
+	/**
+	 * 获取：电子邮箱(买家)
+	 */
+	public String getContactEmail() {
+		return contactEmail;
+	}
+	/**
+	 * 设置：地址(买家)
+	 */
+	public void setContactAddress(String contactAddress) {
+		this.contactAddress = contactAddress;
+	}
+	/**
+	 * 获取：地址(买家)
+	 */
+	public String getContactAddress() {
+		return contactAddress;
+	}
+	/**
+	 * 设置：公司id(买家)
+	 */
+	public void setContactCompanyId(Long contactCompanyId) {
+		this.contactCompanyId = contactCompanyId;
+	}
+	/**
+	 * 获取：公司id(买家)
+	 */
+	public Long getContactCompanyId() {
+		return contactCompanyId;
+	}
+
+	public String getContactCompanyName() {
+		return contactCompanyName;
+	}
+
+	public void setContactCompanyName(String contactCompanyName) {
+		this.contactCompanyName = contactCompanyName;
+	}
+
+	/**
+	 * 设置：权限部门id(买家)
+	 */
+	public void setContactDeptId(Long contactDeptId) {
+		this.contactDeptId = contactDeptId;
+	}
+	/**
+	 * 获取：权限部门id(买家)
+	 */
+	public Long getContactDeptId() {
+		return contactDeptId;
+	}
+	/**
+	 * 设置：订单总价
+	 */
+	public void setTotalPrice(BigDecimal totalPrice) {
+		this.totalPrice = totalPrice;
+	}
+	/**
+	 * 获取：订单总价
+	 */
+	public BigDecimal getTotalPrice() {
+		return totalPrice;
+	}
+	/**
+	 * 设置：币种
+	 */
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
+	/**
+	 * 获取：币种
+	 */
+	public String getCurrency() {
+		return currency;
+	}
+	/**
+	 * 设置：代理费用单价
+	 */
+	public void setUnitPrice(BigDecimal unitPrice) {
+		this.unitPrice = unitPrice;
+	}
+	/**
+	 * 获取：代理费用单价
+	 */
+	public BigDecimal getUnitPrice() {
+		return unitPrice;
+	}
+	/**
+	 * 设置：代理费用数量
+	 */
+	public void setOutlayQuantity(Integer outlayQuantity) {
+		this.outlayQuantity = outlayQuantity;
+	}
+	/**
+	 * 获取：代理费用数量
+	 */
+	public Integer getOutlayQuantity() {
+		return outlayQuantity;
+	}
+	/**
+	 * 设置：来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单
+	 */
+	public void setOriginFlag(Integer originFlag) {
+		this.originFlag = originFlag;
+	}
+	/**
+	 * 获取：来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单
+	 */
+	public Integer getOriginFlag() {
+		return originFlag;
+	}
+	/**
+	 * 设置：来源单号
+	 */
+	public void setOriginNumber(String originNumber) {
+		this.originNumber = originNumber;
+	}
+	/**
+	 * 获取：来源单号
+	 */
+	public String getOriginNumber() {
+		return originNumber;
+	}
+	/**
+	 * 设置：联系方式(商家)
+	 */
+	public void setMerchantPhone(String merchantPhone) {
+		this.merchantPhone = merchantPhone;
+	}
+	/**
+	 * 获取：联系方式(商家)
+	 */
+	public String getMerchantPhone() {
+		return merchantPhone;
+	}
+	/**
+	 * 设置：联系人(商家)
+	 */
+	public void setMerchantPerson(String merchantPerson) {
+		this.merchantPerson = merchantPerson;
+	}
+	/**
+	 * 获取：联系人(商家)
+	 */
+	public String getMerchantPerson() {
+		return merchantPerson;
+	}
+	/**
+	 * 设置：电子邮箱(商家)
+	 */
+	public void setMerchantEmail(String merchantEmail) {
+		this.merchantEmail = merchantEmail;
+	}
+	/**
+	 * 获取：电子邮箱(商家)
+	 */
+	public String getMerchantEmail() {
+		return merchantEmail;
+	}
+	/**
+	 * 设置：联系地址(商家)
+	 */
+	public void setMerchantAddress(String merchantAddress) {
+		this.merchantAddress = merchantAddress;
+	}
+	/**
+	 * 获取：联系地址(商家)
+	 */
+	public String getMerchantAddress() {
+		return merchantAddress;
+	}
+	/**
+	 * 设置：公司id(商家)
+	 */
+	public void setMerchantCompanyId(Long merchantCompanyId) {
+		this.merchantCompanyId = merchantCompanyId;
+	}
+	/**
+	 * 获取：公司id(商家)
+	 */
+	public Long getMerchantCompanyId() {
+		return merchantCompanyId;
+	}
+
+	public String getMerchantCompanyName() {
+		return merchantCompanyName;
+	}
+
+	public void setMerchantCompanyName(String merchantCompanyName) {
+		this.merchantCompanyName = merchantCompanyName;
+	}
+
+	/**
+	 * 设置：权限部门id(商家)
+	 */
+	public void setMerchantDeptId(Long merchantDeptId) {
+		this.merchantDeptId = merchantDeptId;
+	}
+	/**
+	 * 获取：权限部门id(商家)
+	 */
+	public Long getMerchantDeptId() {
+		return merchantDeptId;
+	}
+	/**
+	 * 设置：订单状态 0.待确认 1.已确认 2.订单结束
+	 */
+	public void setOrderStatus(Integer orderStatus) {
+		this.orderStatus = orderStatus;
+	}
+	/**
+	 * 获取：订单状态 0.待确认 1.已确认 2.订单结束
+	 */
+	public Integer getOrderStatus() {
+		return orderStatus;
+	}
+	/**
+	 * 设置：支付状态 0 未支付, 1. 部分支付 2.已支付
+	 */
+	public void setPayStatus(Integer payStatus) {
+		this.payStatus = payStatus;
+	}
+	/**
+	 * 获取：支付状态 0 未支付, 1. 部分支付 2.已支付
+	 */
+	public Integer getPayStatus() {
+		return payStatus;
+	}
+	/**
+	 * 设置：下单时间
+	 */
+	public void setSubmitTime(Date submitTime) {
+		this.submitTime = submitTime;
+	}
+	/**
+	 * 获取：下单时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",locale = "zh",timezone = "GMT+8")
+	public Date getSubmitTime() {
+		return submitTime;
+	}
+	/**
+	 * 设置：接单时间
+	 */
+	public void setReceiptTime(Date receiptTime) {
+		this.receiptTime = receiptTime;
+	}
+	/**
+	 * 获取：接单时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",locale = "zh",timezone = "GMT+8")
+	public Date getReceiptTime() {
+		return receiptTime;
+	}
+	/**
+	 * 设置：支付时间
+	 */
+	public void setPayTime(Date payTime) {
+		this.payTime = payTime;
+	}
+	/**
+	 * 获取：支付时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",locale = "zh",timezone = "GMT+8")
+	public Date getPayTime() {
+		return payTime;
+	}
+	/**
+	 * 设置：订单结束时间
+	 */
+	public void setEndTime(Date endTime) {
+		this.endTime = endTime;
+	}
+	/**
+	 * 获取：订单结束时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",locale = "zh",timezone = "GMT+8")
+	public Date getEndTime() {
+		return endTime;
+	}
+	/**
+	 * 设置：删除标识 0.未删除 1.已删除
+	 */
+	public void setDelFlag(Integer delFlag) {
+		this.delFlag = delFlag;
+	}
+	/**
+	 * 获取：删除标识 0.未删除 1.已删除
+	 */
+	public Integer getDelFlag() {
+		return delFlag;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreateBy(Long createBy) {
+		this.createBy = createBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Long getCreateBy() {
+		return createBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreateTime(Date createTime) {
+		this.createTime = createTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	public Date getCreateTime() {
+		return createTime;
+	}
+	/**
+	 * 设置：修改人
+	 */
+	public void setUpdateBy(Long updateBy) {
+		this.updateBy = updateBy;
+	}
+	/**
+	 * 获取：修改人
+	 */
+	public Long getUpdateBy() {
+		return updateBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+	/**
+	 * 设置：备注
+	 */
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+	/**
+	 * 获取：备注
+	 */
+	public String getRemark() {
+		return remark;
+	}
+
+	public String getGoodsMoreRemark() {
+		return goodsMoreRemark;
+	}
+
+	public void setGoodsMoreRemark(String goodsMoreRemark) {
+		this.goodsMoreRemark = goodsMoreRemark;
+	}
+
+	public Long getOfferId() {
+		return offerId;
+	}
+
+	public void setOfferId(Long offerId) {
+		this.offerId = offerId;
+	}
+
+	public Integer getOriginPayType() {
+		return originPayType;
+	}
+
+	public void setOriginPayType(Integer originPayType) {
+		this.originPayType = originPayType;
+	}
+
+	public List<AgentOrderGoodsEntity> getGoods() {
+		return goods;
+	}
+
+	public void setGoods(List<AgentOrderGoodsEntity> goods) {
+		this.goods = goods;
+	}
+
+	public List<AgentOrderBusinessEntity> getBusiness() {
+		return business;
+	}
+
+	public void setBusiness(List<AgentOrderBusinessEntity> business) {
+		this.business = business;
+	}
+
+	public AgentOfferEntity getOffer() {
+		return offer;
+	}
+
+	public void setOffer(AgentOfferEntity offer) {
+		this.offer = offer;
+	}
+
+	public Long getDeptId() {
+		return deptId;
+	}
+
+	public void setDeptId(Long deptId) {
+		this.deptId = deptId;
+	}
+
+	public Long getCompanyId() {
+		return companyId;
+	}
+
+	public void setCompanyId(Long companyId) {
+		this.companyId = companyId;
+	}
+
+	public Long getAuthorizesId() {
+		return authorizesId;
+	}
+
+	public void setAuthorizesId(Long authorizesId) {
+		this.authorizesId = authorizesId;
+	}
+
+	public Integer getCusComplaintStatus() {
+		return cusComplaintStatus;
+	}
+
+	public void setCusComplaintStatus(Integer cusComplaintStatus) {
+		this.cusComplaintStatus = cusComplaintStatus;
+	}
+
+	public Integer getMerComplaintStatus() {
+		return merComplaintStatus;
+	}
+
+	public void setMerComplaintStatus(Integer merComplaintStatus) {
+		this.merComplaintStatus = merComplaintStatus;
+	}
+
+	public Integer getAfterStatus() {
+		return afterStatus;
+	}
+
+	public void setAfterStatus(Integer afterStatus) {
+		this.afterStatus = afterStatus;
+	}
+}

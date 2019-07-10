@@ -1,0 +1,21 @@
+package com.wzlue.chain.company.dao;
+
+import com.wzlue.chain.company.entity.EmployeeEntity;
+import com.wzlue.chain.common.base.BaseDao;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/**
+ * 员工
+ * 
+ * @author 
+ * @email 
+ * @date 2018-08-22 14:37:00
+ */
+@Mapper
+public interface EmployeeDao extends BaseDao<EmployeeEntity> {
+
+    Integer getGH();
+
+    void updateEmployeeUserId(@Param("userId") Long userId, @Param("id") Integer id);
+}

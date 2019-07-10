@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{$t('SHSCM')}}</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/AdminLTE.min.css">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="css/all-skins.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body class="hold-transition login-page">
+
+
+<div id="rrapp" v-cloak>
+    <!-- login -->
+    <div class="login-box" v-if="context=='login'">
+        <div class="login-logo">
+            <b>{{$t('hello')}}</b>
+        </div>
+        <div class="">
+            <a href="javascript:;" @click="changeen"> &nbsp;English</a>
+            <a href="javascript:;" @click="changezh"> &nbsp;中文{{$t('Chinese')}}</a>
+        </div>
+        <!-- /.login-logo -->
+        <div class="login-box-body">
+            <!--<p class="login-box-msg">{{$t('administratorLogin')}}</p>-->
+            <div v-if="error" class="alert alert-danger alert-dismissible">
+                <h4 style="margin-bottom: 0px;"><i class="fa fa-exclamation-circle"></i> {{errorMsg}}</h4>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" v-model="form.username" :placeholder="$t('account')">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="form.password" :placeholder="$t('password')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <!-- @keyup.enter="login"  enter自动提交表单 针对火狐有效-->
+                <input type="text" class="form-control" v-model="form.captcha" :placeholder="$t('verificationCode')">
+                <span class="glyphicon glyphicon-warning-sign form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <img alt="如果看不清楚，请单击图片刷新！" class="pointer" :src="src" @click="refreshCode">
+                &nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:;" @click="refreshCode">{{$t('refresh')}}</a>
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="checkbox icheck"></div>
+                </div>
+                <!-- /.col -->
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-primary btn-flat" @click="registerPage">{{$t('register')}}
+                    </button>
+                    <button type="button" class="btn btn-primary btn-flat" @click="login">{{$t('signIn')}}</button>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.social-auth-links -->
+        </div>
+        <!-- /.login-box-body -->
+    </div>
+    <!-- login end -->
+
+    <!-- regiter start -->
+    <div class="register-box" v-if="context=='register'">
+        <!-- /.register-box-body -->
+        <div class="register-box-body">
+            <div class="register-logo">
+                <b>{{$t('register')}}</b>
+            </div>
+            <div v-if="registerError" class="alert alert-danger alert-dismissible">
+                <h4 style="margin-bottom: 0px;"><i class="fa fa-exclamation-circle"></i> {{errorMsg}}</h4>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" v-model="register.mobile" :placeholder="$t('registerPhone')">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="register.password" :placeholder="$t('password')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="register.confirmpassword" :placeholder="$t('ConfirmThePassword')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" id="smsCode" :placeholder="$t('verificationCode')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                <input type="button" class="form-control btn btn-primary" @click="sendcode" id="sendSms" :value="$t('GetVerificationCode')"/>
+            </div>
+
+            <div class="form-group">
+                <div style=" width: 100%; text-align: center;">
+                    <input type="checkbox" id="checkboxSuccess" name="checkboxSuccess" value="1" v-model="protocol">
+                    <label>
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal">
+                            {{$t('IHaveReadAndAgreed')}}《{{$t('Agreement')}}》
+                        </button>
+                    </label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="checkbox icheck"></div>
+                </div>
+                <!-- /.col -->
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-primary btn-flat" @click="loginPage">{{$t('return')}}</button>
+                    <button type="button" class="btn btn-primary btn-flat" @click="save">{{$t('register')}}</button>
+                </div>
+                <!-- /.col -->
+            </div>
+        </div>
+    </div>
+    <!-- register end -->
+
+    <!-- 协议（Modal） -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        注册协议
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div id="selectTree" class="ztree" style="height:300px;overflow:auto; ">
+                        {{protocolInfo}}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-default" @click="agree">{{$t('Agree')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="libs/jquery.min.js"></script>
+<script src="libs/jquery.cookie.js"></script>
+<script src="plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/bootstrap.min.js"></script>
+<script src="plugins/layer/layer.js"></script>
+<script src="libs/app.js"></script>
+<script src="messages/zh.js"></script>
+<script src="messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+
+<script src="js/common.js"></script>
+<script type="text/javascript">
+    var vm = new Vue({
+        el: '#rrapp',
+        i18n,
+        data: {
+            isCheckForm: false,
+            protocol: false, // 是否同意协议
+            protocolInfo: '', // 协议内容
+            countdown: 60, // 倒计时
+            context: 'login', // 默认登陆页
+            register: {
+                mobile: '',
+                username: '',
+                password: '',
+                confirmpassword: '',
+                status: 1,
+                roleIdList: [3]
+            },
+            form: {
+                username: '',
+                password: '',
+                captcha: ''
+            },
+            error: false,
+            registerError: false,
+            errorMsg: '',
+            src: 'captcha.jpg'
+        }, beforeCreate: function () {
+            if (self != top) {
+                top.location.href = self.location.href;
+            }
+        }, methods: {
+            sendSms: function () { // 发送验证码
+                vm.sending = true;
+                var obj = $("#sendSms");
+                vm.settime(obj);
+                layer.load();
+                $.post(baseURL + 'sys/user/sendSMS',vm.register.mobile,function (obj) {
+                    layer.closeAll();
+                    if(obj.code =='0')
+                        alert('短信发送成功！');
+                    else
+                        alert(obj.msg);
+                });
+            },
+            settime: function (obj) { // 发送验证码倒计时
+                if (vm.countdown == 0) {
+                    obj.attr('disabled', false);
+                    obj.val("获取验证码");
+                    vm.countdown = 60;
+                    vm.sending = false;
+                    return;
+                } else {
+                    obj.attr('disabled', true);
+                    obj.val("重新发送(" + vm.countdown + ")");
+                    vm.countdown--;
+                }
+                setTimeout(function () {
+                    vm.settime(obj);
+                }, 1000)
+            }, sendcode() { // 验证手机号码
+                var reg = /^1[3456789]\d{9}$/;
+                //var url="/nptOfficialWebsite/apply/sendSms?mobile="+this.ruleForm.phone;
+                if (vm.register.mobile == '') {
+                    alert("请输入手机号码");
+                } else if (!reg.test(vm.register.mobile)) {
+                    alert("手机格式不正确");
+                } else {
+                    vm.sendSms();
+                }
+
+            }, changezh: function () { // 切换 中文
+                this.$i18n.locale = 'zh';
+                document.title = this.$t('wzl');
+
+            }, changeen: function () { // 切换 英文
+                this.$i18n.locale = 'en';
+                document.title = this.$t('wzl');
+
+            }, refreshCode: function () { // 刷新验证码
+                this.src = "captcha.jpg?t=" + $.now();
+
+            }, login: function () { // 登陆
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "sys/login",
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: JSON.stringify(vm.form),
+                    success: function (r) {
+                        if (r.code == 0) {//登录成功
+                            localStorage.setItem("token", r.token);
+                            parent.location.href = 'index.html';
+                        } else {
+                            vm.error = true;
+                            vm.errorMsg = r.msg;
+                            vm.refreshCode();
+                        }
+                    }
+                });
+            }, loginPage: function () {
+                vm.context = 'login';
+                vm.form={};
+                vm.error = false;
+                vm.errorMsg = '';
+            }, save: function () { // 注册
+                vm.checkForm();
+                if (!vm.isCheckForm) return;
+
+                if (!vm.checkboxSuccess()) {
+                    alert("同意阅读协议后申请注册");
+                    return;
+                }
+                vm.register.username = vm.register.mobile;
+                vm.register.status = 1;
+                vm.register. roleIdList = [3];
+
+                layer.load();
+                $.ajax({
+                    type: 'POST',
+                    url: baseURL + 'sys/user/register?smsCode='+$("#smsCode").val(),
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.register),
+                    success: function (obj) {
+                        layer.closeAll();
+                        if (obj.code == '0') {
+                            alert('注册成功！', function () {
+                                vm.context = 'login';
+                            })
+                        } else {
+                            vm.registerError = true;
+                            vm.errorMsg = obj.msg;
+                        }
+                    }
+                })
+
+            }, registerPage: function () { // 注册 跳转注册页面
+                vm.context = 'register';
+                vm.register = {};
+                vm.registerError = false;
+                vm.errorMsg = '';
+            }, protocolPage: function () { // 协议
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "company/merchantusers/getAgreement",
+                    contentType: "application/json",
+                    data: JSON.stringify({xieyiType: '注册协议'}),
+                    success: function (r) {
+                        vm.protocolInfo = r.data.xieyiContent;
+                        if (r.code == 0) {
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+
+            }, agree: function () { // 同意协议
+                vm.protocol = true;
+                $('#myModal').modal('hide');
+
+            }, checkboxSuccess: function () { // 验证 是否同意协议
+                return $("input[name='checkboxSuccess']:checked").val() == 1 && vm.protocol;
+
+            }, checkForm: function () {
+                var msg = '';
+                var regmobile = /^1[3456789]\d{9}$/;
+                if (vm.register.mobile == '') {
+                    msg = "请输入手机号码";
+                } else if (!regmobile.test(vm.register.mobile)) {
+                    msg = "手机格式不正确";
+                } else if (vm.register.password == '') {
+                    msg = "请输入密码";
+                } else if (vm.register.confirmpassword == '') {
+                    msg = "请输入确认密码";
+                } else if (vm.register.password != vm.register.confirmpassword) {
+                    msg = "密码不相同";
+                } else if ($("#smsCode").val() == '') {
+                    msg = "请输入验证码";
+                }
+
+                if (msg == '')
+                    vm.isCheckForm = true;
+                else
+                    alert(msg);
+
+                msg = '';
+            }
+
+        }, created: function () {
+            this.protocolPage();
+            document.title = this.$t('wzl');
+            document.onkeydown = function(e) {
+                var key = window.event.keyCode;
+                if (key == 13) {
+                    vm.login();
+                }
+            };
+            $(function () {
+                vm.countdown = $.cookie('validateCodeCountdown');
+                if (vm.countdown > 0) {
+                    vm.sending = true;
+                    var obj = $("#sendSms");
+                    obj.attr("disabled", true);
+                    obj.val("重新发送(" + vm.countdown + ")");
+                    vm.settime(obj);
+                } else {
+                    vm.countdown = 60;
+                }
+
+                $(window).on('beforeunload unload', function () {
+                    if (vm.sending) {
+                        console.log(vm.countdown);
+                        $.cookie('validateCodeCountdown', vm.countdown);
+                    }
+                    if (!vm.sending) {
+                        console.log(vm.countdown);
+                        $.cookie('validateCodeCountdown', 0);
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

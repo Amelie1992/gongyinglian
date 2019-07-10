@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <title>我的账户</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div class="page-header">
+        <h3>{{title}}</h3>
+    </div>
+
+    <!-- 银行卡管理 -->
+    <div class="row" v-show="showList==4">
+        <div class="panel panel-default" style="margin-top: 20px;">
+
+            <div class="row">
+                <template v-for="(item,key,id) in cardList ">
+                    <div class="col-xs-3">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">
+                                    <img v-bind:src="item.logo"/>
+                                    <span class="pull-right">{{$t('tail')}}: {{item.cardNoEnd}}</span>
+                                </h3>
+
+                            </div>
+                            <div class="panel-body">
+                                <div style="height: 100px;">
+
+                                </div>
+                            </div>
+                            <div class="panel-footer">
+                                <span @click="delCard(item.id)">删除</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </template>
+            </div>
+
+            <!-- v-if="hasPermission('bill:myaccount:delete')"-->
+            <div class="row">
+                <div class="col-xs-3">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">&nbsp;</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div style="height: 100px; text-align:center;" data-toggle="modal" data-target="#myModal" id="myModalLabel">
+                                <img src="/images/images/addcard.png" style="width:50px;height:50px;">
+                                <p></p>
+                                {{$t('AddBankCard')}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--添加银行卡  modal-->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('AddBankCard')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="addCardForm" class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('RealName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="name" class="form-control" v-model="bankCard.name" :placeholder="$t('RealName')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('IDNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="idcard" class="form-control" v-model="bankCard.idcard" :placeholder="$t('IDNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('BankCardNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="bankCardNumber" class="form-control" v-model="bankCard.cardNo" :placeholder="$t('BankCardNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('MobilePhoneNo')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phone" class="form-control" v-model="bankCard.phone" :placeholder="$t('MobilePhoneNo')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="cardvalidate">{{$t('save')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/bill/bank_card_manage.js"></script>
+</body>
+</html>

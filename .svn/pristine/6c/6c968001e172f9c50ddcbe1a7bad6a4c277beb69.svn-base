@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysDeptDao">
+
+	<select id="queryObject" resultType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		select m.*,(select p.name from sys_dept p where p.dept_id = m.parent_id) as parentName from sys_dept m where m.dept_id = #{deptId}
+	</select>
+
+	<insert id="save" parameterType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		insert into sys_dept
+		(
+		`dept_id`,
+		`parent_id`,
+		`parent_ids`,
+		`name`,
+		`order_num`,
+		`dept_type`,
+		`create_by`,
+		`create_date`,
+		`update_by`,
+		`update_date`
+		)
+		values
+		(
+		#{deptId},
+		#{parentId},
+		#{parentIds},
+		#{name},
+		#{orderNum},
+		#{deptType},
+		#{createBy},
+		#{createDate},
+		#{updateBy},
+		#{updateDate}
+		)
+	</insert>
+
+	<select id="queryListParentId" resultType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		select *,(select p.name from sys_dept p where p.dept_id = sys_dept.parent_id) as parentName from sys_dept where parent_id = #{parentId} order by order_num asc
+	</select>
+
+	<select id="queryAllList" resultType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		select *,(select p.name from sys_dept p where p.dept_id = sys_dept.parent_id) as parentName
+		from sys_dept  order by order_num asc
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		select m.*,(select p.name from sys_dept p where p.dept_id = m.parent_id) as parentName
+		from sys_dept m
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				order by m.${sidx} ${order}
+			</when>
+			<otherwise>
+				order by m.order_num asc
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+	</select>
+
+	<!-- 查询用户的权限列表 -->
+	<select id="queryUserList" resultType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		select distinct m.*,(select p.name from sys_dept p where p.dept_id = m.parent_id) as parentName
+		from sys_user_role ur
+		LEFT JOIN sys_role_dept rm on ur.role_id = rm.role_id
+		LEFT JOIN sys_dept m on rm.dept_id = m.dept_id
+		where ur.user_id = #{userId} order by m.order_num asc
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		select count(*) from sys_dept
+	</select>
+
+	<update id="update" parameterType="com.wzlue.chain.sys.entity.SysDeptEntity">
+		update sys_dept
+		<set>
+			<if test="parentId != null">`parent_id` = #{parentId}, </if>
+			<if test="name != null">`name` = #{name}, </if>
+			<if test="delFlag != null">`del_flag` = #{delFlag},</if>
+			<if test="orderNum != null">`order_num` = #{orderNum},</if>
+			<if test="parentIds != null">`parent_ids` = #{parentIds},</if>
+			<if test="deptType != null">`dept_type` = #{deptType},</if>
+			<if test="updateBy != null">`update_by` = #{updateBy},</if>
+			<if test="updateDate != null">`update_date` = #{updateDate}</if>
+		</set>
+		where dept_id = #{deptId}
+	</update>
+
+	<delete id="deleteBatch">
+		delete from sys_dept where dept_id in
+		<foreach item="deptId" collection="array" open="(" separator="," close=")">
+			#{deptId}
+		</foreach>
+		<!--;
+		delete from sys_role_dept where dept_id in
+		<foreach item="menuId" collection="array" open="(" separator="," close=")">
+			#{menuId}
+		</foreach>-->
+	</delete>
+
+</mapper>

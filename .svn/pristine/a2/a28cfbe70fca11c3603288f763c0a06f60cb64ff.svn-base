@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.highcharts.dao.HighchartsDao">
+
+    <select id="receivable" resultType="java.util.Map">
+        SELECT
+        IFNULL(COUNT(bl.`id`),0) AS total
+        <choose>
+            <when test="dateType !=null and dateType=='year' ">
+                ,CONCAT(MONTH(bl.`created_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType=='quarter' ">
+                ,CONCAT(MONTH(bl.`created_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType =='month'">
+                ,CONCAT(MONTH(bl.`created_time`),'-',DAYOFMONTH(bl.`created_time`)) AS title
+            </when>
+        </choose>
+        FROM bill bl
+        WHERE 1=1
+        <if test="companyId !=null ">
+            AND bl.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(bl.`created_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(bl.`created_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(bl.`created_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="adduser" resultType="int">
+        SELECT
+        IFNULL(COUNT(su.`user_id`),0) AS total
+
+        FROM sys_user su
+        WHERE 1=1
+        <if test="companyId !=null ">
+            AND su.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(su.`create_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(su.`create_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(su.`create_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+</mapper>

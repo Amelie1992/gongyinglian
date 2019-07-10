@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOrderCommodityDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity" id="declareOrderCommodityMap">
+        <result property="id" column="id"/>
+        <result property="declareOrderId" column="declare_order_id"/>
+        <result property="commodityId" column="commodity_id"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityNumber" column="commodity_number"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityCount" column="commodity_count"/>
+        <result property="commodityTransactionCount" column="commodity_transaction_count"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <result property="commodityClassification" column="commodity_classification"/>
+        <result property="weight" column="weight"/>
+        <result property="unit" column="unit"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity">
+		SELECT * FROM declare_order_commodity WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity">
+		SELECT * FROM declare_order_commodity
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM declare_order_commodity
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity">
+		INSERT INTO declare_order_commodity
+		(
+																	`declare_order_id`,
+																	`commodity_id`, 
+																	`commodity_name`, 
+																	`commodity_number`, 
+																	`commodity_unit`, 
+																	`commodity_price`, 
+																	`commodity_count`, 
+																	`commodity_transaction_count`, 
+																	`commodity_factory_number`, 
+																	`commodity_country`, 
+																	`commodity_packing`, 
+																	`commodity_classification`, 
+																	`weight`, 
+																	`unit`
+									)
+		VALUES
+		(
+																	#{declareOrderId},
+																	#{commodityId}, 
+																	#{commodityName}, 
+																	#{commodityNumber}, 
+																	#{commodityUnit}, 
+																	#{commodityPrice}, 
+																	#{commodityCount}, 
+																	#{commodityTransactionCount}, 
+																	#{commodityFactoryNumber}, 
+																	#{commodityCountry}, 
+																	#{commodityPacking}, 
+																	#{commodityClassification}, 
+																	#{weight}, 
+																	#{unit}
+									)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity">
+		UPDATE declare_order_commodity
+		<set>
+																				<if test="declareOrderId != null">`declare_order_id` = #{declareOrderId}, </if>
+																	<if test="commodityId != null">`commodity_id` = #{commodityId}, </if>
+																	<if test="commodityName != null">`commodity_name` = #{commodityName}, </if>
+																	<if test="commodityNumber != null">`commodity_number` = #{commodityNumber}, </if>
+																	<if test="commodityUnit != null">`commodity_unit` = #{commodityUnit}, </if>
+																	<if test="commodityPrice != null">`commodity_price` = #{commodityPrice}, </if>
+																	<if test="commodityCount != null">`commodity_count` = #{commodityCount}, </if>
+																	<if test="commodityTransactionCount != null">`commodity_transaction_count` = #{commodityTransactionCount}, </if>
+																	<if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber}, </if>
+																	<if test="commodityCountry != null">`commodity_country` = #{commodityCountry}, </if>
+																	<if test="commodityPacking != null">`commodity_packing` = #{commodityPacking}, </if>
+																	<if test="commodityClassification != null">`commodity_classification` = #{commodityClassification}, </if>
+																	<if test="weight != null">`weight` = #{weight}, </if>
+																	<if test="unit != null">`unit` = #{unit}</if>
+									</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM declare_order_commodity WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM declare_order_commodity WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+    <delete id="deleteByOrder">
+		DELETE FROM declare_order_commodity WHERE declare_order_id = #{id}
+	</delete>
+
+    <select id="getListById" resultType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity">
+        SELECT *
+        FROM declare_order_commodity
+        WHERE declare_order_id=#{value}
+    </select>
+
+</mapper>

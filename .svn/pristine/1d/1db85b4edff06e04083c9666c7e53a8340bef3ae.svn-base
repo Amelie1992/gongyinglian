@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.goods.dao.ItemCategoryDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.goods.entity.ItemCategoryEntity" id="itemCategoryMap">
+        <result property="id" column="id"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="taxNumber" column="tax_number"/>
+        <result property="pricingMethod" column="pricing_method"/>
+        <result property="nowStatus" column="now_status"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="parentName" column="parent_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.goods.entity.ItemCategoryEntity">
+        SELECT * FROM item_category WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.goods.entity.ItemCategoryEntity">
+        SELECT * FROM item_category
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM item_category
+    </select>
+
+    <select id="pageList" resultMap="itemCategoryMap">
+        SELECT DISTINCT
+            (item.id) AS id,
+            item.`category_name`,
+            item.`tax_number`,
+            item.`pricing_method`,
+            item.`now_status`,
+            item.`parent_id`,
+            item.`dept_id`,
+            item.`create_by`,
+            item.`create_time`,
+            item.`dept_id`,
+            item.`company_id`,
+            item.`authorizes_id`,
+            SD.`value` AS parent_name
+        FROM
+          item_category item
+        LEFT JOIN sys_dict SD ON item.parent_id = SD.`code`
+        AND SD.`name` = '商品分类'
+        WHERE
+        1 = 1
+        AND item.`now_status` != 3
+        AND item.parent_id != 0
+        <if test="categoryName!=null and categoryName!='' ">
+            AND item.category_name LIKE concat ('%',#{categoryName},'%')
+        </if>
+        ORDER  By item.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM item_category item
+        WHERE 1=1
+        AND item.`now_status` != 3 AND item.parent_id != 0
+        <if test="categoryName!=null and categoryName!='' ">
+            AND item.category_name LIKE concat ('%',#{categoryName},'%')
+        </if>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.goods.entity.ItemCategoryEntity">
+        INSERT INTO item_category
+        (
+        `category_name`,
+        `tax_number`,
+        `pricing_method`,
+        `now_status`,
+        `parent_id`,
+        `dept_id`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `company_id`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{categoryName},
+        #{taxNumber},
+        #{pricingMethod},
+        #{nowStatus},
+        #{parentId},
+        #{deptId},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{companyId},
+        #{authorizesId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.goods.entity.ItemCategoryEntity">
+        UPDATE item_category
+        <set>
+            <if test="categoryName != null">`category_name` = #{categoryName}, </if>
+            <if test="taxNumber != null">`tax_number` = #{taxNumber}, </if>
+            <if test="pricingMethod != null">`pricing_method` = #{pricingMethod}, </if>
+            <if test="nowStatus != null">`now_status` = #{nowStatus}, </if>
+            <if test="parentId != null">`parent_id` = #{parentId}, </if>
+            <if test="deptId != null">`dept_id` = #{deptId}, </if>
+            <if test="updateBy != null">`update_by` = #{updateBy}, </if>
+            <if test="updateTime != null">`update_time` = #{updateTime}, </if>
+            <if test="companyId !=null">`company_id` = #{companyId}, </if>
+            <if test="authorizesId !=null">`authorizes_id` = #{authorizesId} </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM item_category WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM item_category WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateDel">
+        UPDATE item_category item SET item.now_status = 3
+        WHERE 1=1
+        AND item.id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="getList" resultMap="itemCategoryMap">
+      SELECT
+        DISTINCT(cate.id) AS id,
+        cate.category_name,
+        cate.tax_number,
+        cate.pricing_method,
+        cate.parent_id,
+        cate_p.category_name AS parent_name
+      FROM
+        item_category  cate
+        LEFT JOIN item_category cate_p ON cate_p.id = cate.parent_id
+      WHERE 1=1
+        AND cate.now_status = 1
+        <if test="parentId !=null and parentId !=''">
+            AND cate.parent_id = #{parentId}
+        </if>
+        <if test="deptId!=null and deptId>0">
+            <choose>
+                <when test="permissionScope==1">
+
+                </when>
+                <when test="permissionScope==2">
+
+                </when>
+                <when test="permissionScope==3">
+
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="getTopList" resultMap="itemCategoryMap">
+      SELECT
+          DISTINCT(cate.id) AS id,
+          cate.category_name,
+          cate.tax_number,
+          cate.pricing_method,
+          cate.parent_id
+      FROM
+        item_category_select  cate
+      WHERE 1=1
+      AND cate.now_status = 1
+      AND cate.parent_id = 0
+    </select>
+
+    <select id="getPlacesByCategoryId" resultType="com.wzlue.chain.goods.entity.ItemOriginPlaceEntity">
+        SELECT DISTINCT
+            t2.place,
+            t3.`name` AS placeName,
+            t4.parent_id
+        FROM
+          item_info t1
+        LEFT JOIN item_places t2 ON t1.id = t2.goods_id
+        LEFT JOIN sys_dict t3 ON t2.place = t3.`code`
+        AND t3.del_flag = '0'
+        LEFT JOIN item_category t4 ON t1.category_id = t4.id
+        WHERE
+          t1.item_status = '1'
+        AND
+        t4.parent_id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="getPlaceByBuyingGoods" resultType="com.wzlue.chain.goods.entity.ItemOriginPlaceEntity">
+        SELECT  DISTINCT
+            t1.commodity_country AS place,
+            t2.`name` AS placeName
+        FROM
+            goods_buying t1
+        LEFT JOIN sys_dict t2 ON t1.commodity_country = t2.`value`
+        AND t2.del_flag = '0'
+        WHERE
+        t1.buying_type = #{buyingType}
+        <if test="categoryId != null and categoryId !=''">
+            and  t1.category_id IN
+            <foreach item="categoryIdList" collection="categoryIdList" open="(" separator="," close=")">
+                #{categoryIdList}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="getAllPlaceByBuyingGoods" resultType="com.wzlue.chain.goods.entity.ItemOriginPlaceEntity">
+        SELECT DISTINCT
+            t1.commodity_country AS place,
+            t2.`name` AS placeName
+        FROM
+            goods_buying t1
+        LEFT JOIN sys_dict t2 ON t1.commodity_country = t2.`value`
+        AND t2.del_flag = '0'
+    </select>
+
+    <select id="getPlaces" resultType="com.wzlue.chain.goods.entity.ItemOriginPlaceEntity">
+        SELECT  DISTINCT
+            t2.place,
+            t3.`name` as placeName
+        FROM
+          item_info t1
+        LEFT JOIN item_places t2 ON t1.id = t2.goods_id
+        LEFT JOIN sys_dict t3 ON t2.place = t3.`code`
+        AND t3.del_flag = '0'
+        WHERE
+          t1.item_status = '1'
+    </select>
+    <select id="checkOnly" parameterType="com.wzlue.chain.goods.entity.ItemCategoryEntity" resultType="int">
+        SELECT count(1) FROM item_category WHERE (category_name = #{categoryName} or tax_number = #{taxNumber}) AND now_status IN (1,2)
+    </select>
+
+    <select id="getItemCategory" resultMap="itemCategoryMap">
+        SELECT
+            code as id,
+            value as category_name
+        FROM
+            sys_dict
+        WHERE
+            type = 'item_category'
+          AND del_flag = '0'
+    </select>
+</mapper>

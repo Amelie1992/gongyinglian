@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.bill.dao.PaymentRecordDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.bill.entity.PaymentRecordEntity" id="paymentRecordMap">
+        <result property="id" column="id"/>
+        <result property="billId" column="bill_id"/>
+        <result property="amount" column="amount"/>
+        <result property="unit" column="unit"/>
+        <result property="date" column="date"/>
+        <result property="payStatus" column="pay_status"/>
+        <result property="payMethod" column="pay_method"/>
+        <result property="payeeNumber" column="payee_number"/>
+        <result property="payerNumber" column="payer_number"/>
+        <result property="payeeName" column="payee_name"/>
+        <result property="payerName" column="payer_name"/>
+        <result property="payeeBank" column="payee_bank"/>
+        <result property="payerBank" column="payer_bank"/>
+        <result property="paymentTime" column="payment_time"/>
+        <result property="receivingTime" column="receiving_time"/>
+        <result property="confirmStatus" column="confirm_status"/>
+        <result property="amountCollected" column="amount_collected"/>
+        <result property="receivingRemarks" column="receiving_remarks"/>
+        <result property="paymentRemarks" column="payment_remarks"/>
+        <result property="receivingOperator" column="receiving_operator"/>
+        <result property="paymentOperator" column="payment_operator"/>
+        <result property="payerId" column="payer_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="storagePayIds" column="storage_pay_ids"/>
+        <result property="storageOrderCostId" column="storage_order_cost_id"/>
+        <result property="serialNumber" column="serial_number"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+		SELECT * FROM payment_record WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        SELECT
+        a.* ,
+        (select b.company_name from merchant_company b WHERE b.id=a.payer_id) payer
+        FROM payment_record a
+        <where>
+            <if test="billId != null and billId != ''">
+                `bill_id` = #{billId}
+            </if>
+            <if test="from != null and from != '' and to != null and to != ''">
+                `date `
+            </if>
+            <if test="to != null and to != ''">
+                `date `
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM payment_record
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.bill.entity.PaymentRecordEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO payment_record
+		(
+            `bill_id`,
+            `amount`,
+            `unit`,
+            `date`,
+            `pay_status`,
+            `pay_method`,
+            `payee_number`,
+            `payer_number`,
+            `payee_name`,
+            `payer_name`,
+            `payee_bank`,
+            `payer_bank`,
+            `payment_time`,
+            `receiving_time`,
+            `confirm_status`,
+            `amount_collected`,
+            `receiving_remarks`,
+            `payment_remarks`,
+            `receiving_operator`,
+            `payment_operator`,
+            `payer_id`,
+            `dept_id`,
+            `create_by`,
+            `created_time`,
+            `update_by`,
+            `update_time`,
+            `company_id`,
+            `authorizes_id`,
+            `storage_pay_ids`,
+            `storage_order_cost_id`,
+            `serial_number`
+									)
+		VALUES
+		(
+            #{billId},
+            #{amount},
+            #{unit},
+            #{date},
+            #{payStatus},
+            #{payMethod},
+            #{payeeNumber},
+            #{payerNumber},
+            #{payeeName},
+            #{payerName},
+            #{payeeBank},
+            #{payerBank},
+            #{paymentTime},
+            #{receivingTime},
+            #{confirmStatus},
+            #{amountCollected},
+            #{receivingRemarks},
+            #{paymentRemarks},
+            #{receivingOperator},
+            #{paymentOperator},
+            #{payerId},
+            #{deptId},
+            #{createBy},
+            #{createdTime},
+            #{updateBy},
+            #{updateTime},
+            #{companyId},
+            #{authorizesId},
+            #{storagePayIds},
+            #{storageOrderCostId},
+            #{serialNumber}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        UPDATE payment_record
+        <set>
+            <if test="billId != null">`bill_id` = #{billId},</if>
+            <if test="amount != null">`amount` = #{amount},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="date != null">`date` = #{date},</if>
+            <if test="payStatus != null">`pay_status` = #{payStatus},</if>
+            <if test="payMethod != null">`pay_method` = #{payMethod},</if>
+            <if test="payeeNumber != null">`payee_number` = #{payeeNumber},</if>
+            <if test="payerNumber != null">`payer_number` = #{payerNumber},</if>
+            <if test="payeeName != null">`payee_name` = #{payeeName},</if>
+            <if test="payerName != null">`payer_name` = #{payerName},</if>
+            <if test="payeeBank != null">`payee_bank` = #{payeeBank},</if>
+            <if test="payerBank != null">`payer_bank` = #{payerBank},</if>
+            <if test="paymentTime != null">`payment_time` = #{paymentTime},</if>
+            <if test="receivingTime != null">`receiving_time` = #{receivingTime},</if>
+            <if test="confirmStatus != null">`confirm_status` = #{confirmStatus},</if>
+            <if test="amountCollected != null">`amount_collected` = #{amountCollected},</if>
+            <if test="receivingRemarks != null">`receiving_remarks` = #{receivingRemarks},</if>
+            <if test="paymentRemarks != null">`payment_remarks` = #{paymentRemarks},</if>
+            <if test="receivingOperator != null">`receiving_operator` = #{receivingOperator},</if>
+            <if test="paymentOperator != null">`payment_operator` = #{paymentOperator},</if>
+            <if test="payerId != null">`payer_id` = #{payerId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="storagePayIds != null">`storage_pay_ids` = #{storagePayIds},</if>
+            <if test="storageOrderCostId != null">`storage_order_cost_id` = #{storageOrderCostId},</if>
+            <if test="serialNumber != null">`serial_number` = #{serialNumber}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM payment_record WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM payment_record WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--根据账单号查对应的款项记录-->
+    <select id="queryListByBillId" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        SELECT * FROM payment_record WHERE `bill_id` = #{billId}
+    </select>
+
+    <select id="queryListBillId" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        SELECT * FROM payment_record WHERE `bill_id` = #{billId}
+    </select>
+
+    <select id="queryStoragePayToPaymentRecord" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        SELECT
+            b.id `bill_id`,
+            SUM(a.pay_money) `amount`,
+            DATE_FORMAT(NOW(),'%Y-%m-%d') `date`,
+            0 `pay_status`,
+            NOW() `created_time`,
+            GROUP_CONCAT(a.id) `storage_pay_ids`
+        FROM
+            storage_pay a
+        JOIN bill b ON b.order_number=a.order_number AND b.bill_type=0 AND b.repeat_order IS NULL AND b.valid_state IS NULL
+        WHERE TO_DAYS(a.created_time)=TO_DAYS(NOW())
+        GROUP BY a.order_number
+    </select>
+    <!-- WHERE HOUR (a.created_time) = HOUR (NOW())-->
+
+    <select id="queryStoragePayToPaymentRecord2" resultType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        SELECT
+        b.id `bill_id`,
+        SUM(a.pay_money) `amount`,
+        DATE_FORMAT(NOW(),'%Y-%m-%d') `date`,
+        0 `pay_status`,
+        NOW() `created_time`,
+        GROUP_CONCAT(a.id) `storage_pay_ids`
+        FROM
+        storage_pay a
+        JOIN bill b ON b.order_number=a.order_number AND b.bill_type=0 AND b.repeat_order IS NULL AND b.valid_state IS
+        NULL
+        WHERE a.id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY a.order_number
+    </select>
+
+    <insert id="saveList" parameterType="com.wzlue.chain.bill.entity.PaymentRecordEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO payment_record
+        (
+        `bill_id`,
+        `amount`,
+        `date`,
+        `pay_status`,
+        `created_time`,
+        `storage_pay_ids`
+        )
+        VALUES
+        <foreach collection="list" separator="," item="item">
+            (
+            #{item.billId},
+            #{item.amount},
+            #{item.date},
+            #{item.payStatus},
+            #{item.createdTime},
+            #{item.storagePayIds}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

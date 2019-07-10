@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.logistics.dao.LogisticsDemandDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsDemandEntity" id="logisticsDemandMap">
+        <result property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="goods" column="goods"/>
+        <result property="height" column="height"/>
+        <result property="unit" column="unit"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="type" column="type"/>
+        <result property="provinceStart" column="province_start"/>
+        <result property="cityStart" column="city_start"/>
+        <result property="area" column="area"/>
+        <result property="provinceEnd" column="province_end"/>
+        <result property="cityEnd" column="city_end"/>
+        <result property="describe" column="describe"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="creatDate" column="creat_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.logistics.entity.LogisticsDemandEntity">
+		SELECT * FROM logistics_demand WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.logistics.entity.LogisticsDemandEntity">
+        SELECT * FROM logistics_demand
+        <where>
+            <if test="categoryId != null and categoryId.trim() !=''">
+                category_id = #{categoryId}
+            </if>
+            <if test="companyId != null and companyId !=''">
+                AND company_id = #{companyId}
+            </if>
+            <if test="type != null and type !=''">
+                AND type = #{type}
+            </if>
+            <if test="provinceStart != null and provinceStart !=''">
+                AND province_start = #{provinceStart}
+            </if>
+            <if test="provinceEnd != null and provinceEnd !=''">
+                AND province_end = #{provinceEnd}
+            </if>
+            <if test="cityStart != null and cityStart !=''">
+                AND city_start = #{cityStart}
+            </if>
+            <if test="cityEnd != null and cityEnd !=''">
+                AND city_end = #{cityEnd}
+            </if>
+            <if test="title != null and title.trim() !=''">
+                AND title like concat('%',#{title},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">牛
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY update_date desc,id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM logistics_demand
+        <where>
+            <if test="categoryId != null and categoryId.trim() !=''">
+                category_id = #{categoryId}
+            </if>
+            <if test="companyId != null and companyId !=''">
+                AND company_id = #{companyId}
+            </if>
+            <if test="type != null and type !=''">
+                AND type = #{type}
+            </if>
+            <if test="provinceStart != null and provinceStart !=''">
+                AND province_start = #{provinceStart}
+            </if>
+            <if test="provinceEnd != null and provinceEnd !=''">
+                AND province_end = #{provinceEnd}
+            </if>
+            <if test="cityStart != null and cityStart !=''">
+                AND city_start = #{cityStart}
+            </if>
+            <if test="cityEnd != null and cityEnd !=''">
+                AND city_end = #{cityEnd}
+            </if>
+            <if test="title != null and title.trim() !=''">
+                AND title like concat('%',#{title},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.logistics.entity.LogisticsDemandEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO logistics_demand
+		(
+			`title`,
+			`goods`,
+			`height`,
+			`unit`,
+			`category_id`,
+			`type`,
+			`province_start`,
+			`city_start`,
+			`area`,
+			`province_end`,
+			`city_end`,
+			`describe`,
+			`company_id`,
+			`dept_id`,
+			`create_by`,
+			`authorizes_id`,
+			`creat_date`,
+			`update_by`,
+			`update_date`,
+			`del_flag`
+									)
+		VALUES
+		(
+			#{title},
+			#{goods},
+			#{height},
+			#{unit},
+			#{categoryId},
+			#{type},
+			#{provinceStart},
+			#{cityStart},
+			#{area},
+			#{provinceEnd},
+			#{cityEnd},
+			#{describe},
+			#{companyId},
+			#{deptId},
+			#{authorizesId},
+			#{createBy},
+			#{creatDate},
+			#{updateBy},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.logistics.entity.LogisticsDemandEntity">
+        UPDATE logistics_demand
+        <set>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="goods != null">`goods` = #{goods},</if>
+            <if test="height != null">`height` = #{height},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="categoryId != null">`category_id` = #{categoryId},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="provinceStart != null">`province_start` = #{provinceStart},</if>
+            <if test="cityStart != null">`city_start` = #{cityStart},</if>
+            <if test="area != null">`area` = #{area},</if>
+            <if test="provinceEnd != null">`province_end` = #{provinceEnd},</if>
+            <if test="cityEnd != null">`city_end` = #{cityEnd},</if>
+            <if test="describe != null">`describe` = #{describe},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="creatDate != null">`creat_date` = #{creatDate},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateDate != null">`update_date` = #{updateDate},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM logistics_demand WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM logistics_demand WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

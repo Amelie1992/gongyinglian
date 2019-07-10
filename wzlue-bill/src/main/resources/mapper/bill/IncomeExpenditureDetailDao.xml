@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.bill.dao.IncomeExpenditureDetailDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.bill.entity.IncomeExpenditureDetailEntity" id="incomeExpenditureDetailMap">
+        <result property="id" column="id"/>
+        <result property="accountNo" column="account_no"/>
+        <result property="name" column="name"/>
+        <result property="linkOrder" column="link_order"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="paymentType" column="payment_type"/>
+        <result property="serialNumber" column="serial_number"/>
+        <result property="income" column="income"/>
+        <result property="expenditur" column="expenditur"/>
+        <result property="payerNumber" column="payer_number"/>
+        <result property="payeeNumber" column="payee_number"/>
+        <result property="payeeId" column="payee_id"/>
+        <result property="payeeName" column="payeeName"/>
+        <result property="operator" column="operator"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="unit" column="unit"/>
+        <result property="companyId" column="company_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <collection property="images"
+                    javaType="java.util.ArrayList"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    column="{code=id,type=imgeType}"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryList"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="incomeExpenditureDetailMap">
+		SELECT
+		a.* ,
+		(a.income) income2,
+        (a.expenditur) expenditur2,
+		'offline_pay' imgeType,
+		(SELECT b.company_name FROM merchant_company b WHERE b.id = a.payee_id) payeeName
+		FROM income_expenditure_detail a WHERE a.id = #{value}
+	</select>
+
+    <select id="queryBySerialNumber" resultType="com.wzlue.chain.bill.entity.IncomeExpenditureDetailEntity">
+        SELECT * FROM income_expenditure_detail
+        <where>
+            serial_number = #{serialNumber}
+            <if test="pay != null">
+                AND expenditur IS NOT NULL
+            </if>
+            <if test="receive != null">
+                AND income IS NOT NULL
+            </if>
+        </where>
+
+    </select>
+
+    <select id="queryList" resultMap="incomeExpenditureDetailMap">
+        SELECT
+        * ,
+        (income) income2,
+        (expenditur) expenditur2,
+        'offline_pay' imgeType
+        FROM income_expenditure_detail
+        <where>
+            <if test="companyId!=null">
+                company_id = #{companyId}
+            </if>
+            <if test="orderNumber!=null and orderNumber.trim()!=''">
+                and order_number like concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM income_expenditure_detail
+        <where>
+            <if test="companyId!=null">
+                company_id = #{companyId}
+            </if>
+            <if test="orderNumber!=null and orderNumber.trim()!=''">
+                and order_number like concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.bill.entity.IncomeExpenditureDetailEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO income_expenditure_detail
+		( `account_no`,
+		  `name`,
+		  `link_order`,
+		  `order_number`,
+		  `payment_type`,
+		  `serial_number`,
+		  `income`,
+		  `expenditur`,
+		  `payer_number`,
+		  `payee_number`,
+		  `payee_id`,
+		  `payee_name`,
+		  `operator`,
+		  `pay_time`,
+		  `remarks`,
+		  `unit`,
+		  `company_id`,
+		  `create_by`,
+		  `created_time` )
+		VALUES
+		( #{accountNo},
+		  #{name},
+		  #{linkOrder},
+          #{orderNumber},
+          #{paymentType},
+          #{serialNumber},
+          #{income},
+          #{expenditur},
+          #{payerNumber},
+          #{payeeNumber},
+          #{payeeId},
+          #{payeeName},
+          #{operator},
+          #{payTime},
+          #{remarks},
+          #{unit},
+          #{companyId},
+          #{createBy},
+          #{createdTime} )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.bill.entity.IncomeExpenditureDetailEntity">
+        UPDATE income_expenditure_detail
+        <set>
+            <if test="accountNo != null">`account_no` = #{accountNo},</if>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="linkOrder != null">`link_order` = #{linkOrder},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="paymentType != null">`payment_type` = #{paymentType},</if>
+            <if test="serialNumber != null">`serial_number` = #{serialNumber},</if>
+            <if test="income != null">`income` = #{income},</if>
+            <if test="expenditur != null">`expenditur` = #{expenditur},</if>
+            <if test="payerNumber != null">`payer_number` = #{payerNumber},</if>
+            <if test="payeeNumber != null">`payer_number` = #{payeeNumber},</if>
+            <if test="payeeId != null">`payee_id` = #{payeeId},</if>
+            <if test="payeeName != null">`payee_name` = #{payeeName},</if>
+            <if test="operator != null">`operator` = #{operator},</if>
+            <if test="payTime != null">`pay_time` = #{payTime},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM income_expenditure_detail WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM income_expenditure_detail WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

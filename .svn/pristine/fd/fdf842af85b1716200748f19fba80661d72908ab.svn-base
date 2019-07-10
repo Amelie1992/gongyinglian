@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.company.dao.MerchantCompanyDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.company.entity.MerchantCompanyEntity" id="merchantUsersMap">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyType" column="company_type"/>
+        <result property="contact" column="contact"/>
+        <result property="mobile" column="mobile"/>
+        <result property="unifiedSocialCreditCode" column="unified_social_credit_code"/>
+        <result property="bankAccount" column="bank_account"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="openingBank" column="opening_bank"/>
+        <result property="companyProfile" column="company_profile"/>
+        <result property="recommenDationCode" column="recommen_dation_code"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="quota" column="quota"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="email" column="email"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="fixedTelephone" column="fixed_telephone"/>
+        <result property="companylocation" column="companylocation"/>
+        <result property="area" column="area"/>
+        <result property="grade" column="grade"/>
+        <result property="msg" column="msg"/>
+        <result property="modifyMsg" column="modify_msg"/>
+        <association property="gradeEntity" column="grade" javaType="com.wzlue.chain.grade.entity.GradeEntity"
+                     select="com.wzlue.chain.grade.dao.GradeDao.queryObject"/>
+        <association property="companyTypeEntity" column="company_type"
+                     javaType="com.wzlue.chain.company.entity.CompanyTypeEntity" select="queryCompanyType"/>
+        <association property="userEntity" column="user_id" javaType="com.wzlue.chain.sys.entity.SysUserEntity"
+                     select="com.wzlue.chain.sys.dao.SysUserDao.queryObject"/>
+        <collection property="serviceType" column="id" ofType="Long" javaType="java.util.ArrayList"
+                    select="queryServiceType"/>
+        <collection property="typeEntity" column="id" ofType="com.wzlue.chain.company.entity.ServiceTypeEntity"
+                    javaType="java.util.ArrayList" select="queryServiceTypeList"/>
+        <collection property="imageEntityList" column="user_id" ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    javaType="java.util.ArrayList" select="com.wzlue.chain.sys.dao.ImageDao.queryByCreateBy"/>
+
+    </resultMap>
+    <resultMap type="com.wzlue.chain.company.entity.MerchantCompanyEntity" id="merchantUsersMapQt">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyType" column="company_type"/>
+        <result property="contact" column="contact"/>
+        <result property="mobile" column="mobile"/>
+        <result property="unifiedSocialCreditCode" column="unified_social_credit_code"/>
+        <result property="bankAccount" column="bank_account"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="openingBank" column="opening_bank"/>
+        <result property="companyProfile" column="company_profile"/>
+        <result property="recommenDationCode" column="recommen_dation_code"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="quota" column="quota"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="email" column="email"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="fixedTelephone" column="fixed_telephone"/>
+        <result property="companylocation" column="companylocation"/>
+        <result property="area" column="area"/>
+        <result property="grade" column="grade"/>
+        <result property="msg" column="msg"/>
+        <result property="modifyMsg" column="modify_msg"/>
+        <collection property="imageEntityList"
+                    column="user_id"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    javaType="java.util.ArrayList"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryByCreateBy"/>
+
+    </resultMap>
+    <resultMap type="com.wzlue.chain.company.entity.MerchantCompanyEntity" id="companyMap">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyType" column="company_type"/>
+        <result property="contact" column="contact"/>
+        <result property="mobile" column="mobile"/>
+        <result property="unifiedSocialCreditCode" column="unified_social_credit_code"/>
+        <result property="bankAccount" column="bank_account"/>
+        <result property="legalPersonName" column="legal_person_name"/>
+        <result property="openingBank" column="opening_bank"/>
+        <result property="companyProfile" column="company_profile"/>
+        <result property="recommenDationCode" column="recommen_dation_code"/>
+        <result property="creditScore" column="credit_score"/>
+        <result property="quota" column="quota"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="email" column="email"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="fixedTelephone" column="fixed_telephone"/>
+        <result property="companylocation" column="companylocation"/>
+        <result property="area" column="area"/>
+        <result property="grade" column="grade"/>
+        <result property="msg" column="msg"/>
+        <result property="modifyMsg" column="modify_msg"/>
+        <collection property="imageEntityList"
+                    column="user_id"
+                    ofType="com.wzlue.chain.sys.entity.ImageEntity"
+                    javaType="java.util.ArrayList"
+                    select="com.wzlue.chain.sys.dao.ImageDao.queryCompanyLogo"/>
+
+    </resultMap>
+    <resultMap type="com.wzlue.chain.company.entity.ServiceTypeEntity" id="serviceTypeMap">
+        <result property="id" column="service_id"/>
+        <result property="serviceName" column="service_name"/>
+    </resultMap>
+    <select id="queryServiceTypeList" resultMap="serviceTypeMap">
+        SELECT cs.* FROM merchant_company c JOIN merchant_company_service cs ON c.id = cs.company_id
+        WHERE c.id = #{id}
+    </select>
+    <select id="queryCompanyType" resultType="com.wzlue.chain.company.entity.CompanyTypeEntity">
+        SELECT * FROM company_type WHERE del_flag != -1 AND id = #{id}
+    </select>
+    <select id="queryServiceType" resultType="long">
+        SELECT service_id FROM merchant_company_service WHERE company_id = #{id} ORDER BY service_id ASC
+    </select>
+
+    <select id="queryByUserId" resultMap="merchantUsersMap">
+        SELECT * FROM merchant_company m WHERE   m.id in( (SELECT  company_id FROM sys_user WHERE user_id = #{value})  )
+    </select>
+
+    <select id="queryObject" resultMap="merchantUsersMap">
+        SELECT * FROM merchant_company WHERE id = #{id}
+    </select>
+
+    <select id="queryObject2" resultMap="companyMap">
+        SELECT * FROM merchant_company WHERE id = #{id}
+    </select>
+
+    <select id="queryObjectByUserId" resultMap="merchantUsersMap">
+        SELECT * FROM merchant_company WHERE user_id = #{userId}
+    </select>
+
+    <select id="queryObjectOfEntity" resultMap="merchantUsersMapQt">
+        SELECT * FROM merchant_company WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultMap="merchantUsersMap">
+        SELECT * FROM merchant_company
+        <where>
+            <if test="companyName!=null and companyName!=''">`company_name` like CONCAT ('%',#{companyName},'%')</if>
+            <if test="auditStatus!=null and auditStatus!=''">`audit_status` = #{auditStatus}</if>
+            <if test="id!=null and id!=''">`id` = #{id}</if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM merchant_company
+        <where>
+            <if test="companyName!=null and companyName!=''">`company_name` like CONCAT ('%',#{companyName},'%')</if>
+            <if test="auditStatus!=null and auditStatus!=''">`audit_status` = #{auditStatus}</if>
+        </where>
+    </select>
+    <select id="getCompanys" resultMap="merchantUsersMap">
+        SELECT DISTINCT a.id,a.*
+        FROM merchant_company a
+        INNER JOIN logistics_offer o ON a.id=o.company_id AND o.del_flag=0 AND o.status = 0
+        WHERE a.id != #{companyId}
+    </select>
+    <insert id="save" parameterType="com.wzlue.chain.company.entity.MerchantCompanyEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO merchant_company ( `user_id`, `company_Name`, `company_type`, `contact`, `recommendationcode` )
+		 VALUES ( #{userID}, #{companyName}, #{companyType}, #{contact}, #{recommenDationCode} )
+	</insert>
+    <insert id="register" useGeneratedKeys="true" keyProperty="id">
+      INSERT INTO merchant_company(user_id,company_name,company_type,contact,recommen_dation_code)
+      VALUES(#{userId},#{companyName},#{companyType},#{contact},#{recommenDationCode})
+    </insert>
+    <insert id="saveCompanyServiceType">
+        INSERT INTO merchant_company_service(company_id,service_id,service_name)
+        VALUES
+        <foreach collection="service" item="item" separator=",">
+            (#{id},#{item.id},#{item.serviceName})
+        </foreach>
+    </insert>
+    <insert id="saveOrUpdate" parameterType="com.wzlue.chain.company.entity.MerchantCompanyEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO merchant_company (id,
+        user_id, company_name, company_type, contact, mobile, recommen_dation_code, unified_social_credit_code, bank_account,
+		legal_person_name, opening_bank, company_profile, grade, credit_score,
+		quota, email, card_no,fixed_telephone, companylocation, area, audit_status)
+	    VALUES(#{id},
+	      #{userId},#{companyName},#{companyType},#{contact},#{mobile},#{recommenDationCode},#{unifiedSocialCreditCode},#{bankAccount},
+	      #{legalPersonName},#{openingBank},#{companyProfile},#{grade},#{creditScore},
+	      #{quota}, #{email}, #{cardNo},#{fixedTelephone},#{companylocation},#{area}, #{auditStatus}
+	    )
+	    ON DUPLICATE KEY UPDATE
+	      company_name=VALUES(company_name),
+	      company_type=VALUES(company_type),
+	      contact=VALUES(contact),
+	      mobile=VALUES(mobile),
+	      recommen_dation_code=VALUES(recommen_dation_code),
+	      unified_social_credit_code=VALUES(unified_social_credit_code),
+	      bank_account=VALUES(bank_account),
+	      legal_person_name=VALUES(legal_person_name),
+	      opening_bank=VALUES(opening_bank),
+	      company_profile=VALUES(company_profile),
+	      credit_score=VALUES(credit_score),
+	      quota=VALUES(quota),
+	      email=VALUES(email),
+	      card_no=VALUES(card_no),
+	      fixed_telephone=VALUES(fixed_telephone),
+	      companylocation=VALUES(companylocation),
+	      area=VALUES(area),
+	      audit_status=VALUES(audit_status),
+	      msg =  VALUES(msg)
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        UPDATE merchant_company
+        <set>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="companyType != null">`company_type` = #{companyType},</if>
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="unifiedSocialCreditCode!= null">`unified_social_credit_code`=#{unifiedSocialCreditCode},</if>
+            <if test="bankAccount!= null">`bank_account`=#{bankAccount},</if>
+            <if test="legalPersonName!= null">`legal_person_name`=#{legalPersonName},</if>
+            <if test="openingBank!= null">`opening_bank`=#{openingBank},</if>
+            <if test="companyProfile!= null">`company_profile`=#{companyProfile},</if>
+            <if test="mobile!= null">`mobile`=#{mobile},</if>
+            <if test="email!= null">`email`=#{email},</if>
+            <if test="fixedTelephone!= null">`fixed_telephone`=#{fixedTelephone},</if>
+            <if test="companylocation!= null">`companylocation`=#{companylocation},</if>
+            <if test="area!= null">`area`=#{area},</if>
+            <if test="auditStatus!= null">`audit_status`=#{auditStatus},</if>
+            <if test="modifyMsg!= null">`modify_msg`=#{modifyMsg}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateCreditType">
+        UPDATE merchant_company
+        <set>
+            <if test="creditType.type == 0">
+                `audit_status` = '0', `credit_score` = #{creditType.score}
+            </if>
+            <if test="creditType.type == 1">
+                `audit_status` = '1', `credit_score` = #{creditType.score}
+            </if>
+            <if test="creditType.type == 2">
+                `credit_score` = `credit_score` + #{creditType.score}
+            </if>
+            <if test="creditType.type == 3">
+                `credit_score` = `credit_score` + #{creditType.score}
+            </if>
+            <if test="creditType.type == 4">
+                `credit_score` = `credit_score` + #{creditType.score}
+            </if>
+            <if test="creditType.type == 5">
+                `credit_score` = `credit_score` + #{creditType.score}
+            </if>
+        </set>
+        WHERE id = #{company.id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM merchant_company WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM merchant_company WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteServiceType">
+        DELETE  FROM merchant_company_service WHERE company_id =#{id}
+    </delete>
+
+    <select id="pageList" resultMap="merchantUsersMap">
+        SELECT
+        DISTINCT (cop.id),
+        cop.company_name ,
+        cop.company_type,
+        cop.contact,
+        cop.recommen_dation_code as recommendationcode,
+        s.service_id,
+        s.service_name
+        FROM
+        merchant_company cop
+        LEFT JOIN merchant_company_service s ON s.company_id = cop.`id`
+        WHERE 1 = 1
+        AND id != #{companyId}
+        <if test="serviceName!=null and serviceName!='' ">
+            AND s.service_id IN ( SELECT a.* FROM (SELECT id FROM `service_type` WHERE service_name = #{serviceName} )
+            as a)
+        </if>
+        <if test="companyName!=null and companyName!='' ">
+            AND cop.company_name like concat ('%', #{companyName} ,'%')
+        </if>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryAgentofferCompany" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT mc.id, mc.user_id, mc.company_name, mc.company_type, mc.contact, mc.recommen_dation_code,
+        mc.unified_social_credit_code, mc.bank_account, mc.legal_person_name, mc.opening_bank,
+        mc.company_profile, mc.grade, mc.credit_score, mc.quota, mc.audit_status
+        FROM merchant_company mc join merchant_company_service mcs on mc.id = mcs.company_id
+        <where>
+            <if test="companyId !=null and companyId.trim() !=''">
+                AND mc.id != #{companyId}
+            </if>
+            <if test="companyType != null and companyType.trim() != ''">
+                AND mcs.service_id = #{companyType}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY mc.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+
+    </select>
+
+    <select id="queryAgentofferCompanyCount" resultType="java.lang.Integer">
+        SELECT COUNT(1) FROM merchant_company
+        <where>
+            <if test="id !=null and id.trim() !=''">
+                AND id != #{companyId}
+            </if>
+            <if test="companyType != null and companyType.trim() != ''">
+                AND company_type = #{companyType}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(cop.id)
+        FROM
+        merchant_company cop
+        LEFT JOIN merchant_company_service s ON s.company_id = cop.`id`
+        WHERE 1 = 1
+        <if test="serviceName!=null and serviceName!='' ">
+            AND s.service_id IN ( SELECT a.* FROM (SELECT id FROM `service_type` WHERE service_name = #{serviceName}) as
+            a)
+        </if>
+        <if test="companyName!=null and companyName!='' ">
+            AND cop.company_name like concat ('%', #{companyName} ,'%')
+        </if>
+    </select>
+    <select id="queryCustomerServicebyCompanyId" resultType="com.wzlue.chain.sys.entity.SysUserEntity">
+        SELECT username,nikename FROM sys_user WHERE
+        <choose>
+            <when test=" null != companyid and '' != companyid.trim()">
+                company_id = #{companyid} AND type_id = 1
+            </when>
+            <otherwise>
+                company_id IS NULL AND type_id = 0
+            </otherwise>
+        </choose>
+        AND customer_service = 1
+    </select>
+
+    <select id="getInfoByUser" resultMap="merchantUsersMap">
+        SELECT
+           DISTINCT(cop.id) AS id,
+           cop.company_name,
+           cop.`contact`,
+           cop.`company_profile`
+        FROM `merchant_company` cop
+        JOIN sys_user ur ON ur.`company_id` = cop.`id`
+        WHERE 1 =1
+        AND ur.`user_id` = #{userId}
+    </select>
+
+    <select id="queryCompanysForOutByCompanyId" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT DISTINCT a.* FROM merchant_company a
+        JOIN storage_order b on a.id=b.receipt_merchant_id
+        JOIN (
+        SELECT order_id FROM storage_order_commodity
+        GROUP BY order_id HAVING SUM(IFNULL(weight,0)-IFNULL(out_weight,0))>0
+        ) temp on b.id=temp.order_id and b.pass_status=2
+        WHERE b.merchant_id=#{companyId}
+    </select>
+    <!-- SUM(merchant_weight-IFNULL(out_weight_num,0))>0-->
+
+    <sql id="company">
+
+    </sql>
+    <select id="queryByCompanyId" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        select audit_status   from merchant_company   where id = #{companyid}
+    </select>
+    <select id="getCompanyBynameCount" resultType="int">
+        SELECT COUNT(1) FROM merchant_company WHERE  company_name = #{companyName}
+    </select>
+    <select id="queryCompanyServiceByCompanyId"
+            resultType="com.wzlue.chain.company.entity.MerchantCompanyServiceEntity">
+        SELECT company_id, service_id, service_name FROM merchant_company_service WHERE company_id = #{companyId}
+    </select>
+
+    <update id="updateCompanyStatus">
+        update  merchant_company  set audit_status = #{auditStatus}, msg = #{msg} where  id = #{companyid}
+    </update>
+
+    <select id="getCompanyByService" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT
+            T1.*
+        FROM
+            merchant_company T1
+        LEFT JOIN merchant_company_service T2 ON T1.id = T2.company_id
+        WHERE
+            T2.service_name LIKE concat ('%', #{serviceName} ,'%')
+    </select>
+    <select id="getRecommendCompanyList" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT
+        DISTINCT T1.id,
+        T1.company_name as companyName,
+        T1.credit_score as creditScore,
+        t2.pic_url AS shopLogo
+        FROM
+        recommend_goods T
+        LEFT JOIN merchant_company T1 ON T.sell_id = T1.id
+        LEFT JOIN sys_image t2 ON T1.user_id = t2.create_by
+        AND t2.`code` = '-1'
+        WHERE
+        1 = 1
+        <if test="position != null and position !=''">
+            and T.position = #{position}
+        </if>
+        <if test="type != null and type !=''">
+            and T.type = #{type}
+        </if>
+        ORDER BY T.id DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="getCompanyPass" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT * FROM merchant_company WHERE user_id = #{userId}
+    </select>
+
+    <select id="getCompanyByCompnayid" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT * FROM merchant_company WHERE id = #{id}
+    </select>
+
+    <select id="queryAll" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT * FROM merchant_company
+    </select>
+</mapper>

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.marketing.dao.MarketTenderAnnexDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity" id="marketTenderAnnexMap">
+        <result property="id" column="id"/>
+        <result property="marketTenderId" column="market_tender_id"/>
+        <result property="fileName" column="file_name"/>
+        <result property="url" column="url"/>
+        <result property="fileType" column="file_type"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity">
+		SELECT * FROM market_tender_annex WHERE id = #{value}
+	</select>
+
+    <select id="getAnnexByTenderId" resultType="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity">
+		SELECT * FROM market_tender_annex WHERE market_tender_id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity">
+        SELECT * FROM market_tender_annex
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM market_tender_annex
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO market_tender_annex
+		(
+		`market_tender_id`,
+		`file_name`,
+		`url`,
+		`file_type`,
+		`create_time`,
+		`create_by`
+		)
+		VALUES
+		(
+		#{marketTenderId},
+		#{fileName},
+		#{url},
+		#{fileType},
+		#{createTime},
+		#{createBy}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity">
+        UPDATE market_tender_annex
+        <set>
+            <if test="marketTenderId != null">`market_tender_id` = #{marketTenderId},</if>
+            <if test="fileName != null">`file_name` = #{fileName},</if>
+            <if test="url != null">`url` = #{url},</if>
+            <if test="fileType != null">`file_type` = #{fileType},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="createBy != null">`create_by` = #{createBy}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM market_tender_annex WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM market_tender_annex WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

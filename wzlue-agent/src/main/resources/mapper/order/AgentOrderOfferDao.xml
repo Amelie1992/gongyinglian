@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOrderOfferDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentOrderOfferEntity" id="agentOrderOfferMap">
+        <result property="id" column="id"/>
+		<result property="orderNumber" column="order_number"/>
+        <result property="title" column="title"/>
+        <result property="offerCode" column="offer_code"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="valuationUnit" column="valuation_unit"/>
+        <result property="price" column="price"/>
+        <result property="currency" column="currency"/>
+        <result property="introduction" column="introduction"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOrderOfferEntity">
+		SELECT * FROM agent_order_offer WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOrderOfferEntity">
+		SELECT * FROM agent_order_offer
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_order_offer
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOrderOfferEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_order_offer
+			(
+			`order_number`,
+			`title`,
+			`offer_code`,
+			`contact_person`,
+			`contact_phone`,
+			`valuation_unit`,
+			`price`,
+			`currency`,
+			`introduction`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`dept_id`,
+			`company_id`,
+			`authorizes_id`
+			)
+		VALUES
+			(
+			#{orderNumber},
+			#{title},
+			#{offerCode},
+			#{contactPerson},
+			#{contactPhone},
+			#{valuationUnit},
+			#{price},
+			#{currency},
+			#{introduction},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{deptId},
+			#{companyId},
+			#{authorizesId}
+			)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOrderOfferEntity">
+		UPDATE agent_order_offer
+		<set>
+			<if test="orderNumber != null">`order_number` = #{orderNumber}, </if>
+			<if test="title != null">`title` = #{title}, </if>
+			<if test="offerCode != null">`offer_code` = #{offerCode}, </if>
+			<if test="contactPerson != null">`contact_person` = #{contactPerson}, </if>
+			<if test="contactPhone != null">`contact_phone` = #{contactPhone}, </if>
+			<if test="valuationUnit != null">`valuation_unit` = #{valuationUnit}, </if>
+			<if test="price != null">`price` = #{price}, </if>
+			<if test="currency != null">`currency` = #{currency}, </if>
+			<if test="introduction != null">`introduction` = #{introduction}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}, </if>
+			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
+			<if test="updateTime != null">`update_time` = #{updateTime}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM agent_order_offer WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM agent_order_offer WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByOrderNumber">
+		DELETE FROM agent_order_offer WHERE order_number = #{orderNumber}
+	</delete>
+</mapper>

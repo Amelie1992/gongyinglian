@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOrderDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agent.entity.AgentOrderEntity" id="agentOrderMap">
+        <result property="id" column="id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactEmail" column="contact_email"/>
+        <result property="contactAddress" column="contact_address"/>
+        <result property="contactCompanyId" column="contact_company_id"/>
+        <result property="contactCompanyName" column="contact_company_name"/>
+        <result property="contactDeptId" column="contact_dept_id"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="currency" column="currency"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="outlayQuantity" column="outlay_quantity"/>
+        <result property="originFlag" column="origin_flag"/>
+        <result property="originNumber" column="origin_number"/>
+        <result property="merchantPhone" column="merchant_phone"/>
+        <result property="merchantPerson" column="merchant_person"/>
+        <result property="merchantEmail" column="merchant_email"/>
+        <result property="merchantAddress" column="merchant_address"/>
+        <result property="merchantCompanyId" column="merchant_company_id"/>
+        <result property="merchantCompanyName" column="merchant_company_name"/>
+        <result property="merchantDeptId" column="merchant_dept_id"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="payStatus" column="pay_status"/>
+        <result property="submitTime" column="submit_time"/>
+        <result property="receiptTime" column="receipt_time"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="goodsMoreRemark" column="goods_more_remark"/>
+        <result property="offerId" column="offer_id"/>
+        <result property="originPayType" column="origin_pay_type"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="cusComplaintStatus" column="cus_complaint_status"/>
+        <result property="merComplaintStatus" column="mer_complaint_status"/>
+        <result property="afterStatus" column="after_status"/>
+        <association property="offer" resultMap="offerMap"/>
+        <collection property="goods" resultMap="goodsMap"/>
+        <collection property="business" resultMap="businessMap"/>
+        <collection property="goodsOrderEntity" column="{orderNo=order_number}"
+                    select="com.wzlue.chain.order.dao.GoodsOrderDao.getGoodsOrderByAgentOrder"/>
+
+    </resultMap>
+
+    <resultMap id="goodsMap" type="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity">
+        <id column="gd_id" property="id"/>
+        <result column="commodity_id" property="commodityId"/>
+        <result column="commodity_name" property="commodityName"/>
+        <result column="commodity_number" property="commodityNumber"/>
+        <result column="factory_no" property="factoryNo"/>
+        <result column="commodity_country" property="commodityCountry"/>
+        <result column="commodity_count" property="commodityCount"/>
+        <result column="commodity_price" property="commodityPrice"/>
+        <result column="weight" property="weight"/>
+        <result column="goods_unit" property="goodsUnit"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="goods_price" property="goodsPrice"/>
+        <result column="goods_count" property="goodsCount"/>
+        <result column="goods_total_price" property="goodsTotalPrice"/>
+    </resultMap>
+
+    <resultMap id="businessMap" type="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity">
+        <id column="bus_id" property="id"/>
+        <result column="bus_type" property="busType"/>
+        <result column="bus_name" property="busName"/>
+    </resultMap>
+
+    <resultMap id="offerMap" type="com.wzlue.chain.agent.entity.AgentOfferEntity">
+        <id column="offer_id" property="id"/>
+        <result column="offer_title" property="title"/>
+        <result column="offer_code" property="offerCode"/>
+        <result column="offer_contact_person" property="contactPerson"/>
+        <result column="offer_contact_phone" property="contactPhone"/>
+        <result column="offer_company_id" property="companyId"/>
+        <result column="offer_unit" property="valuationUnit"/>
+        <result column="offer_price" property="price"/>
+        <result column="offer_currency" property="currency"/>
+        <collection property="business" resultMap="offerBusMap"/>
+    </resultMap>
+
+    <resultMap id="offerBusMap" type="com.wzlue.chain.agent.entity.AgentOfferBusinessEntity">
+        <id column="of_bus_id" property="id"/>
+        <result column="of_bus_service_id" property="serviceId"/>
+        <result column="of_bus_service_name" property="serviceName"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+		SELECT * FROM agent_order WHERE id = #{value}
+	</select>
+    <select id="queryListByNumberCode" resultType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+		SELECT * FROM agent_order WHERE origin_number = #{numberCode} and origin_flag=1
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+        SELECT * FROM agent_order
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_order
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOrderEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_order
+		(
+			`order_number`,
+			`contract_number`,
+			`contact_phone`,
+			`contact_person`,
+			`contact_email`,
+			`contact_address`,
+			`contact_company_id`,
+			`contact_company_name`,
+			`contact_dept_id`,
+			`total_price`,
+			`currency`,
+			`unit_price`,
+			`outlay_quantity`,
+			`origin_flag`,
+			`origin_number`,
+			`merchant_phone`,
+			`merchant_person`,
+			`merchant_email`,
+			`merchant_address`,
+			`merchant_company_id`,
+			`merchant_company_name`,
+			`merchant_dept_id`,
+			`order_status`,
+			`pay_status`,
+			`submit_time`,
+			`receipt_time`,
+			`pay_time`,
+			`end_time`,
+			`del_flag`,
+			`create_by`,
+			`create_time`,
+			`update_by`,
+			`update_time`,
+			`remark`,
+			`goods_more_remark`,
+			`offer_id`,
+			`origin_pay_type`,
+			dept_id,
+			company_id,
+			authorizes_id,
+			cus_complaint_status,
+			mer_complaint_status,
+			`after_status`
+		)
+		VALUES
+		(
+			#{orderNumber},
+			#{contractNumber},
+			#{contactPhone},
+			#{contactPerson},
+			#{contactEmail},
+			#{contactAddress},
+			#{contactCompanyId},
+			#{contactCompanyName},
+			#{contactDeptId},
+			#{totalPrice},
+			#{currency},
+			#{unitPrice},
+			#{outlayQuantity},
+			#{originFlag},
+			#{originNumber},
+			#{merchantPhone},
+			#{merchantPerson},
+			#{merchantEmail},
+			#{merchantAddress},
+			#{merchantCompanyId},
+			#{merchantCompanyName},
+			#{merchantDeptId},
+			#{orderStatus},
+			#{payStatus},
+			#{submitTime},
+			#{receiptTime},
+			#{payTime},
+			#{endTime},
+			#{delFlag},
+			#{createBy},
+			#{createTime},
+			#{updateBy},
+			#{updateTime},
+			#{remark},
+			#{goodsMoreRemark},
+			#{offerId},
+			#{originPayType},
+			#{deptId},
+			#{companyId},
+			#{authorizesId},
+			#{cusComplaintStatus},
+			#{merComplaintStatus},
+			#{afterStatus}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+        UPDATE agent_order
+        <set>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="contactPhone != null">`contact_phone` = #{contactPhone},</if>
+            <if test="contactPerson != null">`contact_person` = #{contactPerson},</if>
+            <if test="contactEmail != null">`contact_email` = #{contactEmail},</if>
+            <if test="contactAddress != null">`contact_address` = #{contactAddress},</if>
+            <if test="contactCompanyId != null">`contact_company_id` = #{contactCompanyId},</if>
+            <if test="contactCompanyName != null and contactCompanyName!='' ">`contact_company_name` = #{contactCompanyName},</if>
+            <if test="contactDeptId != null">`contact_dept_id` = #{contactDeptId},</if>
+            <if test="totalPrice != null">`total_price` = #{totalPrice},</if>
+            <if test="currency != null">`currency` = #{currency},</if>
+            <if test="unitPrice != null">`unit_price` = #{unitPrice},</if>
+            <if test="outlayQuantity != null">`outlay_quantity` = #{outlayQuantity},</if>
+            <if test="originFlag != null">`origin_flag` = #{originFlag},</if>
+            <if test="originNumber != null">`origin_number` = #{originNumber},</if>
+            <if test="originPayType !=null and originPayType > 0">`origin_pay_type` = #{originPayType},</if>
+            <if test="merchantPhone != null">`merchant_phone` = #{merchantPhone},</if>
+            <if test="merchantPerson != null">`merchant_person` = #{merchantPerson},</if>
+            <if test="merchantEmail != null">`merchant_email` = #{merchantEmail},</if>
+            <if test="merchantAddress != null">`merchant_address` = #{merchantAddress},</if>
+            <if test="merchantCompanyId != null">`merchant_company_id` = #{merchantCompanyId},</if>
+            <if test="merchantCompanyName != null and merchantCompanyName!='' ">`merchant_company_name` = #{merchantCompanyName},</if>
+            <if test="merchantDeptId != null">`merchant_dept_id` = #{merchantDeptId},</if>
+            <if test="orderStatus != null">`order_status` = #{orderStatus},</if>
+            <if test="payStatus != null">`pay_status` = #{payStatus},</if>
+            <if test="submitTime != null">`submit_time` = #{submitTime},</if>
+            <if test="receiptTime != null">`receipt_time` = #{receiptTime},</if>
+            <if test="payTime != null">`pay_time` = #{payTime},</if>
+            <if test="endTime != null">`end_time` = #{endTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag},</if>
+            <if test="remark != null and remark!='' ">`remark` = #{remark},</if>
+            <if test="goodsMoreRemark!=null and goodsMoreRemark!=''">
+                goods_more_remark = #{goodsMoreRemark},
+            </if>
+            <if test="offerId!=null">
+                offer_id = #{offerId},
+            </if>
+            <if test="deptId !=null ">
+                dept_id = #{deptId},
+            </if>
+            <if test="companyId !=null">
+                company_id = #{companyId},
+            </if>
+            <if test="authorizesId !=null ">
+                authorizes_id = #{authorizesId},
+            </if>
+            <if test="cusComplaintStatus!=null">
+                cus_complaint_status = #{cusComplaintStatus},
+            </if>
+            <if test="merComplaintStatus!=null">
+                mer_complaint_status = #{merComplaintStatus},
+            </if>
+            <if test="afterStatus !=null">
+                after_status = #{afterStatus}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM agent_order WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM agent_order WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="pageList" resultType="com.wzlue.chain.agent.entity.AgentOrderEntity">
+        SELECT
+        DISTINCT(od.id) AS id,
+        od.`contact_company_id`,
+        od.`contact_company_name`,
+        od.`merchant_company_id`,
+        od.`merchant_company_name`,
+        od.`order_number`,
+        od.`contract_number`,
+        od.`unit_price`,
+        od.`outlay_quantity`,
+        od.`total_price`,
+        od.`currency`,
+        od.`origin_flag`,
+        od.`origin_number`,
+        od.`origin_pay_type`,
+        od.`submit_time`,
+        od.`order_status`,
+        od.`pay_status`,
+        od.`contact_person`,
+        od.`contact_phone`,
+        od.`contact_address`,
+        od.`merchant_person`,
+        od.`merchant_phone`,
+        od.`offer_id`,
+        od.`remark`,
+        od.`goods_more_remark`,
+        od.`dept_id`,
+        od.`company_id`,
+        od.`authorizes_id`,
+        od.`cus_complaint_status`,
+        od.`mer_complaint_status`,
+        od.`after_status`
+        FROM
+        `agent_order` od
+        WHERE 1=1
+        AND od.`del_flag`=0
+        <if test="orderNumber != null and orderNumber != ''">
+            <choose>
+                <when test="check !=null and check != ''">
+                    AND od.order_number = #{orderNumber}
+                </when>
+                <otherwise>
+                    AND od.order_number like concat ('%',#{orderNumber},'%')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="contractNumber!=null and contractNumber!=''">
+            AND od.contract_number like concat ('%',#{contractNumber},'%')
+        </if>
+        <if test="contractNumberAll!=null and contractNumberAll!=''">
+            AND od.contract_number = #{contractNumber}
+        </if>
+        <if test="orderStatus!=null and orderStatus!=''">
+            AND od.order_status = #{orderStatus}
+        </if>
+        <choose>
+            <when test="queryType == 1 and companyId !=null">
+                AND od.company_id = #{companyId}
+            </when>
+            <when test="queryType == 2 and companyId !=null">
+                AND od.merchant_company_id = #{companyId}
+            </when>
+        </choose>
+        ORDER By <!-- od.order_status ASC, --> od.create_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(DISTINCT(od.id))
+        FROM
+        `agent_order` od
+        WHERE 1=1
+        AND od.`del_flag`=0
+        <if test="orderNumber != null and orderNumber != ''">
+            <choose>
+                <when test="check !=null and check != ''">
+                    AND od.order_number = #{orderNumber}
+                </when>
+                <otherwise>
+                    AND od.order_number like concat ('%',#{orderNumber},'%')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="contractNumber!=null and contractNumber!=''">
+            AND od.contract_number like concat ('%',#{contractNumber},'%')
+        </if>
+        <if test="contractNumberAll!=null and contractNumberAll!=''">
+            AND od.contract_number = #{contractNumber}
+        </if>
+        <if test="orderStatus!=null and orderStatus!=''">
+            AND od.order_status = #{orderStatus}
+        </if>
+        <choose>
+            <when test="queryType == 1 and companyId !=null">
+                AND od.company_id = #{companyId}
+            </when>
+            <when test="queryType == 2 and companyId !=null">
+                AND od.merchant_company_id = #{companyId}
+            </when>
+        </choose>
+    </select>
+
+    <select id="showList" resultType="java.util.Map">
+        SELECT
+        IFNULL(COUNT(ao.`id`),0) AS total
+        <choose>
+            <when test="dateType !=null and dateType=='year' ">
+                ,CONCAT(MONTH(ao.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType=='quarter' ">
+                ,CONCAT(MONTH(ao.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType =='month'">
+                ,CONCAT(MONTH(ao.`create_time`),'-',DAYOFMONTH(ao.`create_time`)) AS title
+            </when>
+        </choose>
+        FROM agent_order ao
+        WHERE 1=1
+        AND ao.`del_flag` != 1
+        <if test="companyId !=null ">
+             AND ao.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(ao.`create_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(ao.`create_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(ao.`create_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="queryInfo" resultMap="agentOrderMap">
+		SELECT
+		  DISTINCT(od.id) AS id,
+		  od.`contact_company_id`,
+		  od.`contact_company_name`,
+		  od.`merchant_company_id`,
+		  od.`merchant_company_name`,
+		  od.`order_number`,
+		  od.`contract_number`,
+		  od.`unit_price`,
+		  od.`outlay_quantity`,
+		  od.`total_price`,
+		  od.`currency`,
+		  od.`origin_flag`,
+		  od.`origin_number`,
+		  od.`origin_pay_type`,
+		  od.`submit_time`,
+		  od.`order_status`,
+		  od.`pay_status`,
+		  od.`contact_person`,
+		  od.`contact_phone`,
+		  od.`contact_address`,
+		  od.`merchant_person`,
+		  od.`merchant_phone`,
+		  od.`offer_id`,
+		  od.`remark`,
+		  od.`goods_more_remark`,
+		  od.`create_by`,
+		  od.`create_time`,
+		  od.`update_by`,
+		  od.`dept_id`,
+		  od.`company_id`,
+		  od.`cus_complaint_status`,
+		  od.`mer_complaint_status`,
+		  od.`authorizes_id`,
+		  od.`update_time`,
+		  od.`receipt_time`,
+		  od.`receipt_time`,
+		  od.`end_time`,
+		  od.after_status,
+		  bus.`id` AS bus_id,
+		  bus.`bus_name`,
+		  bus.`bus_type`,
+		  gd.id AS gd_id,
+		  gd.`commodity_id`,
+		  gd.`commodity_name`,
+		  gd.`commodity_number`,
+		  gd.`factory_no`,
+		  gd.`commodity_country`,
+		  gd.`commodity_count`,
+		  gd.`commodity_price`,
+		  gd.`weight`,
+		  gd.`goods_unit`,
+		  gd.`goods_name`,
+		  gd.`goods_price`,
+		  gd.`goods_count`,
+		  gd.`goods_total_price`,
+
+		  offer.`id` AS offer_id,
+		  offer.`company_id` AS offer_company_id,
+		  offer.`contact_person` AS offer_contact_person,
+		  offer.`contact_phone` AS offer_contact_phone,
+		  offer.`title` AS offer_title,
+		  offer.`offer_code`,
+		  offer.`valuation_unit` AS offer_unit,
+		  offer.`price` AS offer_price,
+		  offer.`currency` AS offer_currency,
+		  ofBus.`id` AS of_bus_id,
+		  ofBus.`service_id` AS of_bus_service_id,
+		  ofBus.`service_name` AS of_bus_service_name
+		FROM
+		  `agent_order` od
+		LEFT JOIN `agent_order_business` bus
+			ON bus.`order_number` = od.`order_number`
+		LEFT JOIN `agent_order_goods` gd
+			ON gd.`order_number` = od.`order_number`
+		LEFT JOIN `agent_offer` offer
+			ON offer.`id`  = od.`offer_id`
+		LEFT JOIN `agent_offer_business` ofBus
+			ON ofBus.`offer_id` = offer.`id`
+		WHERE 1 = 1
+		    AND od.id = #{id}
+	</select>
+
+    <update id="updateDel">
+        UPDATE agent_order
+        <set>
+            update_by = #{userId},
+            update_time = #{date}
+            <if test="delFlag !=null and delFlag>0">
+                ,del_flag = #{delFlag}
+            </if>
+            <if test="orderStatus!=null">
+                ,order_status = #{orderStatus}
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <update id="changePrice" parameterType="map">
+        UPDATE agent_order
+        <set>
+            <if test="afterPrice != null and afterPrice.trim() != '' ">
+                total_price =#{afterPrice}, update_time = now()
+            </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <insert id="setAgentAuthorize">
+        INSERT INTO
+          agent_order_authorize(order_no,company_id,create_by,create_time,is_payment)
+        VALUES
+          (#{orderNo}, #{companyId}, #{createBy}, now(),#{isPayment})
+
+        ;
+
+        UPDATE goods_order SET authorizes_id = #{createBy}  WHERE order_number = #{orderNo}
+
+    </insert>
+
+    <select id="queryByOrderNum" resultMap="agentOrderMap">
+		SELECT
+		  DISTINCT(od.id) AS id,
+		  od.`contact_company_id`,
+		  od.`contact_company_name`,
+		  od.`merchant_company_id`,
+		  od.`merchant_company_name`,
+		  od.`order_number`,
+		  od.`contract_number`,
+		  od.`unit_price`,
+		  od.`outlay_quantity`,
+		  od.`total_price`,
+		  od.`currency`,
+		  od.`origin_flag`,
+		  od.`origin_number`,
+		  od.`origin_pay_type`,
+		  od.`submit_time`,
+		  od.`order_status`,
+		  od.`pay_status`,
+		  od.`contact_person`,
+		  od.`contact_phone`,
+		  od.`contact_address`,
+		  od.`merchant_person`,
+		  od.`merchant_phone`,
+		  od.`offer_id`,
+		  od.`remark`,
+		  od.`goods_more_remark`,
+		  od.`create_by`,
+		  od.`create_time`,
+		  od.`update_by`,
+		  od.`dept_id`,
+		  od.`company_id`,
+		  od.`cus_complaint_status`,
+		  od.`mer_complaint_status`,
+		  od.`authorizes_id`,
+		  od.`update_time`,
+		  od.`receipt_time`,
+		  od.`receipt_time`,
+		  od.`end_time`,
+		  od.`after_status`
+		  FROM agent_order od
+		  WHERE 1=1
+		  AND od.order_number = #{orderNumber}
+	</select>
+    <select id="getAgentAuthorize" resultType="java.lang.String">
+      SELECT order_no FROM agent_order_authorize  WHERE company_id = #{companyId} AND is_cancel = '0'
+
+    </select>
+    <select id="queryListByNumberCodeAndNumberType" resultType="map">
+        SELECT s.id id,order_number orderNumber FROM agent_order s
+        <where>
+            s.origin_number=#{numberCode}
+            and s.origin_flag=#{numberType}
+            and (s.company_id=#{companyId} or s.merchant_company_id=#{companyId})
+        </where>
+        limit 1
+    </select>
+
+    <update id="cancelAgentAuthorize">
+      UPDATE agent_order_authorize set is_cancel = '1'  WHERE company_id = #{companyId} AND is_cancel = '0' AND order_no = #{orderNo};
+      UPDATE goods_order SET authorizes_id = null  WHERE order_number = #{orderNo}
+    </update>
+
+</mapper>

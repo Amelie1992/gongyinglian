@@ -1,0 +1,170 @@
+
+package com.wzlue.chain.web.controller.marketing;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity;
+import com.wzlue.chain.marketing.service.MarketAuctionCommodityService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysUserRoleService;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.marketing.entity.MarketAuctionEntity;
+import com.wzlue.chain.marketing.service.MarketAuctionService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 营销拍卖表
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-26 13:43:46
+ */
+@RestController
+@RequestMapping("/marketing/marketauction")
+public class MarketAuctionController extends AbstractController {
+    @Autowired
+    private MarketAuctionService marketAuctionService;
+    @Autowired
+    private MarketAuctionCommodityService marketAuctionCommodityService;
+    @Autowired
+    private SysUserRoleService sysUserRoleService;
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        if (getUserId()!=null){
+            List<Long> roleIdList = sysUserRoleService.queryRoleIdList(getUserId());
+            for (Long roleId:roleIdList) {
+                if (roleId.intValue()==85){ //直营公司
+                    query.put("companyId",getUser().getCompanyId());
+                }
+            }
+        }
+        List<MarketAuctionEntity> marketAuctionList = marketAuctionService.queryList(query);
+        int total = marketAuctionService.queryTotal(query);
+        return R.page(marketAuctionList, total);
+    }
+
+    /**
+     * 查询当前登录人所属公司下所有拍卖记录
+     * @param params
+     * @return
+     */
+    @RequestMapping("/list1")
+    public R list1(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        SysUserEntity user = getUser();
+        if(user.getCompanyId() == null){
+            return R.page(null, 0);
+        }
+        //查询本公司所有拍卖记录
+        query.put("companyId",user.getCompanyId());
+        List<MarketAuctionEntity> marketAuctionList = marketAuctionService.queryList(query);
+        int total = marketAuctionService.queryTotal(query);
+
+        return R.page(marketAuctionList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+    @RequiresPermissions("marketing:marketauction:info")
+    public R info(@PathVariable("id") Long id) {
+        MarketAuctionEntity marketAuction = marketAuctionService.queryObject(id);
+        Map<String, Object> map = new HashMap<>();
+        map.put("auctionId", id);
+        List<MarketAuctionCommodityEntity> marketAuctionCommodityEntityList = marketAuctionCommodityService.queryList(map);
+        R r = R.ok();
+        r.put("marketAuction", marketAuction);
+        r.put("marketAuctionCommodityList", marketAuctionCommodityEntityList);
+        return r;
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("marketing:marketauction:save")
+    public R save(@RequestBody MarketAuctionEntity marketAuction) {
+        SysUserEntity user = getUser();
+        marketAuction.setCreateBy(user.getUserId());
+        if(user.getCompanyId() !=null){
+            marketAuction.setCompanyId(Math.toIntExact(user.getCompanyId()));
+        }else{
+            return R.error("该账号未注册公司，无法参与拍卖");
+        }
+        marketAuctionService.save(marketAuction);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("marketing:marketauction:update")
+    public R update(@RequestBody MarketAuctionEntity marketAuction) {
+        marketAuctionService.update(marketAuction);
+
+        return R.ok();
+    }
+    /**
+     * 上架
+     */
+    @RequestMapping("/updateup")
+    @RequiresPermissions("marketing:marketauction:update")
+    public R updateUp(@RequestBody Long[] ids) {
+       Map<String,Object> map = new HashMap<>(16);
+        map.put("status",1);
+        map.put("ids", ids);
+        map.put("userId",getUserId());
+        marketAuctionService.updateStatus(map);
+        return R.ok();
+    }
+
+    /**
+     * 下架
+     */
+    @RequestMapping("/updatedown")
+    @RequiresPermissions("marketing:marketauction:update")
+    public R updateDown(@RequestBody Long[] ids) {
+        Map<String,Object> map = new HashMap<>(16);
+        map.put("status",0);
+        map.put("ids", ids);
+        map.put("userId",getUserId());
+        marketAuctionService.updateStatus1(map);
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("marketing:marketauction:delete")
+    public R delete(@RequestBody Long[] ids) {
+        marketAuctionService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+}

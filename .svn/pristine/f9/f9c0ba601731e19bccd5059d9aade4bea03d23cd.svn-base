@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.bill.dao.BankCardDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.bill.entity.BankCardEntity" id="bankCardMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="idcard" column="idcard"/>
+        <result property="cardName" column="card_name"/>
+        <result property="cardNo" column="card_no"/>
+        <result property="logo" column="logo"/>
+        <result property="phone" column="phone"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="defaultCard" column="default_card"/>
+        <result property="sortNum" column="sort_num"/>
+        <result property="delFalg" column="del_falg"/>
+        <result property="cardNoEnd" column="card_no"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.bill.entity.BankCardEntity">
+		SELECT * FROM bank_card WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.bill.entity.BankCardEntity">
+        SELECT
+        id, name, idcard, card_name, card_no ,RIGHT(card_no,4) AS card_no_end, card_type, card_type_name, logo, phone, company_id, dept_id, create_by, authorizes_id, created_time, update_time, default_card, sort_num, del_falg
+        FROM
+        bank_card
+        WHERE
+          create_by = #{createBy}
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <!--<if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>-->
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT
+		  count(*)
+		FROM
+		  bank_card
+		WHERE
+          create_by = #{createBy}
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.bill.entity.BankCardEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO bank_card
+		( `name`, `idcard`, `card_name`, `card_no`,`card_type`,`card_type_name`, `phone`, `logo`,`company_id`, `dept_id`, `create_by`, `authorizes_id`, `created_time`, `update_time`, `default_card`, `sort_num`, `del_falg` )
+		VALUES ( #{name}, #{idcard}, #{cardName}, #{cardNo},#{cardType},#{cardTypeName}, #{phone}, #{logo},#{companyId}, #{deptId}, #{createBy}, #{authorizesId}, NOW(), #{updateTime}, #{defaultCard}, #{sortNum}, #{delFalg} )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.bill.entity.BankCardEntity">
+        UPDATE bank_card
+        <set>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="idcard != null">`idcard` = #{idcard},</if>
+            <if test="cardName != null">`card_name` = #{cardName},</if>
+            <if test="cardNo != null">`card_no` = #{cardNo},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="phone != null">`logo` = #{logo},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="defaultCard != null">`default_card` = #{defaultCard},</if>
+            <if test="sortNum != null">`sort_num` = #{sortNum},</if>
+            <if test="delFalg != null">`del_falg` = #{delFalg}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM bank_card WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM bank_card WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

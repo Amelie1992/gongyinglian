@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.traceback.dao.TraceBackDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.traceback.entity.TraceBackEntity" id="traceBackMap">
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="merchantCopName" column="merchant_cop_name"/>
+        <result property="customsCopName" column="customs_cop_name"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <sql id="select_goods_order">
+        order_id id,agreement_id contract_number,order_number,seller_name merchant_cop_name,seller_id merchant_company_id,purchaser_company_name
+            customs_cop_name,create_by,create_time,company_id
+    </sql>
+    <sql id="select_logistics_order">
+        id,contract_number,order_number,merchant_company_id,merchant_company_name merchant_cop_name,contact_company_name
+            customs_cop_name,create_by,created_time create_time,company_id
+    </sql>
+    <sql id="select_declare_order">
+        id,contract_number,order_number,merchant_company_id,merchant_company_name merchant_cop_name,buy_company_name customs_cop_name,create_by,create_time,company_id
+    </sql>
+    <sql id="select_storage_order">
+         id,contract_number,order_number,receipt_merchant_id merchant_company_id,sale_company_name merchant_cop_name,buy_company_name customs_cop_name,created_by create_by,created_time create_time,merchant_id company_id
+    </sql>
+    <sql id="select_agent_order">
+        id,contract_number,order_number,merchant_company_id,merchant_company_name merchant_cop_name,contact_company_name customs_cop_name, create_by,create_time,company_id
+    </sql>
+    <select id="queryList" resultMap="traceBackMap">
+        select t.*,u.username createByName from
+        (
+        <if test="orderType == 0">
+            select
+            <include refid="select_goods_order"/>
+            from goods_order
+        </if>
+        <if test="orderType == 1">
+            select
+            <include refid="select_logistics_order"/>
+            from logistics_order
+        </if>
+        <if test="orderType == 2">
+            select
+            <include refid="select_declare_order"/>
+            from
+            declare_order
+        </if>
+        <if test="orderType == 3">
+            select
+            <include refid="select_storage_order"/>
+            from
+            storage_order
+        </if>
+        <if test="orderType == 4">
+            select
+            <include refid="select_agent_order"/>
+            from
+            agent_order
+        </if>
+        ) t
+        left JOIN sys_user u on t.create_by = u.user_id
+        <where>
+            <if test="companyId != null">
+                and (t.company_id =#{companyId} or t.merchant_company_id=#{companyId})
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                and t.order_number like concat('%',#{orderNumber},'%')
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                and t.contract_number like concat('%',#{contractNumber},'%')
+            </if>
+        </where>
+        ORDER By t.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(1) from
+        (
+        <if test="orderType == 0">
+            select
+            <include refid="select_goods_order"/>
+            from goods_order
+        </if>
+        <if test="orderType == 1">
+            select
+            <include refid="select_logistics_order"/>
+            from logistics_order
+        </if>
+        <if test="orderType == 2">
+            select
+            <include refid="select_declare_order"/>
+            from
+            declare_order
+        </if>
+        <if test="orderType == 3">
+            select
+            <include refid="select_storage_order"/>
+            from
+            storage_order
+        </if>
+        <if test="orderType == 4">
+            select
+            <include refid="select_agent_order"/>
+            from
+            agent_order
+        </if>
+        ) t
+        <where>
+            <if test="companyId != null">
+                and t.company_id =#{companyId}
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() != ''">
+                and t.order_number like concat('%',#{orderNumber},'%')
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() != ''">
+                and t.contract_number like concat('%',#{contractNumber},'%')
+            </if>
+        </where>
+    </select>
+    <select id="queryInfo" resultType="java.util.Map">
+        select * from
+        (
+        <if test="orderType == 0">
+            SELECT
+            order_id id , o.*
+            FROM
+            goods_order o
+        </if>
+        <if test="orderType == 1">
+            select *
+            from logistics_order
+        </if>
+        <if test="orderType == 2">
+            select
+            *
+            from
+            declare_order
+        </if>
+        <if test="orderType == 3">
+            select
+            *
+            from
+            storage_order
+        </if>
+        <if test="orderType == 4">
+            select
+            *
+            from
+            agent_order
+        </if>
+        ) t
+        <where>
+            <if test="id != null">
+                and t.id=#{id}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryContract" resultType="java.util.Map">
+        select * from
+        (
+        <if test="orderType == 0">
+            select *
+            from goods_contract
+            where owner=#{companyId}
+        </if>
+        <if test="orderType == 1">
+            select *
+            from logistics_contract
+            where company_id=#{companyId}
+        </if>
+        <if test="orderType == 2">
+            select
+            *
+            from
+            declare_contract
+            where owner=#{companyId}
+        </if>
+        <if test="orderType == 3">
+            select
+            *
+            from
+            storage_contract
+            where company_id=#{companyId}
+        </if>
+        <if test="orderType == 4">
+            select
+            *
+            from
+            agent_contract
+        </if>
+        ) t
+        <where>
+            <if test="contractNumber != null">
+                and t.contract_number=#{contractNumber}
+                and t.order_number=#{orderNumber}
+            </if>
+        </where>
+        limit 1
+    </select>
+
+
+</mapper>

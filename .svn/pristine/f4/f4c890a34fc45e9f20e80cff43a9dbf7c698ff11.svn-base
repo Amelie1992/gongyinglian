@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>投诉管理</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+    <!--下拉框-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <!-- 选项卡组件（菜单项nav-tabs）-->
+        <ul id="myTab" class="nav nav-tabs" role="tablist">
+            <li class="active"><a href="#record1" role="tab" data-toggle="tab">{{$t('ComplaintRecord1')}}</a></li>
+            <li><a href="#record2">{{$t('ComplaintRecord2')}}</a></li>
+        </ul>
+        <!-- 选项卡面板 -->
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane active" id="record1">
+                <div class="row">
+                    <div class="col-xs-2">
+                        <!--<input type="text" class="form-control" v-model="params.name" placeholder=""/>-->
+                        <select class="form-control" data-width="auto" v-model="params.status">
+                            <option value="">{{$t('SelectStatus')}}</option>
+                            <!--<option v-for="(item,index) in statusList" :value="index">{{item}}</option>-->
+                            <option value="0">{{$t('WaitForPayment')}}</option>
+                            <option value="2">{{$t('End')}}</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table id="table1"></table>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="record2">
+                <div class="row">
+                    <div class="col-xs-2">
+                        <!--<input type="text" class="form-control" v-model="params.name" placeholder=""/>-->
+                        <select class="form-control" data-width="auto" v-model="params2.status">
+                            <option value="">{{$t('SelectStatus')}}</option>
+                            <!--<option v-for="(item,index) in statusList" :value="index">{{item}}</option>-->
+                            <option value="0">{{$t('WaitForPayment')}}</option>
+                            <option value="2">{{$t('End')}}</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-default m-left-5" @click="query2"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table id="table2"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--详情页-->
+    <div v-show="detailList" class="panel panel-default" style="margin-top: 20px;">
+        <section class="content-header">
+            <h1>
+                {{$t('DetailsOfComplaint')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+            </h1>
+        </section>
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('ComplaintFrom')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="complaintFrom" class="form-control"
+                                   v-model="complaint.complaintFrom" disabled/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('ComplaintTo')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="complaintTo" class="form-control" v-model="complaint.complaintTo"
+                                   disabled/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('OrderId')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="orderId" class="form-control" v-model="complaint.orderId"
+                                   disabled/>
+                        </div>
+                    </div>
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('ComplaintTime')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="complaintTime" class="form-control"
+                                   v-model="complaint.complaintTime" disabled/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4" style="width: 70%">
+                        <div class="col-sm-2 control-label">{{$t('ComplaintReason')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="reason" class="form-control" v-model="complaint.reason" disabled/>-->
+                            <textarea name="reason" class="form-control" rows="4" v-model="complaint.reason"
+                                      disabled></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4" style="width: 70%">
+                        <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                        <div class="col-sm-10">
+                            <commodity-fileinput :files="images" :image_list="complaint.images"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('status')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="status" class="form-control" v-model="complaint.status" disabled/>-->
+                            <select class="form-control" v-model="complaint.status" name="status" disabled>
+                                <option v-for="(item,index) in statusList" :value="index">{{item}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="complaint.status==2" class="row">
+                    <div class="form-group col-sm-4">
+                        <div class="col-sm-2 control-label">{{$t('Result')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="result" class="form-control" v-model="complaint.result" disabled/>-->
+                            <select class="form-control" v-model="complaint.result" name="result" disabled>
+                                <option v-for="(item,index) in resultList" :value="index">{{item}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="complaint.status==2" class="row">
+                    <div class="form-group col-sm-4" style="width: 70%">
+                        <div class="col-sm-2 control-label">{{$t('Suggestion')}}</div>
+                        <div class="col-sm-10">
+                            <!--<input type="text" name="suggestion" class="form-control" v-model="complaint.suggestion" disabled/>-->
+                            <textarea name="suggestion" class="form-control" rows="4" v-model="complaint.suggestion"
+                                      disabled></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <!--<input type="button" class="btn btn-primary" @click="handle" :value="$t('Handle')" v-show="isShow"/>-->
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<!--下拉框-->
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/complaint/complaint.js"></script>
+</body>
+</html>

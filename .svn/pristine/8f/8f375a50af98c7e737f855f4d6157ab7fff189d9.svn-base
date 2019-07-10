@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.company.dao.EmployeeDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.company.entity.EmployeeEntity" id="employeeMap">
+        <result property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="worknumber" column="worknumber"/>
+        <result property="name" column="name"/>
+        <result property="idcard" column="idcard"/>
+        <result property="phonenumber" column="phonenumber"/>
+        <result property="sex" column="sex"/>
+        <result property="dateofbirth" column="dateofbirth"/>
+        <result property="socialsecurity" column="socialsecurity"/>
+        <result property="companyId" column="company_id"/>
+        <result property="housingfund" column="housingfund"/>
+        <result property="jobstate" column="jobstate"/>
+        <result property="hiredate" column="hiredate"/>
+        <result property="email" column="email"/>
+        <result property="stateofcontract" column="stateofcontract"/>
+        <result property="contractsigningtime" column="contractsigningtime"/>
+        <result property="contractexpirationdate" column="contractexpirationdate"/>
+        <result property="companyname" column="companyname"/>
+        <result property="post" column="post"/>
+        <association property="user" column="user_id" javaType="com.wzlue.chain.sys.entity.SysUserEntity"
+                     select="com.wzlue.chain.sys.dao.SysUserDao.queryOne"/>
+        <association property="employeeAdditional" javaType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity"
+                     column="id"
+                     select="com.wzlue.chain.company.dao.EmployeeAdditionalDao.queryEmployeeId"></association>
+    </resultMap>
+
+    <select id="queryObject" resultMap="employeeMap">
+		SELECT * FROM employee WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="employeeMap">
+        SELECT * FROM employee
+        WHERE
+        1=1
+        <if test="name !=null and name != ''">
+            and name LIKE concat ('%',#{name},'%')
+        </if>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM employee
+        WHERE
+        1=1
+        <if test="name !=null and name != ''">
+            and name LIKE concat ('%',#{name},'%')
+        </if>
+    </select>
+    <select id="getGH" resultType="java.lang.Integer">
+        SELECT IFNULL(MAX(CAST(worknumber AS DECIMAL)),0) FROM employee ORDER  BY CAST(worknumber AS DECIMAL) DESC
+    </select>
+    <select id="queryUserNamesByIds" resultType="string">
+        select username from sys_user where user_id in (
+          select user_id from employee where id in(
+            <foreach collection="ids" item="item" separator=",">
+                #{item}
+            </foreach>
+          )
+        )
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.company.entity.EmployeeEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO employee
+		( `user_id`,`worknumber`, `name`, `idcard`, `phonenumber`, `sex`, `dateofbirth`, `socialsecurity`, `company_id`, `housingfund`, `jobstate`, `hiredate`, `email`, `stateofcontract`, `contractsigningtime`, `contractexpirationdate`, `companyname`, `post`, `create_by`)
+		VALUES
+		(#{userId}, #{worknumber}, #{name}, #{idcard}, #{phonenumber}, #{sex}, #{dateofbirth}, #{socialsecurity}, #{companyId}, #{housingfund}, #{jobstate}, #{hiredate}, #{email}, #{stateofcontract}, #{contractsigningtime}, #{contractexpirationdate}, #{companyname}, #{post}, #{createBy} )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.company.entity.EmployeeEntity">
+        UPDATE employee
+        <set>
+            <if test="worknumber != null">`worknumber` = #{worknumber},</if>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="idcard != null">`idcard` = #{idcard},</if>
+            <if test="phonenumber != null">`phonenumber` = #{phonenumber},</if>
+            <if test="sex != null">`sex` = #{sex},</if>
+            <if test="dateofbirth != null">`dateofbirth` = #{dateofbirth},</if>
+            <if test="socialsecurity != null">`socialsecurity` = #{socialsecurity},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="housingfund != null">`housingfund` = #{housingfund},</if>
+            <if test="jobstate != null">`jobstate` = #{jobstate},</if>
+            <if test="hiredate != null">`hiredate` = #{hiredate},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="stateofcontract != null">`stateofcontract` = #{stateofcontract},</if>
+            <if test="contractsigningtime != null">`contractsigningtime` = #{contractsigningtime},</if>
+            <if test="contractexpirationdate != null">`contractexpirationdate` = #{contractexpirationdate},</if>
+            <if test="companyname != null">`companyname` = #{companyname},</if>
+            <if test="post != null">`post` = #{post}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <update id="updateEmployeeUserId">
+        UPDATE
+          employee
+        SET
+          user_id = #{userId}
+        WHERE
+          id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM employee WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM sys_user WHERE user_id IN
+        (SELECT user_id FROM employee WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        );
+        DELETE FROM employee WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.StorageContractDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.StorageContractEntity" id="storageContractMap">
+        <result property="id" column="id"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="dataSource" column="data_source"/>
+        <result property="customsCopName" column="customs_cop_name"/>
+        <result property="merchantCopName" column="merchant_cop_name"/>
+        <result property="payMethod" column="pay_method"/>
+        <result property="contractAmount" column="contract_amount"/>
+        <result property="storageLocation" column="storage_location"/>
+        <result property="signingTime" column="signing_time"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="cusCompanyId" column="cus_company_id"/>
+        <result property="merCompanyId" column="mer_company_id"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="companyId" column="company_id"/>
+        <association property="storageOrder" javaType="com.wzlue.chain.storage.entity.OrderEntity">
+            <result property="id" column="id"/>
+            <result property="orderNumber" column="order_number"/>
+            <result property="contractNumber" column="contract_number"/>
+            <result property="price" column="price"/>
+            <result property="unit" column="unit"/>
+        </association>
+        <collection property="file" resultMap="annexMap" columnPrefix="ax_"></collection>
+    </resultMap>
+    <resultMap id="annexMap" type="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+        <id column="id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_type" property="fileType"/>
+        <result column="file_url" property="url"/>
+        <result column="username" property="username"/>
+        <result column="create_time" property="createTime"/>
+        <result column="contract_type" property="contractType"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="storageContractMap">
+		SELECT a.*,so.*,
+		ax.`id` AS ax_id,
+        ax.`file_name` AS ax_file_name,
+        ax.`file_type` AS ax_file_type,
+        ax.`url` AS ax_file_url,
+        ax.`contract_type` AS ax_contract_type,
+        ax.`create_time` AS ax_create_time,
+		su.username AS ax_username
+		FROM storage_contract a
+		LEFT JOIN contract_annex ax ON ax.contract_id = a.id and ax.contract_type=3
+		LEFT JOIN sys_user su ON ax.create_by = su.user_id
+		LEFT JOIN storage_order so ON so.order_number = a.order_number
+		WHERE a.id = #{value}
+	</select>
+
+    <!--<select id="queryObject" resultMap="storageContractMap">
+		SELECT * FROM storage_contract WHERE id = #{value}
+	</select>-->
+
+    <select id="queryContract" resultType="com.wzlue.chain.storage.entity.StorageContractEntity">
+        SELECT * FROM storage_contract WHERE contract_number = #{contractNumber} AND data_source = 2 AND company_id = #{companyId}
+    </select>
+
+    <select id="queryByContractNumber" resultType="com.wzlue.chain.storage.entity.StorageContractEntity">
+		SELECT * FROM storage_contract WHERE contract_number = #{contractNumber} AND data_source = 2
+	</select>
+
+    <select id="queryList" resultMap="storageContractMap">
+        SELECT a.*,so.*,
+        ax.`id` AS ax_id,
+        ax.`file_name` AS ax_file_name,
+        ax.`file_type` AS ax_file_type,
+        ax.`url` AS ax_file_url,
+        ax.`contract_type` AS ax_contract_type,
+        ax.`create_time` AS ax_create_time,
+        su.username AS ax_username
+        FROM storage_contract a
+        LEFT JOIN contract_annex ax ON ax.contract_id = a.id and ax.contract_type=3
+        LEFT JOIN sys_user su ON ax.create_by = su.user_id
+        LEFT JOIN storage_order so ON so.order_number = a.order_number
+        <where>
+            <if test="companyId!=null">a.company_id=#{companyId}</if>
+            <if test="contractName != null and contractName.trim() !=''">
+                and	a.contract_name like concat('%',#{contractName},'%')
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() !=''">
+                and	a.contract_number like concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() !=''">
+                and a.order_number LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY a.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM storage_contract
+        <where>
+            <if test="companyId!=null">company_id=#{companyId}</if>
+            <if test="contractName != null and contractName.trim() !=''">
+                and	contract_name like concat('%',#{contractName},'%')
+            </if>
+            <if test="contractNumber != null and contractNumber.trim() !=''">
+                and	contract_number like concat('%',#{contractNumber},'%')
+            </if>
+            <if test="orderNumber != null and orderNumber.trim() !=''">
+                and order_number LIKE concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.storage.entity.StorageContractEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_contract
+		(
+            `contract_number`,
+            `order_number`,
+            `data_source`,
+            `customs_cop_name`,
+            `merchant_cop_name`,
+            `pay_method`,
+            `contract_amount`,
+            `storage_location`,
+            `signing_time`,
+            `expire_date`,
+            `remarks`,
+            `create_by`,
+            `create_time`,
+            `update_by`,
+            `update_time`,
+            `cus_company_id`,
+            `mer_company_id`,
+            `contract_name`,
+            `company_id`
+		)
+		VALUES
+		(
+            #{contractNumber},
+            #{orderNumber},
+            #{dataSource},
+            #{customsCopName},
+            #{merchantCopName},
+            #{payMethod},
+            #{contractAmount},
+            #{storageLocation},
+            #{signingTime},
+            #{expireDate},
+            #{remarks},
+            #{createBy},
+            #{createTime},
+            #{updateBy},
+            #{updateTime},
+            #{cusCompanyId},
+            #{merCompanyId},
+            #{contractName},
+            #{companyId}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.StorageContractEntity">
+        UPDATE storage_contract
+        <set>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="dataSource != null">`data_source` = #{dataSource},</if>
+            <if test="customsCopName != null">`customs_cop_name` = #{customsCopName},</if>
+            <if test="merchantCopName != null">`merchant_cop_name` = #{merchantCopName},</if>
+            <if test="payMethod != null">`pay_method` = #{payMethod},</if>
+            <if test="contractAmount != null">`contract_amount` = #{contractAmount},</if>
+            <if test="storageLocation != null">`storage_location` = #{storageLocation},</if>
+            <if test="signingTime != null">`signing_time` = #{signingTime},</if>
+            <if test="expireDate != null">`expire_date` = #{expireDate},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="cusCompanyId != null">`cus_company_id` = #{cusCompanyId},</if>
+            <if test="merCompanyId != null">`mer_company_id` = #{merCompanyId},</if>
+            <if test="contractName != null">`contract_name` = #{contractName},</if>
+            <if test="companyId != null">`company_id` = #{companyId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM storage_contract WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM storage_contract WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

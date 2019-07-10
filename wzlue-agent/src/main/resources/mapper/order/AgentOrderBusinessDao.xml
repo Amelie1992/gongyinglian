@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOrderBusinessDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap type="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity" id="agentOrderBusinessMap">
+		<result property="id" column="id"/>
+		<result property="orderNumber" column="order_number"/>
+		<result property="originFlag" column="origin_flag"/>
+		<result property="originNumber" column="origin_number"/>
+		<result property="busType" column="bus_type"/>
+		<result property="busName" column="bus_name"/>
+	</resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity">
+		SELECT * FROM agent_order_business WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity">
+		SELECT * FROM agent_order_business
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				ORDER BY ${sidx} ${order}
+			</when>
+			<otherwise>
+				ORDER BY id desc
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_order_business
+	</select>
+
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_order_business
+		(
+			`order_number`,
+			`origin_flag`,
+			`origin_number`,
+			`bus_type`,
+			`bus_name`
+		)
+		VALUES
+		(
+			#{orderNumber},
+			#{originFlag},
+			#{originNumber},
+			#{busType},
+			#{busName}
+		)
+	</insert>
+
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOrderBusinessEntity">
+		UPDATE agent_order_business
+		<set>
+			<if test="orderNumber != null">`order_number` = #{orderNumber}, </if>
+			<if test="originFlag != null">`origin_flag` = #{originFlag}, </if>
+			<if test="originNumber != null">`origin_number` = #{originNumber}, </if>
+			<if test="busType != null">`bus_type` = #{busType}, </if>
+			<if test="busName != null">`bus_name` = #{busName}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM agent_order_business WHERE id = #{value}
+	</delete>
+
+	<delete id="deleteBatch">
+		DELETE FROM agent_order_business WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByOrderNumber">
+		DELETE FROM agent_order_business
+		WHERE order_number  = #{orderNumber}
+	</delete>
+</mapper>

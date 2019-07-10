@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:v-bind="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>微战略</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <!--<link rel="stylesheet" href="css/AdminLTE.min.css">-->
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="css/all-skins.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div class="page-header">
+        <div class="row">
+            <div class="col-xs-10 col-md-4">
+                <h1><span style="color:#1abc9c">{{$t('SupplyChainServicePlatform')}}</span></h1>
+            </div>
+            <div class="col-xs-4 col-md-4 text-center" style="top: 6px;">
+                <h3>{{$t('WelcomeToRegistration')}}</h3>
+            </div>
+            <div class="col-xs-8 col-md-4 text-right" style="top: 6px;">
+                <h3>{{$t('ExistingAccount')}}？<a href="login.html">{{$t('PleaseLogIn')}}</a></h3>
+            </div>
+        </div>
+    </div>
+
+    <!--<div class="jumbotron">-->
+    <div class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <div class="panel-title">
+                <div class="btn-group  btn-group-lg" role="group">
+                    <!--<button type="button" class="btn btn-default active" @click="switchForm('p')" id="p">个人注册</button>-->
+                    <button type="button" class="btn btn-default" id="m">{{$t('BusinessRegistration')}}</button>
+                </div>
+            </div>
+            <!-- 个人注册 -->
+            <!--<div class="personalReg col-sm-8 col-sm-offset-2" v-show="!showForm" id="personalReg">
+                <form class="form-horizontal" role="personalRegRole">
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="usernamep">用户名</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="usernamep" name="usernamep" placeholder="用户名">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="phonep">手机号</label>
+                        <div class="col-sm-10">
+                            <input type="tel" class="form-control" id="phonep" name="phonep" placeholder="手机号">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="identifyingCodep">验证码</label>
+                        <div class="col-sm-10 form-inline">
+                            <input type="text" class="form-control" id="identifyingCodep" placeholder="验证码">
+                            <input type="button" class="btn btn-primary btn-lg" @click="sendSms" id="sendSms" name="identifyingCodep" value="获取验证码"/>
+                        </div>
+                    </div>
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="setPasswordp">设置密码</label>
+                        <div class="col-sm-10">
+                            <input type="password" class="form-control" id="setPasswordp" name="setPasswordp" placeholder="设置密码">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="confirmPasswordp">确认密码</label>
+                        <div class="col-sm-10">
+                            <input type="password" class="form-control" id="confirmPasswordp" name="confirmPasswordp" placeholder="确认密码">
+                        </div>
+                    </div>
+                    <div class="form-group form-group-lg">
+                        <label class="col-sm-2 control-label" for="recommendationCodep">推荐码</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="recommendationCodep" name="recommendationCodep" placeholder="推荐码">
+                        </div>
+                    </div>
+                </form>
+            </div>-->
+            <!-- 商户注册 -->
+            <div class="merchantReg  col-sm-8 col-sm-offset-2 " v-show="showForm" id="merchantReg">
+                <form class="form-horizontal">
+                    <div class="row">
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="usernamem">{{$t('UserName')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="usernamem" name="usernamem"
+                                       v-model="user.username" :placeholder="$t('UserName')">
+                            </div>
+                        </div>
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="companyname">{{$t('CorporateName')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="companyname" name="companyname"
+                                       v-model="company.companyName" :placeholder="$t('CorporateName')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="companytype">{{$t('BusinessType')}}</label>
+                            <div class="col-sm-10">
+                                <vm-select :options="companyTypeOption" title="请选择公司类型" :load="companyTypeLoad"
+                                           v-model="company.companyType" id="companytype" name="companytype">
+                                </vm-select>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="contact">{{$t('contact')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="contact" name="contact"
+                                       v-model="company.contact" :placeholder="$t('contact')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label">{{$t('ServiceType')}}</label>
+                            <div class="col-sm-10">
+                                <div class="checkbox">
+                                    <template v-for="(item,key,idx) in serviceTypeList">
+                                        <label class="checkbox-inline">
+                                            <input type="checkbox" v-bind:value="item.id" v-model="company.serviceType"
+                                                   name="serviceType[]"/> {{item.serviceName}}
+                                        </label>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="setPasswordm">{{$t('password')}}</label>
+                            <div class="col-sm-10">
+                                <input type="password" class="form-control" id="setPasswordm" name="setPasswordm"
+                                       v-model="user.password" :placeholder="$t('password')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label" for="phonem">{{$t('MobilePhoneNo')}}</label>
+                            <div class="col-sm-10">
+                                <input type="tel" class="form-control" id="phonem" name="phonem" v-model="user.mobile"
+                                       :placeholder="$t('MobilePhoneNo')" maxlength="11">
+                            </div>
+                        </div>
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label"
+                                   for="confirmPasswordm">{{$t('ConfirmThePassword')}}</label>
+                            <div class="col-sm-10">
+                                <input type="password" class="form-control" id="confirmPasswordm"
+                                       name="confirmPasswordm" v-model="user.passwordveri"
+                                       :placeholder="$t('ConfirmThePassword')">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label"
+                                   for="identifyingCodem">{{$t('verificationCode')}}</label>
+                            <div class="col-sm-10">
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control span2"
+                                           id="identifyingCodem"
+                                           name="identifyingCodem" :placeholder="$t('verificationCode')">
+                                </div>
+                                <div class="col-sm-5">
+                                    <input type="button" class="btn btn-primary btn-lg" @click="sendcode"
+                                           id="sendSms"
+                                           :value="$t('GetVerificationCode')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group form-group-lg col-sm-6 row">
+                            <label class="col-sm-2 control-label"
+                                   for="recommendationCodem">{{$t('RecommendationCode')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="recommendationCodem"
+                                       name="recommendationCodem" v-model="company.recommenDationCode"
+                                       :placeholder="$t('RecommendationCode')">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-6 col-sm-offset-3">
+                <div style=" width: 100%; text-align: center;">
+                    <input type="checkbox" id="checkboxSuccess" value="1" v-model="protocol">
+                    <label>
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal">
+                            {{$t('IHaveReadAndAgreed')}}《{{$t('Agreement')}}》
+                        </button>
+                    </label>
+                </div>
+                <button type="button" class="btn btn-success btn-lg btn-block" @click="validFromSuccess('personalReg')">
+                    {{$t('register')}}
+                </button>
+
+            </div>
+        </div>
+        <!-- 模态框（Modal） -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            &times;
+                        </button>
+                        <h4 class="modal-title" id="myModalLabel">
+                            注册协议
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="selectTree" class="ztree" style="height:300px;overflow:auto; ">
+                            {{content}}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭
+                        </button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+    </div>
+</div>
+<!-- /.login-box -->
+<script src="libs/jquery.min.js"></script>
+<script src="libs/jquery.cookie.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/bootstrap.min.js"></script>
+<!--<script src="../../libs/validator.min.js"></script>-->
+<script src="libs/app.js"></script>
+<script src="messages/zh.js"></script>
+<script src="messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+
+<!-- bootstrap select-->
+<script src="plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+
+<script src="js/common.js"></script>
+<script src="js/components.js"></script>
+<script src="../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+
+<script src="../js/register.js"></script>
+</body>
+</html>

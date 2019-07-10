@@ -1,0 +1,341 @@
+
+package com.wzlue.chain.web.controller.order;
+
+import com.wzlue.chain.agent.entity.AgentOrderEntity;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.depot.dao.GoodsOrderDepotDao;
+import com.wzlue.chain.depot.entity.GoodsOrderDepotEntity;
+import com.wzlue.chain.offer.dao.GoodsOfferDao;
+import com.wzlue.chain.offer.entity.GoodsOfferEntity;
+import com.wzlue.chain.offer.service.GoodsOfferService;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.order.service.GoodsOrderService;
+import com.wzlue.chain.sys.entity.SysNoticeEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNoticeService;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+
+/**
+ * 货物订单表
+ *
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-08-15 19:47:29
+ */
+@RestController
+@RequestMapping("/order/goodsorder")
+public class GoodsOrderController extends AbstractController {
+    @Autowired
+    private GoodsOrderService goodsOrderService;
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private GoodsOrderDepotDao goodsOrderDepotDao;
+    @Autowired
+    private GoodsOfferService goodsOfferService;
+    @Autowired
+    private GoodsOfferDao goodsOfferDao;
+    @Autowired
+    private SysNoticeService sysNoticeService;
+
+    /**
+     * 首页展示数据查询(订单成交统计)
+     * queryBy: year season month week days
+     */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String, Object> map) {
+        List<Map> list = new ArrayList<>();
+        Map Obj = new HashMap(16);
+        List<Object> dataList = new ArrayList();
+        List<Map> goodsOrder = goodsOrderService.showList(map);
+        //todo 其他订单的查询 List<Map> delceraOrder ....
+        List<String> itemList = (List) map.get("itemList");
+        Map temp;
+        /* 循环时期节点Array 空值处理 */
+        for (String item : itemList) {
+            temp = new HashMap(16);
+            temp.put("time", item);
+            temp.put("data", null);
+            // 遍历对比数据库的日期节点,当节点有统计值则赋值,否则默认为null;
+            for (Map goodsData : goodsOrder) {
+                String val = (String) goodsData.get("title");
+                if (val.equals(temp.get("time"))) {
+                    temp.put("data", goodsData.get("total"));
+                }
+            }
+            dataList.add(temp);
+            //todo 循环其他订单的数据进行封装处理
+        }
+        Obj.put("name", "货物订单");
+        Obj.put("data", dataList);
+        list.add(Obj);
+
+
+        return R.ok().put("list", list).put("itemList", itemList);
+    }
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        if (params.get("sellerId") != null) {
+            params.put("isDelete", "1");
+            //params.put("agr","agr");
+        } else {
+            params.put("delFlag", "1");
+        }
+        Query query = new Query(params);
+        List<GoodsOrderEntity> goodsOrderList = goodsOrderService.queryList(query);
+        int total = goodsOrderService.queryTotal(query);
+
+        return R.page(goodsOrderList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{orderId}")
+    @RequiresPermissions("order:goodsorder:info")
+    public R info(@PathVariable("orderId") Long orderId) {
+        GoodsOrderEntity goodsOrder = goodsOrderService.queryObject(orderId);
+        GoodsOrderDepotEntity goodsOrderDepot = goodsOrderDepotDao.getCreateTimeByOrder(goodsOrder);
+        goodsOrder.setDepot(goodsOrderDepot);
+        goodsOrder.setPriceVersion(goodsOrderService.getPriceVersion(goodsOrder));
+        return R.ok().put("goodsOrder", goodsOrder);
+    }
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/infoByOrderNumber/{orderNumber}")
+    @RequiresPermissions("order:goodsorder:info")
+    public R info(@PathVariable("orderNumber") String orderNumber) {
+        GoodsOrderEntity goodsOrder = goodsOrderService.queryObjectByOrderNumber(orderNumber);
+        GoodsOrderDepotEntity goodsOrderDepot = goodsOrderDepotDao.getCreateTimeByOrder(goodsOrder);
+        goodsOrder.setDepot(goodsOrderDepot);
+        goodsOrder.setPriceVersion(goodsOrderService.getPriceVersion(goodsOrder));
+        return R.ok().put("goodsOrder", goodsOrder);
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("order:goodsorder:save")
+    public R save(@RequestBody GoodsOrderEntity goodsOrder) {
+       /* if("1".equals(goodsOrder.getIsAgent())){
+            //代理订单
+            goodsOrderService.saveAgentOrder(goodsOrder);
+        }else{*/
+        goodsOrderService.save(goodsOrder);
+        // }
+        return R.ok();
+    }
+
+    @RequestMapping("/appSave")
+    @RequiresPermissions("order:goodsorder:save")
+    public R appSave(@RequestBody GoodsOrderEntity goodsOrder) {
+       /* if("1".equals(goodsOrder.getIsAgent())){
+            //代理订单
+            goodsOrderService.saveAgentOrder(goodsOrder);
+        }else{*/
+        goodsOrderService.appSave(goodsOrder);
+        // }
+        return R.ok();
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/getReviewStatus")
+    @RequiresPermissions("order:goodsorder:info")
+    public R getReviewStatus() {
+        boolean flag = goodsOrderService.getReviewStatus();
+        return R.ok().put("flag", flag);
+    }
+
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("order:goodsorder:update")
+    @Transactional(rollbackFor = Exception.class)
+    public R update(@RequestBody GoodsOrderEntity goodsOrder) {
+        JSONObject jsonObject = JSONObject.fromObject(goodsOrder);
+        System.out.println(jsonObject);
+        goodsOrderService.update(goodsOrder);
+        return R.ok();
+    }
+
+    /**
+     * 接单
+     */
+    @RequestMapping("/updateStatus")
+    @RequiresPermissions("order:goodsorder:update")
+    public R updateStatus(@RequestBody GoodsOrderEntity goodsOrder) {
+        goodsOrderService.updateStatus(goodsOrder);
+        String tbp = "tbp";
+        if (goodsOrder.getStatusCount() != null && tbp.equals(goodsOrder.getOrderStatus())) {
+            //生成账单
+            BillEntity bill = new BillEntity();
+            bill.setOrderNumber(goodsOrder.getOrderNumber());
+            bill.setOrderType(1);
+            billService.save(bill);
+            //生成最新成交通知
+            SysNoticeEntity sysNotice = new SysNoticeEntity();
+            sysNotice.setPositionId("zuixinchengjiao");
+            sysNotice.setNoticeType("0");
+            sysNotice.setCreatedTime(new Date());
+            sysNotice.setCreatedBy(getUser().getUserId());
+            SimpleDateFormat simple = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String nowTime = simple.format(new Date());
+            for (int i = 0; i < goodsOrder.getDetail().size(); i++) {
+                sysNotice.setNoticeContent(goodsOrder.getPurchaserCompanyName() + "买家购得" + goodsOrder.getDetail().get(i).getGoodsName() + "商品    成交时间：" + nowTime);
+                sysNoticeService.save(sysNotice);
+            }
+        }
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/deleteBuy")
+    @RequiresPermissions("order:goodsorder:delete")
+    public R deleteBuy(@RequestBody Long[] orderIds) {
+        goodsOrderService.deleteBatch(orderIds);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/deleteSell")
+    @RequiresPermissions("order:goodsorder:delete")
+    public R deleteSell(@RequestBody Long[] orderIds) {
+        goodsOrderService.deleteBatchSell(orderIds);
+
+        return R.ok();
+    }
+
+    /**
+     * 查询订单状态
+     *
+     * @param orderIds
+     * @return
+     */
+    @RequestMapping("/searchStatus")
+    public R searchStatus(@RequestBody Long[] orderIds) {
+        List<GoodsOrderEntity> goodsOrder = goodsOrderService.searchStatus(orderIds);
+
+        return R.ok().put("goodsStatus", goodsOrder);
+    }
+
+    /**
+     * 通过货物订单号查询
+     *
+     * @param orderNumber
+     * @return
+     */
+    @RequestMapping("/getListByOrderNumber/{orderNumber}")
+    public R getListByOrderNumber(@PathVariable("orderNumber") String orderNumber) {
+
+        GoodsOrderEntity goodsOrderEntity = goodsOrderService.getListByOrderNumber(orderNumber);
+        for (int i=0;i<goodsOrderEntity.getDetail().size();i++){
+            if(goodsOrderEntity.getDetail().get(i).getGoodsUnit().equals("1")){
+                goodsOrderEntity.getDetail().get(i).setGoodsCount(goodsOrderEntity.getDetail().get(i).getGoodsCount()*goodsOrderEntity.getOrderCount());
+            }
+        }
+
+        return R.ok().put("good", goodsOrderEntity);
+    }
+
+    /**
+     * 获取报盘公司
+     *
+     * @param params
+     * @return
+     */
+    @RequestMapping("/getMerchants")
+    public R getMerchants(@RequestBody Map<String, Object> params) {
+        List<MerchantCompanyEntity> merchantCompanyEntity = goodsOrderService.getMerchants(params);
+        return R.ok().put("merchant", merchantCompanyEntity);
+    }
+
+    /**
+     * 查询代理订单
+     *
+     * @param orderNumber
+     * @return
+     */
+    @RequestMapping("/getAgentNo/{orderNumber}")
+    public R getAgentNo(@PathVariable("orderNumber") String orderNumber) {
+        int count = 0;
+        count = goodsOrderService.getAgentInfo(orderNumber);
+        return R.ok().put("count", count);
+    }
+
+    /**
+     * 获取授权公司列表
+     *
+     * @return
+     */
+    @RequestMapping("/getAccreditCompany")
+    public R getAccreditCompany() {
+        List<MerchantCompanyEntity> conpanyList = goodsOrderService.getAccreditCompany();
+        return R.page(conpanyList, conpanyList.size());
+    }
+
+    /**
+     * 获取授权公司下员工
+     *
+     * @return
+     */
+    @RequestMapping("/getCompanyStaff/{companyId}")
+    public R getCompanyStaff(@PathVariable("companyId") Long companyId) {
+        List<SysUserEntity> userList = goodsOrderService.getCompanyStaff(companyId);
+        return R.page(userList, userList.size());
+    }
+
+    /**
+     * 获取授权信息
+     *
+     * @param orderNumber
+     * @return
+     */
+    @RequestMapping("/getAccredit/{orderNumber}")
+    public R getAccredit(@PathVariable("orderNumber") String orderNumber) {
+        Map<String, Object> accreditInfo = goodsOrderService.getAccredit(orderNumber);
+        return R.ok().put("accreditInfo", accreditInfo);
+    }
+
+    /**
+     * 根据代理订单编号查询货物订单
+     *
+     * @param agentOrderNo
+     * @return
+     */
+    @RequestMapping("/queryByAgentOrderNo/{agentOrderNo}")
+    public R queryByAgentOrderNo(@PathVariable("agentOrderNo") String agentOrderNo) {
+        GoodsOrderEntity goodsOrder = goodsOrderService.queryByAgentOrderNo(agentOrderNo);
+        return R.ok().put("goodsOrder", goodsOrder);
+    }
+}

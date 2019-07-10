@@ -1,0 +1,537 @@
+package com.wzlue.chain.offer.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.wzlue.chain.sys.entity.ImageEntity;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+
+/**
+ * 货物求购
+ *
+ * @author hjw
+ * @email love@und.win
+ * @date 2018-08-23 10:01:30
+ */
+public class GoodsBuyingEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    //货物求购Id
+    private Long id;
+    //标题名称
+    private String titleName;
+    //分类id
+    private String categoryId;
+    //分类名称
+    private String categoryName;
+    //0:期货1：现货
+    private Long buyingType;
+    //求购状态0:下架1：上架
+    private Long buyingStatus;
+    //商品名称
+    private String commodityName;
+    //产地
+    private String commodityCountry;
+    private String commodityCountryName;
+    //厂号
+    private String commodityFactoryNumber;
+    //数量
+    private BigDecimal commodityCount;
+    //商品单位
+    private String commodityUnit;
+    //商品单位中文
+    private String commodityUnitZh;
+    //商品图片
+    private List<ImageEntity> images;
+    //货物船期
+    private String goodsSailingTime;
+    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    private Date goodsSailingTime2;
+    //预算价格
+    private String commodityPrice;
+    //包装
+    private String commodityPacking;
+    //提货省
+    private String goodsPodProvince;
+    //提货地址城市
+    private String goodsPodCity;
+    //价格单位
+    private Long unit;
+
+    public Long getUnit() {
+        return unit;
+    }
+
+    public void setUnit(Long unit) {
+        this.unit = unit;
+    }
+
+    public String getProvinceName() {
+        return provinceName;
+    }
+
+    public void setProvinceName(String provinceName) {
+        this.provinceName = provinceName;
+    }
+
+    public String getCityName() {
+        return cityName;
+    }
+
+    public void setCityName(String cityName) {
+        this.cityName = cityName;
+    }
+
+    //提货省中文名
+    private String provinceName;
+    //提货市中文名
+    private String cityName;
+    //商品描述
+    private String goodsDescribe;
+    //创建人
+    private String createBy;
+    //创建时间
+    private Date createTime;
+    //修改人
+    private String modifyBy;
+    //修改时间
+    private Date modifyTime;
+    //备注
+    private String remarks;
+    //货物企业id
+    private String goodsCompanyId;
+    private String companyId;
+    //公司名
+    private String companyName;
+    //公司logo
+    private String shopLogo;
+    //公司简介
+    private String companyProfile;
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public String getShopLogo() {
+        return shopLogo;
+    }
+
+    public void setShopLogo(String shopLogo) {
+        this.shopLogo = shopLogo;
+    }
+
+    public String getCreditScore() {
+        return creditScore;
+    }
+
+    public void setCreditScore(String creditScore) {
+        this.creditScore = creditScore;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    //公司信用度
+    private String creditScore;
+    //联系人
+    private String contact;
+
+    public String getMobile() {
+        return mobile;
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    //联系电话
+    private String mobile;
+
+    /**
+     * 设置：货物求购Id
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    /**
+     * 获取：货物求购Id
+     */
+    public Long getId() {
+        return id;
+    }
+
+    /**
+     * 设置：标题名称
+     */
+    public void setTitleName(String titleName) {
+        this.titleName = titleName;
+    }
+
+    /**
+     * 获取：标题名称
+     */
+    public String getTitleName() {
+        return titleName;
+    }
+
+    /**
+     * 设置：分类id
+     */
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    /**
+     * 获取：分类id
+     */
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    /**
+     * 设置：分类名称
+     */
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    /**
+     * 获取：分类名称
+     */
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    /**
+     * 设置：厂号
+     */
+    public void setCommodityFactoryNumber(String commodityFactoryNumber) {
+        this.commodityFactoryNumber = commodityFactoryNumber;
+    }
+
+    /**
+     * 获取：厂号
+     */
+    public String getCommodityFactoryNumber() {
+        return commodityFactoryNumber;
+    }
+
+    /**
+     * 求购状态0:下架1：上架
+     *
+     * @return
+     */
+    public Long getBuyingStatus() {
+        return buyingStatus;
+    }
+
+    /**
+     * 求购状态0:下架1：上架
+     *
+     * @param buyingStatus
+     */
+    public void setBuyingStatus(Long buyingStatus) {
+        this.buyingStatus = buyingStatus;
+    }
+
+    /**
+     * 设置：0:期货1：现货
+     */
+    public void setBuyingType(Long buyingType) {
+        this.buyingType = buyingType;
+    }
+
+    /**
+     * 获取：0:期货1：现货
+     */
+    public Long getBuyingType() {
+        return buyingType;
+    }
+
+    /**
+     * 设置：商品名称
+     */
+    public void setCommodityName(String commodityName) {
+        this.commodityName = commodityName;
+    }
+
+    /**
+     * 获取：商品名称
+     */
+    public String getCommodityName() {
+        return commodityName;
+    }
+
+    /**
+     * 设置：产地
+     */
+    public void setCommodityCountry(String commodityCountry) {
+        this.commodityCountry = commodityCountry;
+    }
+
+    /**
+     * 获取：产地
+     */
+    public String getCommodityCountry() {
+        return commodityCountry;
+    }
+
+    /**
+     * 设置：数量
+     */
+    public void setCommodityCount(BigDecimal commodityCount) {
+        this.commodityCount = commodityCount;
+    }
+
+    /**
+     * 获取：数量
+     */
+    public BigDecimal getCommodityCount() {
+        return commodityCount;
+    }
+
+    /**
+     * 设置：商品单位
+     */
+    public void setCommodityUnit(String commodityUnit) {
+        this.commodityUnit = commodityUnit;
+    }
+
+    /**
+     * 设置：货物船期
+     */
+    public void setGoodsSailingTime2(Date goodsSailingTime2) {
+        this.goodsSailingTime2 = goodsSailingTime2;
+    }
+
+    /**
+     * 获取：货物船期
+     */
+    public Date getGoodsSailingTime2() {
+        return goodsSailingTime2;
+    }
+
+    public String getGoodsSailingTime() {
+        return goodsSailingTime;
+    }
+
+    public void setGoodsSailingTime(String goodsSailingTime) {
+        this.goodsSailingTime = goodsSailingTime;
+    }
+
+    /**
+     * 获取：商品单位
+     */
+    public String getCommodityUnit() {
+        return commodityUnit;
+    }
+
+    /**
+     * 设置：预算价格
+     */
+    public void setCommodityPrice(String commodityPrice) {
+        this.commodityPrice = commodityPrice;
+    }
+
+    /**
+     * 获取：预算价格
+     */
+    public String getCommodityPrice() {
+        return commodityPrice;
+    }
+
+    /**
+     * 设置：包装
+     */
+    public void setCommodityPacking(String commodityPacking) {
+        this.commodityPacking = commodityPacking;
+    }
+
+    /**
+     * 获取：包装
+     */
+    public String getCommodityPacking() {
+        return commodityPacking;
+    }
+
+    /**
+     * 设置：提货省
+     */
+    public void setGoodsPodProvince(String goodsPodProvince) {
+        this.goodsPodProvince = goodsPodProvince;
+    }
+
+    /**
+     * 获取：提货省
+     */
+    public String getGoodsPodProvince() {
+        return goodsPodProvince;
+    }
+
+    /**
+     * 设置：提货地址城市
+     */
+    public void setGoodsPodCity(String goodsPodCity) {
+        this.goodsPodCity = goodsPodCity;
+    }
+
+    /**
+     * 获取：提货地址城市
+     */
+    public String getGoodsPodCity() {
+        return goodsPodCity;
+    }
+
+    /**
+     * 设置：商品描述
+     */
+    public void setGoodsDescribe(String goodsDescribe) {
+        this.goodsDescribe = goodsDescribe;
+    }
+
+    /**
+     * 获取：商品描述
+     */
+    public String getGoodsDescribe() {
+        return goodsDescribe;
+    }
+
+    /**
+     * 设置：创建人
+     */
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    /**
+     * 获取：创建人
+     */
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    /**
+     * 设置：创建时间
+     */
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    /**
+     * 获取：创建时间
+     */
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    /**
+     * 设置：修改人
+     */
+    public void setModifyBy(String modifyBy) {
+        this.modifyBy = modifyBy;
+    }
+
+    /**
+     * 获取：修改人
+     */
+    public String getModifyBy() {
+        return modifyBy;
+    }
+
+    /**
+     * 设置：修改时间
+     */
+    public void setModifyTime(Date modifyTime) {
+        this.modifyTime = modifyTime;
+    }
+
+    /**
+     * 获取：修改时间
+     */
+    public Date getModifyTime() {
+        return modifyTime;
+    }
+
+    /**
+     * 设置：备注
+     */
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
+    /**
+     * 获取：备注
+     */
+    public String getRemarks() {
+        return remarks;
+    }
+
+    /**
+     * 设置：货物企业id
+     */
+    public void setGoodsCompanyId(String goodsCompanyId) {
+        this.goodsCompanyId = goodsCompanyId;
+    }
+
+    /**
+     * 获取：货物企业id
+     */
+    public String getGoodsCompanyId() {
+        return goodsCompanyId;
+    }
+
+    public List<ImageEntity> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ImageEntity> images) {
+        this.images = images;
+    }
+
+    public String getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(String companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getCommodityCountryName() {
+        return commodityCountryName;
+    }
+
+    public void setCommodityCountryName(String commodityCountryName) {
+        this.commodityCountryName = commodityCountryName;
+    }
+
+    public String getCompanyProfile() {
+        return companyProfile;
+    }
+
+    public void setCompanyProfile(String companyProfile) {
+        this.companyProfile = companyProfile;
+    }
+
+    public String getCommodityUnitZh() {
+        return commodityUnitZh;
+    }
+
+    public void setCommodityUnitZh(String commodityUnitZh) {
+        this.commodityUnitZh = commodityUnitZh;
+    }
+}

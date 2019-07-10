@@ -1,0 +1,313 @@
+var vm = new Vue({
+    el: '#chartBD',
+    i18n,
+    data: function () {
+        return {
+            params: {},
+        }
+    },
+    created: function () {
+        let $this = this;
+        // $this.getOrderData('orderChart','week');
+    },
+    mounted: function () {
+
+    },
+    methods: {
+        /**
+         * @Author Zeyee
+         * 订单统计区域 点击事件逻辑
+         * nodeName chart对象 id
+         * type 统计的日期类型 : year...week
+         * dataList 统计数据
+         * labelsList  X 轴展示的 节点Array => ['1月','2月'...]
+         *
+         * */
+        changeOrderCharts: function (nodeName, type, dataList, labelsList) {
+            $("#" + nodeName).highcharts({
+                title: {text: '订单成交量'},
+                subtitle: {
+                    text: type
+                },
+                yAxis: {
+                    title: {
+                        text: '订单量'
+                    },
+                    // lineWidth: 1,
+                    id: 'order-yAxis',
+                },
+                xAxis: {
+                    categories: labelsList
+                },
+                series: dataList,
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 500
+                        },
+                        chartOptions: {
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+            })
+        },
+
+        /**
+         * @Author Zeyee
+         * 获取订单统计数据(Api)
+         * type 查询该统计对象数据时所依据的 日期类型 : year...week
+         * */
+        getOrderData: function (nodeName, type) {
+            var params = {};
+            params.dateType = type;
+            params.stime = '';
+            params.etime = '';
+            params.itemList = [];
+            this.getDateArray(params);
+
+            if('orderChart'){
+                vm.orderRequestData(nodeName, type, params)
+            }else if('receivableChart') {
+                vm.receivableRequestData(nodeName, type, params)
+            }else if('userRequestData') {
+                vm.userRequestData(nodeName, type, params)
+            }
+
+        },
+
+        // 订单ajax
+        orderRequestData: function (nodeName, type, params) {
+            let Statistical = '';
+            switch (type) {
+                case 'year':
+                    Statistical = '本年度销量';
+                    break;
+                case 'quarter':
+                    Statistical = '本季度销量';
+                    break;
+                case 'month':
+                    Statistical = '本月销量';
+                    break;
+            }
+            $.ajax({
+                type: 'post',
+                url: baseURL + "reportform/highcharts/showList",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (res) {
+                    if (res.code == 0) {
+                        let data = [];
+                        res.list.forEach(function (item, index) {
+                            data = [];
+                            item.data.forEach(function (val) {
+                                console.log('val', val);
+                                data.push(val.data);
+                            });
+                            item.data = data;
+                        });
+                        vm.changeOrderCharts(nodeName, Statistical, res.list, res.itemList);
+                    } else {
+                        alert(res.msg);
+                    }
+                }
+            });
+        },
+        // 应收应付ajax
+        receivableRequestData: function (nodeName, type, params) {
+            let Statistical = '';
+            switch (type) {
+                case 'year':
+                    Statistical = '本年度应收应付';
+                    break;
+                case 'quarter':
+                    Statistical = '本季度应收应付';
+                    break;
+                case 'month':
+                    Statistical = '本月应收应付';
+                    break;
+            }
+            $.ajax({
+                type: 'post',
+                url: baseURL + "reportform/highcharts/showList",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (res) {
+                    if (res.code == 0) {
+                        let data = [];
+                        res.list.forEach(function (item, index) {
+                            data = [];
+                            item.data.forEach(function (val) {
+                                console.log('val', val);
+                                data.push(val.data);
+                            });
+                            item.data = data;
+                        });
+                        vm.changeOrderCharts(nodeName, Statistical, res.list, res.itemList);
+                    } else {
+                        alert(res.msg);
+                    }
+                }
+            });
+        },
+        // 新增客户量ajax
+        userRequestData: function (nodeName, type, params) {
+            let Statistical = '';
+            switch (type) {
+                case 'year':
+                    Statistical = '本年度新增客户量';
+                    break;
+                case 'quarter':
+                    Statistical = '本季度新增客户量';
+                    break;
+                case 'month':
+                    Statistical = '本月新增客户量';
+                    break;
+            }
+            $.ajax({
+                type: 'post',
+                url: baseURL + "reportform/highcharts/showList",
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                success: function (res) {
+                    if (res.code == 0) {
+                        let data = [];
+                        res.list.forEach(function (item, index) {
+                            data = [];
+                            item.data.forEach(function (val) {
+                                console.log('val', val);
+                                data.push(val.data);
+                            });
+                            item.data = data;
+                        });
+                        vm.changeOrderCharts(nodeName, Statistical, res.list, res.itemList);
+                    } else {
+                        alert(res.msg);
+                    }
+                }
+            });
+        },
+
+        /**
+         * 获取日期数组
+         * options 查询对象 {stime[开始时间], etime[结束时间], dateType[日期类型], itemList:将展示的X轴节点}
+         * */
+        getDateArray: function (options) {
+            let $this = this;
+            let array = [];
+            let date = new Date();
+            let str = '';
+            if (options == null || options.dateType == null || options.dateType == '') {
+                options = {};
+                options.dateType = '';
+            }
+            options.stime = '';
+            options.etime = '';
+            let nowMonth = date.getMonth() + 1;
+            switch (options.dateType) {
+                case 'year' :
+                    for (let i = 1; i <= nowMonth; i++) {
+                        if (i == 1) {
+                            str = '';
+                            options.stime = str.concat(date.getFullYear(), '-', i, '-', '01');
+                        }
+                        str = '';
+                        array.push(str.concat(i, '月'));
+                        if (i == nowMonth) {
+                            str = '';
+                            options.etime = str.concat(date.getFullYear(), '-', i, '-', date.getDate());
+                        }
+                    }
+                    break;
+                case 'quarter' :
+                    let nowQuarter = Math.floor((date.getMonth() + 3) / 3);
+                    for (let i = (nowQuarter - 1) * 3 + 1; i <= nowMonth; i++) {
+                        if (i == (nowQuarter - 1) * 3 + 1) {
+                            str = '';
+                            options.stime = str.concat(date.getFullYear(), '-', i, '-', '01');
+                        }
+                        str = '';
+                        array.push(str.concat(i, '月'));
+                        if (i == nowMonth) {
+                            str = '';
+                            options.etime = str.concat(date.getFullYear(), '-', i, '-', date.getDate());
+                        }
+                    }
+                    break;
+                case 'month' :
+                    let nowDay = date.getDate();
+                    for (let i = 1; i <= nowDay; i++) {
+                        if (i == 1) {
+                            str = '';
+                            options.stime = str.concat(date.getFullYear(), '-', nowMonth, '-', i);
+                        }
+                        str = '';
+                        array.push(str.concat(parseInt(date.getMonth()) + 1, '-', i));
+
+                        if (i == nowDay) {
+                            str = '';
+                            options.etime = str.concat(date.getFullYear(), '-', nowMonth, '-', i);
+                        }
+                    }
+                    break;
+                case 'week' :
+                    let sD = date;
+                    for (let i = 6; i >= 0; i--) {
+                        sD = new Date();
+                        sD.addDays(-i);
+                        if (i == 6) {
+                            str = '';
+                            options.stime = str.concat(sD.getFullYear(), '-', sD.getMonth() + 1, '-', sD.getDate());
+                        }
+                        str = '';
+                        array.push(str.concat(sD.getMonth() + 1, '-', parseInt(sD.getDate())));
+                        if (i == 0) {
+                            str = '';
+                            options.etime = str.concat(date.getFullYear(), '-', date.getMonth() + 1, '-', date.getDate());
+                        }
+                    }
+                    break;
+                default :
+                    let nD = date;
+                    for (let i = 6; i >= 0; i--) {
+                        nD = new Date();
+                        nD.addDays(-i);
+                        if (i == 6) {
+                            str = '';
+                            options.stime = str.concat(nD.getFullYear(), '-', nD.getMonth() + 1, '-', nD.getDate());
+                        }
+                        str = '';
+                        array.push(str.concat(nD.getMonth() + 1, '-', parseInt(nD.getDate())));
+                        if (i == 0) {
+                            str = '';
+                            options.etime = str.concat(date.getFullYear(), '-', date.getMonth() + 1, '-', date.getDate());
+                        }
+                    }
+                    break;
+            }
+            options.itemList = array;
+            console.log('节点列表:', options.itemList);
+            console.log("sTime:", options.stime);
+            console.log("eTime:", options.etime);
+            return options;
+        },
+        /**
+         * 订单统计日期类型 点击事件逻辑
+         * nodeName chart对象所在div的id
+         * type 当前点击的日期类型*/
+        changeOrderBtn: function (nodeName, btnName) {
+            if (btnName == 'orderCharY') {
+                vm.getOrderData(nodeName, 'year');
+            } else if (btnName == 'orderCharQ') {
+                vm.getOrderData(nodeName, 'quarter');
+            } else if (btnName == 'orderCharM') {
+                vm.getOrderData(nodeName, 'month');
+            }
+        }
+    }
+})
+

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>营销拍卖表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('auction')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <!--<li v-if="title==null"><a href="#" @click="reload">刷新</a></li>-->
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <div>
+        <!-- 选项卡组件（菜单项nav-tabs）-->
+        <div class="row">
+            <div class="col-xs-12" v-if="title=='详情'">
+                <ul id="myTab" class="nav nav-tabs" role="tablist">
+                    <li class="active"><a href="#record1" role="tab" data-toggle="tab">{{$t('auction')}}</a></li>
+                    <li class="active1"><a href="#record2" role="tab" data-toggle="tab">{{$t('ParticipationInBidRecord')}}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- 选项卡面板 -->
+        <!-- <div id="myTabContent" class="tab-content"> -->
+        <div v-show="showList">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="col-xs-2" style="padding-left: 0px;">
+                        <input type="text" class="form-control" v-model="params.auctionNumber"
+                               :placeholder="$t('PleaseEnterTheAuctionNumber')"/>
+                    </div>
+                    <div class="col-xs-2" style="padding-left: 0px;">
+                        <input type="text" class="form-control" v-model="params.auctionCommodityName"
+                               :placeholder="$t('PleaseEnterTheNameOfTheAuctionProduct')"/>
+                    </div>
+                    <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+                    </button>
+                    <button v-if="hasPermission('marketing:marketauction:save')" class="btn btn-primary"
+                            @click="add">
+                        <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+                    </button>
+                    <button v-if="hasPermission('marketing:marketauction:update')" class="btn btn-warning"
+                            @click="update">
+                        <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+                    </button>
+                    <button v-if="hasPermission('marketing:marketauction:delete')" class="btn btn-danger"
+                            @click="del">
+                        <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}
+                    </button>
+                    <button class="btn btn-success"
+                            @click="updateStatusUp">
+                        <i class="fa fa-edit"></i>&nbsp;{{$t('shelf')}}
+                    </button>
+                    <button class="btn btn-success"
+                            @click="updateStatusDown">
+                        <i class="fa fa-edit"></i>&nbsp;{{$t('obtained')}}
+                    </button>
+                </div>
+            </div>
+            <!-- 列表 -->
+            <div class="row">
+                <div class="col-xs-12">
+                    <table id="table1"></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 拍卖新增 -->
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane active" id="record1">
+                <div class="row">
+                    <div class="col-xs-12" v-show="!showList">
+                        <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+                            <div class="panel-body">
+                                <form class="form-horizontal" id="form" onkeydown="if(event.keyCode==13){return false;}">
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label" style="width:124px;">
+                                                        {{$t('AuctionOfCommodityNames')}}
+                                                    </label>
+                                                    <div class="col-sm-10">
+                                                        <input type="text" name="auctionCommodityName"
+                                                               class="form-control"
+                                                               v-model="marketAuction.auctionCommodityName"
+                                                               :placeholder="$t('AuctionOfCommodityNames')"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('startingPrice')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <div class="input-group">
+                                                            <input style="width: 56%" type="text" name="startingPrice"
+                                                                   class="form-control"
+                                                                   v-model="marketAuction.startingPrice"
+                                                                   :placeholder="$t('startingPrice')"/>
+                                                            <select style="width: 37%" class="form-control"
+                                                                    v-model="marketAuction.unit"
+                                                                    name="unit">
+                                                                <option value="0">{{$t('RMB')}}</option>
+                                                                <option value="1">{{$t('Dollar')}}</option>
+                                                                <option value="2">{{$t('Euro')}}</option>
+                                                                <option value="3">{{$t('Pound')}}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('AuctionMethod')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <select class="form-control" v-model="marketAuction.type"
+                                                                name="type">
+                                                            <option value="0">{{$t('PriceReduction')}}</option>
+                                                            <option value="1">{{$t('RaisePrice')}}</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <div class="form-group required" style="width: 670px;">
+                                                    <label class="col-sm-2 control-label">{{$t('PlaceofDelivery')}}</label>
+                                                    <div class="col-sm-10" style="display: flex">
+                                                        <vm-select :options="provinces" :title="$t('selectProvince')"
+                                                                   search="true"
+                                                                   v-model="marketAuction.province"
+                                                                   name="province" :method="provincesChange"
+                                                                   :value="marketAuction.province"></vm-select>&nbsp;&nbsp;&nbsp;&nbsp;
+                                                        <vm-select :options="cities" :title="$t('selectCities')"
+                                                                   search="true"
+                                                                   v-model="marketAuction.city"
+                                                                   name="city" :value="marketAuction.city"></vm-select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!--  <div class="col-sm-4">
+                                                 <div class="form-group">
+                                                     <div class="col-sm-2 control-label">{{$t('status')}}</div>
+                                                     <div class="col-sm-10">
+                                                         <select class="form-control" v-model="marketAuction.status"
+                                                                 name="status">
+                                                             <option value="2">{{$t('noShelf')}}</option>
+                                                             <option value="0">{{$t('shelf')}}</option>
+                                                             <option value="1">{{$t('LowerShelves')}}</option>
+                                                         </select>
+                                                     </div>
+                                                 </div>
+                                             </div> -->
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-4" v-if="marketAuction.type==0">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('ReservePrice')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <div class="input-group">
+                                                            <input style="width: 56%" type="text" name="reservePrice"
+                                                                   class="form-control"
+                                                                   v-model="marketAuction.reservePrice"
+                                                                   :placeholder="$t('ReservePrice')"/>
+                                                            <select style="width: 37%" class="form-control"
+                                                                    v-model="marketAuction.unit" disabled
+                                                                    name="unit">
+                                                                <option value="0">{{$t('RMB')}}</option>
+                                                                <option value="1">{{$t('Dollar')}}</option>
+                                                                <option value="2">{{$t('Euro')}}</option>
+                                                                <option value="3">{{$t('Pound')}}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label v-if="marketAuction.type==0" class="col-sm-2 control-label">{{$t('DepreciatePerHour')}}</label>
+                                                    <label v-if="marketAuction.type==1" class="col-sm-2 control-label">{{$t('VariablePriceRange')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <div class="input-group">
+                                                            <input style="width: 56%" type="text" name="amplitude"
+                                                                   class="form-control"
+                                                                   v-model="marketAuction.amplitude"
+                                                                   :placeholder="$t('VariablePriceRange')"/>
+                                                            <select style="width: 37%" class="form-control"
+                                                                    v-model="marketAuction.unit" disabled
+                                                                    name="unit">
+                                                                <option value="0">{{$t('RMB')}}</option>
+                                                                <option value="1">{{$t('Dollar')}}</option>
+                                                                <option value="2">{{$t('Euro')}}</option>
+                                                                <option value="3">{{$t('Pound')}}</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- <div class="col-sm-4">
+                                                <div class="form-group">
+                                                    <div class="col-sm-2 control-label">{{$t('DelayPeriod')}}</div>
+                                                    <div class="col-sm-10">
+                                                        <input type="text" name="delayPeriod" class="form-control"
+                                                               v-model="marketAuction.delayPeriod" :placeholder="$t('DelayPeriod')"/>
+                                                    </div>
+                                                </div>
+                                            </div> -->
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('StartTime')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <input type="text" name="startTime" readonly
+                                                               class="form-control select-box-input"
+                                                               id="startTime"
+                                                               v-model="marketAuction.startTime"
+                                                               :placeholder="$t('StartTime')"
+                                                               data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('EndTime')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <input type="text" name="endTime" readonly
+                                                               class="form-control select-box-input"
+                                                               id="endTime"
+                                                               v-model="marketAuction.endTime"
+                                                               :placeholder="$t('EndTime')"
+                                                               data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-11">
+                                                <div class="form-group required">
+                                                    <label class="col-sm-2 control-label">{{$t('Photo')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <commodity-fileinput ref="file" :this_multiple="false"
+                                                                             :drop_zone_enabled="false"
+                                                                             :show_preview="true" :max_file_count='5'
+                                                                             :files="files"
+                                                                             :image_list="marketAuction.file"></commodity-fileinput>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-11">
+                                                <div class="form-group">
+                                                    <label class="col-sm-2 control-label">{{$t('description')}}</label>
+                                                    <div class="col-sm-10">
+                                                        <el-textarea id="myEditor" name="describe"
+                                                                     v-model="marketAuction.describe"></el-textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body">
+                                        <div class="row">
+                                            <input v-if="!addTxBtn&&!updateStatus" href="javascript:void(0);"
+                                                   type="button" :value="$t('NewGoods')"
+                                                   class="btn btn-sm btn-primary" @click="addGoods('txtBtn')"/>
+                                        </div>
+                                        <br>
+                                        <div style="color: red;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{$t('tip1')}}</div>
+                                        <div class="row">
+                                            <div class="col-sm-12 table-responsive" style="max-height: 550px;">
+                                                <table class="table table-bordered">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>{{$t('NameOfGoods')}}</th>
+                                                        <th>{{$t('place')}}</th>
+                                                        <th>{{$t('FactoryNumber')}}</th>
+                                                        <th>{{$t('UnitPrice')}}</th>
+                                                        <th>{{$t('Weight')}}</th>
+                                                        <th>{{$t('unit')}}</th>
+                                                        <th v-if="!addTxBtn&&!updateStatus">{{$t('chaozuo')}}</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr v-for="(item,index) in marketAuctionCommodityList"
+                                                        v-if="!addTxBtn&&marketAuctionCommodityList&&!updateStatus">
+
+                                                        <td><input type="text" class="form-control"
+                                                                   v-model="marketAuctionCommodityList[index].commodityName">
+                                                        </td>
+                                                        <td>
+                                                            <select type="text" class="form-control"
+                                                                    v-model="marketAuctionCommodityList[index].commodityCountry">
+                                                                <option :value="p.code" v-for="p in placeData">
+                                                                    {{p.name}}
+                                                                </option>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="text" class="form-control"
+                                                                   v-model="marketAuctionCommodityList[index].commodityFactoryNumber">
+                                                        </td>
+                                                        <td><input type="text" class="form-control"
+                                                                   v-model="marketAuctionCommodityList[index].commodityPrice">
+                                                        </td>
+                                                        <td><input type="text" class="form-control"
+                                                                   v-model="marketAuctionCommodityList[index].commodityCount">
+                                                        </td>
+                                                        <td>
+                                                            <select type="text" class="form-control"
+                                                                    v-model="marketAuctionCommodityList[index].commodityUnit">
+                                                                <option :value="p.code" v-for="p in unitList">
+                                                                    {{p.name}}
+                                                                </option>
+                                                            </select>
+                                                        </td>
+                                                        <td><a class="fa fa-trash-o" href="javascript:void(0)"
+                                                               @click="removeGoods(index)"
+                                                               class=""></a></td>
+                                                    </tr>
+                                                    <tr v-for="(item,index) in marketAuctionCommodityList"
+                                                        v-if="addTxBtn&&!updateStatus">
+                                                        <td>{{item.commodityName}}</td>
+                                                        <td>
+                                                            <select type="text" class="form-control"
+                                                                    v-model="item.commodityCountry"
+                                                            >
+                                                                <option :value="p.code" v-for="p in placeData">
+                                                                    {{p.name}}
+                                                                </option>
+                                                            </select>
+                                                        </td>
+                                                        <td>{{item.commodityFactoryNumber}}</td>
+                                                        <td>{{item.commodityPrice}}</td>
+                                                        <td>{{item.commodityCount}}</td>
+                                                        <td>
+                                                            <select type="text" class="form-control"
+                                                                    v-model="marketAuctionCommodityList[index].commodityUnit"
+                                                            >
+                                                                <option :value="p.code" v-for="p in unitList">
+                                                                    {{p.name}}
+                                                                </option>
+                                                            </select>
+                                                        </td>
+                                                        <td v-if="!addTxBtn"></td>
+                                                    </tr>
+                                                    <tr v-for="(item,index) in marketAuctionCommodityList"
+                                                        v-if="updateStatus">
+                                                        <td>{{item.commodityName}}</td>
+                                                        <td>{{getCommodityCountry(item.commodityCountry)}}</td>
+                                                        <td>{{item.commodityFactoryNumber}}</td>
+                                                        <td>{{item.commodityPrice}}</td>
+                                                        <td>{{item.commodityCount}}</td>
+                                                        <td v-for="p in unitList" v-if="p.code==item.commodityUnit">
+                                                            {{p.name}}
+                                                        </td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="form-group" v-if="title=='新增'|| title=='修改'">
+                                            <div class="col-sm-2 control-label"></div>
+                                            <input type="button" class="btn btn-primary" @click="validate"
+                                                   :value="$t('sure')"/>
+                                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload"
+                                                               :value="$t('return')"/>
+                                        </div>
+                                        <div class="form-group" v-if="title=='详情'">
+                                            <div class="col-sm-2 control-label"></div>
+                                            <input type="button" class="btn btn-primary" @click="reload"
+                                                   :value="$t('return')"/>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 拍卖记录 -->
+            <div class="tab-pane active1" id="record2" v-show="!showList1">
+                <div class="row">
+                    <div class="col-xs-12">
+                        <button v-if="hasPermission('marketing:marketbidrecord:save')"
+                                class="btn btn-primary pull-right"
+                                @click="add1">
+                            <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+                        </button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <table id="table2"></table>
+                    </div>
+                </div>
+
+            </div>
+            <!-- 拍卖记录新增 -->
+            <div class="row">
+                <div class="col-xs-12" v-show="!showList2">
+                    <div class="panel panel-default" style="margin-top: 20px;">
+                        <div class="panel-body">
+                            <form class="form-horizontal" id="addform" onkeydown="if(event.keyCode==13){return false;}">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <div class="col-sm-2 control-label">{{$t('offer')}}</div>
+                                                <div class="col-sm-10">
+                                                    <input type="text" name="terminalPrice" class="form-control"
+                                                           v-model="marketBidRecord.terminalPrice"
+                                                           :placeholder="$t('FinalBid')"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <div class="col-sm-2 control-label">{{$t('AuctionOfCommodityNames')}}
+                                                </div>
+                                                <div class="col-sm-10">
+                                                    <!--<input type="text" name="commodityName" class="form-control"
+                                                           v-model="marketBidRecord.commodityName"
+                                                           placeholder="拍卖商品名称"/>-->
+                                                    <vm-select :options="options"
+                                                               search="true"
+                                                               title="请选择"
+                                                               v-model="marketBidRecord.auctionId"
+                                                               name="commodityName"
+                                                               @input="optionChange"></vm-select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <div class="col-sm-2 control-label">{{$t('business')}}</div>
+                                                <div class="col-sm-10">
+                                                    <input type="text" name="" class="form-control"
+                                                           v-model="marketBidRecord.companyName"
+                                                           :placeholder="$t('business')" disabled/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <div class="col-sm-2 control-label">{{$t('status')}}</div>
+                                                <div class="col-sm-10">
+                                                    <select class="form-control" v-model="marketBidRecord.status"
+                                                            name="status">
+                                                        <option value="0">{{$t('OutOfOffice')}}</option>
+                                                        <option value="1">{{$t('WinningTheBid')}}</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <div class="form-group">
+                                                <div class="col-sm-2 control-label">{{$t('BidTime')}}</div>
+                                                <div class="col-sm-10">
+                                                    <input type="text" name="bidTime"
+                                                           class="form-control select-box-input datepicker"
+                                                           id="bidTime"
+                                                           v-model="marketBidRecord.bidTime"
+                                                           :placeholder="$t('BidTime')"
+                                                           data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group" v-if="title=='新增'">
+                                        <div class="col-sm-2 control-label"></div>
+                                        <input type="button" class="btn btn-primary" @click="validate1"
+                                               :value="$t('sure')"/>
+                                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload"
+                                                           :value="$t('return')"/>
+                                    </div>
+                                    <div class="form-group" v-if="title=='详情'">
+                                        <div class="col-sm-2 control-label"></div>
+                                        <input type="button" class="btn btn-primary" @click="reload"
+                                               :value="$t('return')"/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<!--文件上传插件-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<!--时间插件-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<!-- 图片上传、富文本编辑器-->
+<script src="../../plugins/ueditor/ueditor.config.js"></script>
+<script src="../../plugins/ueditor/ueditor.all.js"></script>
+<script src="../../plugins/ueditor/ueditor.parse.js"></script>
+
+
+<script src="../../js/modules/marketing/marketauction.js"></script>
+<script type="text/javascript">
+    $("#startTime").datetimepicker({
+        format: 'yyyy-mm-dd hh:ii:ss',
+        autoclose: true,//自动关闭
+        startDate: new Date(),
+        todayBtn: true,
+        todayHighlight: true,
+
+    });
+
+</script>
+</body>
+</html>

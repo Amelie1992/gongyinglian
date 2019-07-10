@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>物流订单</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/kdniao/css/KDNWidget.css"/>
+    <link rel="stylesheet" href="../../css/main.css">
+    <!--文件上传-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('LogisticsOrderList')}}{{$t('Sell')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" placeholder="根据订单号查询"
+                       maxlength="25"/>
+            </div>
+            <div class="col-xs-2">
+                <vm-select :options="statusSelect" title="选择订单状态" search="true"
+                           name="statusSelect" @input="" v-model="params.orderStatus"></vm-select>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <!--详情-->
+    <div v-show="!showList && afterSDetail ==false" style="margin-top: 20px;">
+        <section class="content-header">
+            <h1>
+                {{$t('OrderDetails')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+            </h1>
+        </section>
+        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+            <div class="row">
+                <div class="panel panel-default col-sm-6 text-center" style="height: 200px">
+                    <div class="panel-body text-center" style="height: 300px">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="pull-right">{{$t('ContractNumber')}}：</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="pull-left">{{logisticsOrder.contractNumber}}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <div class="pull-right">{{$t('OrderId')}}：</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="pull-left">{{logisticsOrder.orderNumber}}</div>
+                            </div>
+                        </div>
+                        <template v-if="logisticsOrder.orderStatus==0">
+                            <h1 style="color: red;">{{$t('WaitForPayment')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==1">
+                            <h1 style="color: red;">{{$t('OrderUnPaid')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==2">
+                            <h1 style="color: green;">{{$t('ReceiptPayment')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==3">
+                            <h1 style="color: green;">{{$t('PendingShip')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.passStatus==1">
+                            <h1 v-if="logisticsOrder.payStatus==0">{{$t('LogisticsChargesAreNotSettled')}}</h1>
+                            <button v-if="logisticsOrder.payStatus==0">{{$t('ImmediatePayment')}}</button>
+                            <h1 v-if="logisticsOrder.payStatus==1">{{$t('TheLogisticsFeeHasBeenSettled')}}</h1>
+                        </template>
+                        <!--<template v-if="logisticsOrder.passStatus==2">-->
+                            <!--<h1>{{$t('OrderCancelled')}}</h1>-->
+                        <!--</template>-->
+                        <template v-if="logisticsOrder.orderStatus==5">
+                            <h1 style="color: green;">{{$t('Shipped')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==6">
+                            <h1 style="color: green;">{{$t('TransactionCompletion')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==7">
+                            <h1 style="color: red;">{{$t('OrderCancelle')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==8">
+                            <h1 style="color: red;">{{$t('BuyCancelled')}}</h1>
+                        </template>
+                        <template v-if="logisticsOrder.orderStatus==9">
+                            <h1 style="color: red;">{{$t('SellCancelled')}}</h1>
+                        </template>
+                        <!--<template v-if="logisticsOrder.passStatus==0">-->
+                        <!--<h1 style="color: green;">{{$t('OrderUnPaid')}}</h1>-->
+                        <!--</template>-->
+                        <!--<template v-if="logisticsOrder.passStatus==1">-->
+                            <!--<h1 style="color: green;">{{$t('OrderPaid')}}</h1>-->
+                        <!--</template>-->
+                    </div>
+                </div>
+                <div class="panel panel-default col-sm-6" align="center" style="height: 200px">
+                    <!--v-if="logisticsOrder.passStatus==0">-->
+                    <div class="panel-body">
+                        <div>{{$t('LogisticsContactInformation')}}</div>
+                        <div>{{$t('consignee')}}：{{logisticsOrder.contact}}</div>
+                        <div>{{$t('phone')}}：{{logisticsOrder.phone}}</div>
+                        <div>{{$t('address')}}：{{logisticsOrder.address}}</div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <!--接单信息-->
+        <div class="panel panel-default">
+            <div class="panel-title text-left"><span>&nbsp;&nbsp;&nbsp;&nbsp;{{$t('business')}}：{{logisticsOrder.merchantCompanyName}}&nbsp;&nbsp;&nbsp;&nbsp;{{$t('ContactInformation')}}：{{logisticsOrder.merchantPhone}}</span>
+            </div>
+            <div class="panel-body">
+                <div>
+                    {{$t('OrderInformation')}}
+                </div>
+                <div>{{$t('OrderTime')}}：{{logisticsOrder.createdTime}}</div>
+                <table class="table table-striped table_list" id="contentTable"></table>
+                <div class="row">
+                    <div class="col-sm-1 text-right"><span>{{$t('Remarks')}}</span></div>
+                    <div class="col-sm-8"><textarea type="text" class="form-control"
+                                                    v-model="logisticsOrder.remarks"
+                                                    :placeholder="$t('Remarks')"></textarea></div>
+                </div>
+                <div class="text-right">
+                    <div>{{$t('TotalPrice')}}：￥{{logisticsOrder.total}}</div>
+                    <!--<div>{{$t('freight')}}：￥0.00</div>-->
+                    <!--<div>{{$t('RealPayment')}}：￥{{logisticsOrder.total}}</div>-->
+                </div>
+            </div>
+        </div>
+        <!--物流信息-->
+        <div class="row">
+            <div class="form-group">
+                <div class="panel panel-default" v-show="viewStatus==1">
+                    <div class="panel-heading">
+                        <div class="panel-title">
+                            {{$t('ShippingInformation')}}
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <!--<div id="shipElement"></div>-->
+                        <div v-if="logisticsOrderShip.id != null">
+                            <iframe :src="ship1" width="800" height="500" frameborder="0" scrolling="yes"></iframe>
+                        </div>
+                        <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                            <div class="row">
+                                <div class="form-group col-sm-3">
+                                    <label for="logisticsCode" style="width: 128px" class="col-sm-3 control-label">{{$t('LogisticsCompany')}}</label>
+	                                <div class="col-md-7">
+	                                    <!--<vm-select :options="logisticsOptions" title="选择快递" search="true"-->
+	                                               <!--v-model="logisticsOrderShip.logisticsCode"-->
+	                                               <!--:value="logisticsOrderShip.logisticsCode"-->
+	                                               <!--name="logisticsOptions"></vm-select>-->
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="logisticsCode" v-model="logisticsOrderShip.logisticsCode" maxlength="50"/>
+	                                </div>
+                                </div>
+                                <div class="form-group col-sm-3 required">
+                                    <label for="logisticsNumber" style="width: 128px" class="col-sm-3 control-label">{{$t('LogisticsSingleNumber')}}</label>
+	                                <div class="col-md-7">
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="logisticsNumber" v-model="logisticsOrderShip.logisticsNumber" maxlength="50"/>
+	                                </div>
+                                </div>
+                                <div class="form-group col-sm-3 required">
+                                    <label for="numberPlate" style="width: 128px" class="col-sm-3 control-label">{{$t('LicensePlateNumber')}}</label>
+	                                <div class="col-md-7">
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="numberPlate" v-model="logisticsOrderShip.numberPlate" maxlength="20"/>
+	                                </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-sm-3 required">
+                                    <label for="driverName" style="width: 128px" class="col-sm-3 control-label">{{$t('DriverName')}}</label>
+	                                <div class="col-md-7">
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverName" v-model="logisticsOrderShip.driverName" maxlength="20"/>
+	                                </div>
+                                </div>
+                                <div class="form-group col-sm-3 required">
+                                    <label for="driverNumber" style="width: 128px" class="col-sm-3 control-label">{{$t('DriverNumber')}}</label>
+	                                <div class="col-md-7">
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverNumber" v-model="logisticsOrderShip.driverNumber" maxlength="11"/>
+	                                </div>
+                                </div>
+                                <div class="form-group col-sm-3">
+                                    <label for="driverIdNumber" style="width: 128px" class="col-sm-3 control-label">{{$t('DriverIdNumber')}}</label>
+	                                <div class="col-md-7">
+	                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="driverIdNumber" v-model="logisticsOrderShip.driverIdNumber" maxlength="18"/>
+	                                </div>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="remark" style="width: 128px" class="col-sm-3 control-label">{{$t('Remarks')}}</label>
+                                <div class="col-md-5">
+                                    <input class="form-control" type="text" :disabled="viewStatus != 1" id="remark" v-model="logisticsOrderShip.remark" maxlength="255"/>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <input type="button" class="btn btn-warning m-left-5" @click="reload" :value="$t('return')"/>
+                <input type="button" class="btn btn-default m-left-5" v-if="logisticsOrderShip.id == null" v-show="viewStatus == 1"
+                       @click="addLogisticsOrderShip" :value="$t('PreservingLogisticsInformation')"/>
+                <input type="button" class="btn btn-danger" style="float: right;margin-left: 10px;"
+                       v-if="logisticsOrder.sellStatus == 0 && logisticsOrder.orderStatus >0" @click="toushu"
+                       :value="$t('Complaint')"/>
+                <input type="button" class="btn btn-danger" style="float: right;margin-left: 10px;"
+                       v-if="logisticsOrder.sellStatus==1" @click="complaintDetail" :value="$t('DetailsOfComplaint')"/>
+                <input type="button" class="btn btn-primary" style="float: right;margin-left: 10px;"
+                       v-if="logisticsOrder.alterSale==1" @click="handleAfterSale" :value="$t('AfterProcessing')"/>
+                <input type="button" class="btn btn-primary" style="float: right"
+                       v-if="logisticsOrder.alterSale>0" @click="asDetail"
+                       :value="$t('DetailsOfAfterSaleService')"/>
+            </div>
+        </div>
+    </div>
+
+    <!--拒绝接单-->
+    <div class="modal fade" id="refuseModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="modal-title">{{$t('refuse')}}</h3>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="refuseForm" onkeydown="if(event.keyCode==13){return false;}">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('refuseReason')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea type="text" name="remarks" class="form-control" rows="7"
+                                              v-model="logisticsOrder.remarks"></textarea>
+
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="validate3">{{$t('refuse')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+
+    <!--投诉框-->
+    <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">{{$t('Complaint')}}</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">
+                                <div class="control-label">{{$t('ComplaintReason')}}</div>
+                            </div>
+                            <div class="col-sm-10">
+                                <textarea type="text" class="form-control" rows="6" name="reason"
+                                          v-model="complaint.reason"
+                                          :placeholder="$t('ComplaintReason')"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <div class="col-sm-2 control-label">{{$t('ComplaintVoucher')}}</div>
+                            <div class="col-sm-10">
+                                <commodity-fileinput :this_maxFileCount="6" ref="file2" :files="images"
+                                                     :image_list="complaint.images"></commodity-fileinput>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer" v-if="!complaint.id">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('cancel')}}</button>
+                    <button type="button" class="btn btn-primary" @click="saveTouSu">{{$t('submission')}}</button>
+                </div>
+                <div class="modal-footer" v-if="complaint.id">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    <!-- 改价弹框-->
+    <div class="modal fade" id="changeprice" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">改价</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="changePriceForm">
+                        <div class="form-group">
+                            <label for="changPriceBefore" class="form-control-label">原价:</label>
+                            <input type="text" class="form-control" id="changPriceBefore" disabled
+                                   v-model="changPriceBefore.beforePrice">
+                        </div>
+                        <div class="form-group">
+                            <label for="afterPrice" class="form-control-label">折后价:</label>
+                            <input type="text" class="form-control" id="afterPrice" name="afterPrice"
+                                   v-model="changPriceBefore.afterPrice">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="validatePrice">{{$t('save')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--处理售后-->
+    <div class="modal fade" id="AfterSaleModal" tabindex="-1" role="dialog" aria-labelledby="afterSale"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form class="form-horizontal" id="afterSaleForm" onkeydown="if(event.keyCode==13){return false;}">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="afterSale">{{$t('AfterSale')}}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Result')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control col-sm-10" style="width: 80%"
+                                            v-model="afterSale.result" name="result">
+                                        <option v-for="(item,index) in resultList" :label="item" :value="index">
+                                            {{item}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Suggestion')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea name="suggestion" class="form-control" rows="5"
+                                              v-model="afterSale.suggestion" style="width: 80%"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" v-if="afterSale.id">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('cancel')}}</button>
+                        <button type="button" class="btn btn-primary" @click="handle">{{$t('submission')}}
+                        </button>
+                    </div>
+                    <div class="modal-footer" v-if="!afterSale.id">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <!--售后详情-->
+    <div v-show="afterSDetail " class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" id="aftForm" :model="afterSale" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="panel-body">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1">{{$t('status')}}：{{afterSale.status==0?'待处理':'已处理'}}</div>
+                        <div class="col-sm-4">{{$t('CodeId')}}：{{afterSale.code}}</div>
+                        <div class="col-sm-2">{{$t('OrderId')}}：{{afterSale.orderId}}</div>
+                        <div class="col-sm-2">{{$t('ApplicationDate')}}：{{afterSale.applicationDate}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2">{{$t('Seller')}}：{{afterSale.seller}}</div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('ServiceType')}}：{{$t('ClaimDemage')}}</div>
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('RefundForm')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in refundFormList" v-if="p.value==afterSale.refundForm">
+                                {{p.label}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div style="float: left;">
+                                {{$t('ClaimReason')}}：
+                            </div>
+                            <div style="float: left;" v-for="p in reasonList" v-if="p.value==afterSale.reason">
+                                {{p.label}}
+                            </div>
+                        </div>
+                        <div class="col-sm-4">{{$t('ProblemDescription')}}：{{afterSale.description}}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">{{$t('Pictures')}}：
+                            <commodity-fileinput :image_list="afterSale.images" ref="file3"
+                                                 :files="afterImages"></commodity-fileinput>
+                        </div>
+                    </div>
+                </div>
+                <!--已处理的信息展示-->
+                <div class="panel-body">
+                    <div class="row" v-show="afterSale.status==1">
+                        <div class="col-sm-4">{{$t('Result')}}：{{afterSale.result==0?'通过':'不通过'}}</div>
+                        <div class="col-sm-4">{{$t('Suggestion')}}：{{afterSale.suggestion}}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <button type="button" class="btn btn-warning" @click="back">{{$t('return')}}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<!--图片上传-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+
+<script src="../../js/modules/logistics/logisticsorderSale.js"></script>
+</body>
+</html>

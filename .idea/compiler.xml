@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="wzlue-afterSale" />
+        <module name="wzlue-agent" />
+        <module name="wzlue-agreement" />
+        <module name="wzlue-app" />
+        <module name="wzlue-bill" />
+        <module name="wzlue-commodity" />
+        <module name="wzlue-common" />
+        <module name="wzlue-company" />
+        <module name="wzlue-complaint" />
+        <module name="wzlue-declare" />
+        <module name="wzlue-generator" />
+        <module name="wzlue-goods" />
+        <module name="wzlue-grade" />
+        <module name="wzlue-highcharts" />
+        <module name="wzlue-huanxin" />
+        <module name="wzlue-logisticsoffer" />
+        <module name="wzlue-marketing" />
+        <module name="wzlue-offer" />
+        <module name="wzlue-promotion" />
+        <module name="wzlue-protocol" />
+        <module name="wzlue-schedule" />
+        <module name="wzlue-storage" />
+        <module name="wzlue-sys" />
+        <module name="wzlue-traceback" />
+        <module name="wzlue-web" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>员工</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('StaffManagement')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <!-- 增删改查 -->
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" :placeholder="$t('FullName')"
+                       maxlength="20"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <button v-if="" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+    <!-- 新增，详情 -->
+    <div v-show="!showList">
+        <div class="panel panel-default" style="margin-top: 20px;">
+            <div class="panel-heading">{{$t('EssentialInformation')}}</div>
+            <div class="panel-body">
+                <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="username">{{$t('UserName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="username" class="form-control" v-model="user.username"
+                                           :placeholder="$t('registerPhone')" maxlength="20"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label" for="setPasswordm">{{$t('password')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="password" class="form-control" id="setPasswordm" name="setPasswordm"
+                                           v-model="user.password" :placeholder="$t('password')">
+                                    <!-- maxlength="16"-->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('FullName')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="name" class="form-control" v-model="employee.name"
+                                           :placeholder="$t('FullName')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('IDNumber')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="idcard" class="form-control" v-model="employee.idcard"
+                                           :placeholder="$t('IDNumber')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('MobilePhoneNo')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="phonenumber" class="form-control"
+                                           v-model="employee.phonenumber" :placeholder="$t('MobilePhoneNo')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('Sex')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="sex" class="form-control" v-model="employee.sex" placeholder="性别"/>-->
+                                    <vm-select :options="sexOption" title="请选择" name="sex"
+                                               v-model="employee.sex"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('WorkingState')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="jobstate" class="form-control" v-model="employee.jobstate" placeholder="在职状态"/>-->
+                                    <vm-select :options="jobstateOption" title="请选择" name="jobstate"
+                                               v-model="employee.jobstate"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('mailbox')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="email" class="form-control" v-model="employee.email"
+                                           :placeholder="$t('mailbox')"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('contractStatus')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="stateofcontract" class="form-control" v-model="employee.stateofcontract" placeholder="合同状态"/>-->
+                                    <vm-select :options="stateofcontractOption" title="请选择" name="stateofcontract"
+                                               v-model="employee.stateofcontract"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('Authority')}}</label>
+                                <div class="col-sm-10">
+                                    <label class="radio-inline">
+                                        <input type="radio" value="0" v-model="user.dataAuthorizes">本公司
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" value="1" v-model="user.dataAuthorizes">个人
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('CustomerService')}}</label>
+                                <div class="col-sm-10">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" v-model="user.customerService"
+                                               :checked="user.customerService=='1'">&nbsp;
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('Role')}}</label>
+                                <div class="col-sm-10">
+                                    <label v-for="role in roleList" class="checkbox-inline">
+                                        <input type="checkbox" :value="role.roleId" v-model="user.roleIdList">{{role.roleName}}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('DateOfBirth')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" id="dateofbirth" name="dateofbirth" class="form-control"
+                                           v-model="employee.dateofbirth" :placeholder="$t('DateOfBirth')" readonly
+                                           unselectable="on"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('housingFund')}}</label>
+                                <div class="col-sm-10">
+                                    <vm-select :options="housingfundOption" title="请选择" name="housingfund"
+                                               v-model="employee.housingfund"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('InTheTime')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" id="hiredate" name="hiredate" class="form-control"
+                                           v-model="employee.hiredate" :placeholder="$t('InTheTime')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('ContractSigningTime')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractsigningtime" class="form-control"
+                                           v-model="employee.contractsigningtime"
+                                           :placeholder="$t('ContractSigningTime')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('ContractExpirationDate')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractexpirationdate" class="form-control"
+                                           v-model="employee.contractexpirationdate"
+                                           :placeholder="$t('ContractExpirationDate')"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">{{$t('socialSecurity')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="socialsecurity" class="form-control" v-model="employee.socialsecurity" placeholder="社保"/>-->
+                                    <vm-select :options="socialsecurityOption" title="请选择" name="socialsecurity"
+                                               v-model="employee.socialsecurity"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('AffiliatedCompany')}}</label>
+                                <div class="col-sm-10">
+                                    <vm-select :options="companyOption" :method="companySelect" title="请选择"
+                                               name="companyId" id="companyId" v-model="employee.companyId"></vm-select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <div class="panel panel-default" style="margin-top: 20px;">
+            <div class="panel-heading">{{$t('SelectionOfInformation')}}</div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('Healthy')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="healthy" class="form-control"
+                                       v-model="employee.employeeAdditional.healthy" :placeholder="$t('Healthy')"
+                                       maxlength="10"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('HouseholdRegister')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="censusregistertype" class="form-control"
+                                       v-model="employee.employeeAdditional.censusregistertype"
+                                       :placeholder="$t('HouseholdRegister')"
+                                       maxlength="20"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('MaritalStatus')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="maritalstatus" class="form-control"
+                                       v-model="employee.employeeAdditional.maritalstatus"
+                                       :placeholder="$t('MaritalStatus')" maxlength="20"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('children')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="children" class="form-control"
+                                       v-model="employee.employeeAdditional.children" :placeholder="$t('children')"
+                                       maxlength="10"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('Education')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="education" class="form-control"
+                                       v-model="employee.employeeAdditional.education" :placeholder="$t('Education')"
+                                       maxlength="5"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('RecruitmentSource')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="recruitmentsource" class="form-control"
+                                       v-model="employee.employeeAdditional.recruitmentsource"
+                                       :placeholder="$t('RecruitmentSource')"
+                                       maxlength="20"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('JobSalaryLevel')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="jobsalarylevel" class="form-control"
+                                       v-model="employee.employeeAdditional.jobsalarylevel"
+                                       :placeholder="$t('JobSalaryLevel')" maxlength="10"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('BelongToThePost')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="belongtothepost" class="form-control"
+                                       v-model="employee.employeeAdditional.belongtothepost"
+                                       :placeholder="$t('BelongToThePost')"
+                                       maxlength="10"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('HomeAddress')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="homeaddress" class="form-control"
+                                       v-model="employee.employeeAdditional.homeaddress"
+                                       :placeholder="$t('HomeAddress')" maxlength="30"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('GraduateSchool')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="graduateschool" class="form-control"
+                                       v-model="employee.employeeAdditional.graduateschool"
+                                       :placeholder="$t('GraduateSchool')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('major')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="major" class="form-control"
+                                       v-model="employee.employeeAdditional.major" :placeholder="$t('major')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('Family')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="family" class="form-control"
+                                       v-model="employee.employeeAdditional.family" :placeholder="$t('Family')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('FamilyPhone')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" id="familyphone" name="familyphone" class="form-control"
+                                       v-model="employee.employeeAdditional.familyphone"
+                                       :placeholder="$t('FamilyPhone')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('emergencyContact')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="emergencycontact" class="form-control"
+                                       v-model="employee.employeeAdditional.emergencycontact"
+                                       :placeholder="$t('emergencyContact')"
+                                       maxlength="10"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('EmergencyContactTelephone')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" id="emergencycontactphone" name="emergencycontactphone"
+                                       class="form-control" v-model="employee.employeeAdditional.emergencycontactphone"
+                                       :placeholder="$t('EmergencyContactTelephone')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('CorrectionOfSalary')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="correctionofsalary" class="form-control"
+                                       v-model="employee.employeeAdditional.correctionofsalary"
+                                       :placeholder="$t('CorrectionOfSalary')"
+                                       maxlength="20"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('DepartureTime')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="departuretime" class="form-control"
+                                       v-model="employee.employeeAdditional.departuretime"
+                                       :placeholder="$t('DepartureTime')"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('ReasonsForLeaving')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="reasonsforleaving" class="form-control"
+                                       v-model="employee.employeeAdditional.reasonsforleaving"
+                                       :placeholder="$t('ReasonsForLeaving')"
+                                       maxlength="20"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">{{$t('DateOfCorrection')}}</label>
+                            <div class="col-sm-10">
+                                <input type="text" name="dateofcorrection" class="form-control"
+                                       v-model="employee.employeeAdditional.dateofcorrection"
+                                       :placeholder="$t('DateOfCorrection')"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+            </div>
+        </div>
+    </div>
+
+    <!-- 授权弹窗 -->
+    <div class="modal fade" id="grant" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">授权</h4>
+                </div>
+                <div class="modal-body">
+                    <ul id="menuTree" class="ztree" style="height:500px;overflow:auto; "></ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-primary" @click="grant">{{$t('save')}}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+
+<script src="../../plugins/ztree/jquery.ztree.all.min.js"></script>
+
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/company/employee.js"></script>
+</body>
+</html>

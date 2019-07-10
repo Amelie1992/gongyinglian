@@ -1,0 +1,8 @@
+com\wzlue\chain\afterSale\dao\AfterSaleDao.class
+com\wzlue\chain\afterSale\service\AfterSaleGoodsService.class
+com\wzlue\chain\afterSale\service\impl\AfterSaleServiceImpl.class
+com\wzlue\chain\afterSale\service\AfterSaleService.class
+com\wzlue\chain\afterSale\dao\AfterSaleGoodsDao.class
+com\wzlue\chain\afterSale\entity\AfterSaleEntity.class
+com\wzlue\chain\afterSale\entity\AfterSaleGoodsEntity.class
+com\wzlue\chain\afterSale\service\impl\AfterSaleGoodsServiceImpl.class

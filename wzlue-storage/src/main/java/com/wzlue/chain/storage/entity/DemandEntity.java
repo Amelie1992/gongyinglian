@@ -1,0 +1,346 @@
+package com.wzlue.chain.storage.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
+
+
+/**
+ * 仓储求购表
+ * 
+ * @author 
+ * @email 
+ * @date 2018-08-27 14:15:37
+ */
+public class DemandEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//
+	private Long id;
+	//标题
+	private String title;
+	//联系方式
+	private String phone;
+	//联系人
+	private String contact;
+	//省
+	private String province;
+	//市
+	private String city;
+	//区县
+	private String county;
+	//预计存储日期
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private Date intTime;
+	//仓库描述
+	private String storageInfo;
+	//状态: 0.显示 1.隐藏
+	private Integer status;
+	//公司id
+	private Long merchantId;
+	//部门id
+	private Long deptId;
+	//创建人
+	private Long createdBy;
+	//创建时间
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date createdTime;
+	//修改人
+	private Long updatedBy;
+	//修改时间
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	private Date updatedTime;
+	//删除标识 0：未删除 1：删除
+	private Integer delFlag;
+	//省
+	private String provinceName;
+	//市
+	private String cityName;
+	//区县
+	private String countyName;
+    //货物
+    private String goodsName;
+    //重量
+    private BigDecimal weight;
+    //单位 1：吨；2：千克
+    private String unit;
+    //公司名称
+    private String companyName;
+    //信用分数
+    private Integer creditScore;
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public Integer getCreditScore() {
+        return creditScore;
+    }
+
+    public void setCreditScore(Integer creditScore) {
+        this.creditScore = creditScore;
+    }
+
+    public String getGoodsName() {
+        return goodsName;
+    }
+
+    public void setGoodsName(String goodsName) {
+        this.goodsName = goodsName;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public void setWeight(BigDecimal weight) {
+        this.weight = weight;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    /**
+	 * 设置：
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：标题
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	/**
+	 * 获取：标题
+	 */
+	public String getTitle() {
+		return title;
+	}
+	/**
+	 * 设置：联系方式
+	 */
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	/**
+	 * 获取：联系方式
+	 */
+	public String getPhone() {
+		return phone;
+	}
+	/**
+	 * 设置：联系人
+	 */
+	public void setContact(String contact) {
+		this.contact = contact;
+	}
+	/**
+	 * 获取：联系人
+	 */
+	public String getContact() {
+		return contact;
+	}
+	/**
+	 * 设置：省
+	 */
+	public void setProvince(String province) {
+		this.province = province;
+	}
+	/**
+	 * 获取：省
+	 */
+	public String getProvince() {
+		return province;
+	}
+	/**
+	 * 设置：市
+	 */
+	public void setCity(String city) {
+		this.city = city;
+	}
+	/**
+	 * 获取：市
+	 */
+	public String getCity() {
+		return city;
+	}
+	/**
+	 * 设置：区县
+	 */
+	public void setCounty(String county) {
+		this.county = county;
+	}
+	/**
+	 * 获取：区县
+	 */
+	public String getCounty() {
+		return county;
+	}
+	/**
+	 * 设置：存储日期
+	 */
+	public void setIntTime(Date intTime) {
+		this.intTime = intTime;
+	}
+	/**
+	 * 获取：存储日期
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	public Date getIntTime() {
+		return intTime;
+	}
+	/**
+	 * 设置：仓库描述
+	 */
+	public void setStorageInfo(String storageInfo) {
+		this.storageInfo = storageInfo;
+	}
+	/**
+	 * 获取：仓库描述
+	 */
+	public String getStorageInfo() {
+		return storageInfo;
+	}
+	/**
+	 * 设置：状态: 0.显示 1.隐藏
+	 */
+	public void setStatus(Integer status) {
+		this.status = status;
+	}
+	/**
+	 * 获取：状态: 0.显示 1.隐藏
+	 */
+	public Integer getStatus() {
+		return status;
+	}
+	/**
+	 * 设置：公司id
+	 */
+	public void setMerchantId(Long merchantId) {
+		this.merchantId = merchantId;
+	}
+	/**
+	 * 获取：公司id
+	 */
+	public Long getMerchantId() {
+		return merchantId;
+	}
+	/**
+	 * 设置：部门id
+	 */
+	public void setDeptId(Long deptId) {
+		this.deptId = deptId;
+	}
+	/**
+	 * 获取：部门id
+	 */
+	public Long getDeptId() {
+		return deptId;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreatedBy(Long createdBy) {
+		this.createdBy = createdBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Long getCreatedBy() {
+		return createdBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreatedTime(Date createdTime) {
+		this.createdTime = createdTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getCreatedTime() {
+		return createdTime;
+	}
+	/**
+	 * 设置：修改人
+	 */
+	public void setUpdatedBy(Long updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	/**
+	 * 获取：修改人
+	 */
+	public Long getUpdatedBy() {
+		return updatedBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setUpdatedTime(Date updatedTime) {
+		this.updatedTime = updatedTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getUpdatedTime() {
+		return updatedTime;
+	}
+	/**
+	 * 设置：删除标识 0：未删除 1：删除
+	 */
+	public void setDelFlag(Integer delFlag) {
+		this.delFlag = delFlag;
+	}
+	/**
+	 * 获取：删除标识 0：未删除 1：删除
+	 */
+	public Integer getDelFlag() {
+		return delFlag;
+	}
+
+	public String getProvinceName() {
+		return provinceName;
+	}
+
+	public void setProvinceName(String provinceName) {
+		this.provinceName = provinceName;
+	}
+
+	public String getCityName() {
+		return cityName;
+	}
+
+	public void setCityName(String cityName) {
+		this.cityName = cityName;
+	}
+
+	public String getCountyName() {
+		return countyName;
+	}
+
+	public void setCountyName(String countyName) {
+		this.countyName = countyName;
+	}
+}

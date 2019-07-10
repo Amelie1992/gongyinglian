@@ -1,0 +1,124 @@
+package com.wzlue.chain.agent.service.impl;
+
+import com.wzlue.chain.agent.dao.ContractAnnexDao;
+import com.wzlue.chain.agent.entity.ContractAnnexEntity;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.agent.dao.AgentContractDao;
+import com.wzlue.chain.agent.entity.AgentContractEntity;
+import com.wzlue.chain.agent.service.AgentContractService;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service("agentContractService")
+public class AgentContractServiceImpl implements AgentContractService {
+    @Autowired
+    private AgentContractDao agentContractDao;
+    @Autowired
+    private ContractAnnexDao contractAnnexDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+
+    @Override
+    public AgentContractEntity queryObject(Long id) {
+        return agentContractDao.queryObject(id);
+    }
+
+    @Override
+    public AgentContractEntity queryInfo(Long id) {
+        return agentContractDao.queryInfo(id);
+    }
+
+    @Override
+    public List<AgentContractEntity> queryList(Map<String, Object> map) {
+        return agentContractDao.queryList(map);
+    }
+
+    @Override
+    public List<AgentContractEntity> pageList(Map<String, Object> map) {
+        MerchantCompanyEntity companyEntity = merchantCompanyDao.queryByUserId(Long.valueOf(map.get("userId").toString()));
+        if (companyEntity != null && !"1".equals(map.get("userId").toString())) {
+            map.put("companyName", companyEntity.getCompanyName());
+            map.put("companyId", companyEntity.getId());
+        }
+        return agentContractDao.pageList(map);
+    }
+
+    @Override
+    public int pageCount(Map<String, Object> map) {
+        return agentContractDao.pageCount(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return agentContractDao.queryTotal(map);
+    }
+
+    @Override
+    @Transactional
+    public void save(AgentContractEntity agentContract) {
+        MerchantCompanyEntity userCompany = merchantCompanyDao.queryByUserId(agentContract.getCreateBy());
+        if (null != userCompany) {
+            if (userCompany.getCompanyName() == agentContract.getCustomsCopName()) {
+                agentContract.setAdscription(1);
+            } else {
+                agentContract.setAdscription(2);
+            }
+        }
+        Date now = new Date();
+        agentContract.setDataSource(2);
+        agentContract.setCreateTime(now);
+        agentContract.setUpdateTime(now);
+        agentContractDao.save(agentContract);
+
+        //插入合同附件信息
+        if (agentContract.getAnnexs() != null && agentContract.getAnnexs().get(0) != null) {
+            for (ContractAnnexEntity annexEntity : agentContract.getAnnexs()) {
+                annexEntity.setContractId(agentContract.getId());
+                annexEntity.setContractType(5L);
+                contractAnnexDao.save(annexEntity);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void update(AgentContractEntity agentContract) {
+        Date now = new Date();
+        agentContract.setUpdateTime(now);
+        agentContractDao.update(agentContract);
+
+        //合同附件信息
+        contractAnnexDao.deleteByContractId(agentContract.getId(), 5);
+        if (agentContract.getAnnexs() != null && agentContract.getAnnexs().get(0) != null) {
+            for (ContractAnnexEntity annexEntity : agentContract.getAnnexs()) {
+                annexEntity.setContractId(agentContract.getId());
+                annexEntity.setContractType(5L);
+                annexEntity.setCreateTime(new Date());
+                contractAnnexDao.save(annexEntity);
+            }
+        }
+    }
+
+    @Override
+    public void delete(Long id) {
+        agentContractDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        agentContractDao.deleteBatch(ids);
+    }
+
+}

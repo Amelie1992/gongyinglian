@@ -1,0 +1,198 @@
+
+package com.wzlue.chain.web.controller.logistics;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.logistics.entity.LogisticsOfferAddressEntity;
+import com.wzlue.chain.logistics.service.LogisticsOfferAddressService;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.logistics.entity.LogisticsOfferEntity;
+import com.wzlue.chain.logistics.service.LogisticsOfferService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+
+/**
+ * 商品库物流报盘
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-08-16 10:19:13
+ */
+@SuppressWarnings("ALL")
+@RestController
+@RequestMapping("/logistics/logisticsoffer")
+public class LogisticsOfferController extends AbstractController {
+    @Autowired
+    private LogisticsOfferService logisticsOfferService;
+    @Autowired
+    private LogisticsOfferAddressService logisticsOfferAddressService;
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        SysUserEntity user = getUser();
+        if(user.getCompanyId() !=null){
+            query.put("companyId",user.getCompanyId());
+        }
+        List<LogisticsOfferEntity> logisticsOfferList = logisticsOfferService.queryList(query);
+        int total = logisticsOfferService.queryTotal(query);
+
+        return R.page(logisticsOfferList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+    @RequiresPermissions("logistics:logisticsoffer:info")
+    public R info(@PathVariable("id") Long id) {
+        LogisticsOfferEntity logisticsOffer = logisticsOfferService.queryObject(id);
+//        List<LogisticsOfferAddressEntity> logisticsOfferAddressList = logisticsOfferAddressService.queryByLogisticsId(Math.toIntExact(logisticsOffer.getId()));
+
+//        Map<String, Object> map = new HashMap<>(16);
+//        map.put("logisticsOffer",logisticsOffer);
+//        return R.ok(map);
+        R r = R.ok();
+        r.put("logisticsOffer", logisticsOffer);
+        return r;
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+    @RequiresPermissions("logistics:logisticsoffer:save")
+    public R save(@RequestBody LogisticsOfferEntity logisticsOffer) {
+        SysUserEntity user = getUser();
+        Date date =new Date();
+        logisticsOffer.setDeptId(null);//部门id
+        logisticsOffer.setDelFlag(0);
+        logisticsOffer.setCreateBy(Math.toIntExact(getUserId()));
+        logisticsOffer.setCreatDate(date);
+        logisticsOffer.setUpdateBy(Math.toIntExact(getUserId()));
+        logisticsOffer.setUpdateDate(new Date());
+        logisticsOfferService.save(logisticsOffer);
+        //循环展示路线集合列表
+        List<LogisticsOfferAddressEntity> logisticsOfferAddressEntityList = logisticsOffer.getLogisticsOfferAddressList();
+
+        for (LogisticsOfferAddressEntity logisticsOfferAddressEntity : logisticsOfferAddressEntityList) {
+            logisticsOfferAddressEntity.setLogisticsId(Math.toIntExact(logisticsOffer.getId()));
+//            logisticsOfferAddressService.save(logisticsOfferAddressEntity);//方法1，存一个对象
+        }
+        //判断运输线路是否传入 方法2
+        if (logisticsOfferAddressEntityList.size() > 0) {
+            logisticsOfferAddressService.saveList(logisticsOfferAddressEntityList);
+        }
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @RequestMapping("/update")
+    @RequiresPermissions("logistics:logisticsoffer:update")
+    public R update(@RequestBody LogisticsOfferEntity logisticsOffer) {
+        logisticsOffer.setUpdateBy(Math.toIntExact(getUserId()));
+        logisticsOffer.setUpdateDate(new Date());
+
+        logisticsOfferService.update(logisticsOffer);
+
+        List<LogisticsOfferAddressEntity> logisticsOfferAddressEntityList = logisticsOffer.getLogisticsOfferAddressList();
+        //先全部删掉
+        logisticsOfferAddressService.deleteBatchs(Math.toIntExact(logisticsOffer.getId()));
+        //再判断有无重新添加线路
+        if (logisticsOfferAddressEntityList != null && logisticsOfferAddressEntityList.size() != 0) {
+            for (LogisticsOfferAddressEntity logisticsOfferAddressEntity : logisticsOfferAddressEntityList) {
+                logisticsOfferAddressEntity.setLogisticsId(Math.toIntExact(logisticsOffer.getId()));
+            }
+            logisticsOfferAddressService.saveList(logisticsOfferAddressEntityList);
+        }
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("logistics:logisticsoffer:delete")
+    public R delete(@RequestBody Long[] ids) {
+        logisticsOfferService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+    /**
+     * 查询当前公司下 已上架的报盘商品
+     */
+    @RequestMapping("/queryByCompanyId")
+    public R queryByCompanyId(@RequestParam Map<String, Object> params){
+        params.put("status",0);
+        List<LogisticsOfferEntity> list = logisticsOfferService.queryList1(params);
+
+        return R.ok().put("list",list);
+    }
+
+    /**
+     * 上架
+     */
+    @RequestMapping("/up")
+    @RequiresPermissions("logistics:logisticsoffer:update")
+    public R up(@RequestBody Long[] ids) {
+        Map<String, Object> map = new HashMap<>(16);
+        map.put("status",1);
+        map.put("ids", ids);
+        map.put("userId",getUserId());
+        logisticsOfferService.updateStatus(map);
+
+        return R.ok();
+    }
+
+    /**
+     * 下架
+     */
+    @RequestMapping("/down")
+    @RequiresPermissions("logistics:logisticsoffer:update")
+    public R down(@RequestBody Long[] ids) {
+        Map<String, Object> map = new HashMap<>(16);
+        map.put("status",0);
+        map.put("ids", ids);
+        map.put("userId",getUserId());
+        logisticsOfferService.updateStatus1(map);
+
+        return R.ok();
+    }
+
+    /**
+     * 验证物流编码是否重复
+     * @param logisticsOfferEntity
+     * @return
+     */
+    @RequestMapping("/checkCode")
+    @RequiresPermissions("logistics:logisticsoffer:info")
+    public R checkCode(@RequestBody LogisticsOfferEntity logisticsOfferEntity){
+        logisticsOfferEntity=logisticsOfferService.checkCode(logisticsOfferEntity);
+        return R.ok().put("commodityCode",logisticsOfferEntity);
+    }
+
+}

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.chatMsg.dao.ChatMessageDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.chatMsg.entity.ChatMessageEntity" id="chatMessageMap">
+        <result property="id" column="id"/>
+        <result property="msgId" column="msg_id"/>
+        <result property="timestamp" column="timestamp"/>
+        <result property="direction" column="direction"/>
+        <result property="toUser" column="to_user"/>
+        <result property="fromUser" column="from_user"/>
+        <result property="msg" column="msg"/>
+        <result property="type" column="type"/>
+        <result property="url" column="url"/>
+        <result property="textType" column="textType"/>
+    </resultMap>
+
+
+    <!--SELECT t.*,u.username as name,ifnull(u.nikename,u.username) nikename,u.user_id,u.mobile,u.business_id FROM (
+    SELECT id,`timestamp`,u_name,msg,textType,`type`,url FROM (
+    (SELECT id,`timestamp`,to_user as u_name,msg,textType,`type`,url FROM chat_message WHERE from_user = #{fromUser})
+    UNION
+    (SELECT id,`timestamp`,from_user as u_name,msg,textType,`type`,url FROM chat_message WHERE to_user = #{fromUser})
+    ORDER BY `timestamp` DESC) as tmp
+    GROUP BY tmp.u_name ORDER BY tmp.`timestamp` DESC limit 20) as t
+    LEFT JOIN sys_user as u on t.u_name = u.username-->
+
+    <!--最近联系人列表-->
+    <select id="queryRecentContacts" parameterType="map" resultType="map">
+
+        SELECT t.*, u.username AS NAME, IFNULL(u.nikename, u.username) AS nikename
+            , u.user_id, u.mobile, u.business_id
+        FROM (
+            SELECT id, `timestamp`, u_name, from_user,msg, textType
+                , `type`, url
+            FROM (
+                (SELECT id, `timestamp`, to_user AS u_name,from_user, msg, textType
+                    , `type`, url
+                FROM `chat_message`
+                WHERE from_user = 'admin')
+                UNION
+                (SELECT id, `timestamp`, to_user AS u_name,from_user, msg, textType
+                    , `type`, url
+                FROM chat_message
+                WHERE to_user = 'admin')
+                ORDER BY `timestamp` DESC
+            ) tmp
+            GROUP BY tmp.u_name
+            ORDER BY tmp.`timestamp` DESC
+            LIMIT 20
+        ) t
+            LEFT JOIN sys_user u ON t.from_user = u.username
+    </select>
+
+    <!--查询个人好友信息 -->
+    <select id="querytemporaryList" parameterType="map" resultType="map">
+ 		SELECT
+			*
+		FROM
+			(
+				SELECT
+					u.nikename AS fromUserName,
+					(SELECT nikename FROM sys_user WHERE username = #{fromUser}) toUserName,
+					u.username AS name,
+					u.user_id,
+					u.mobile,
+					u.business_id,
+					m.`timestamp`,
+					m.textType,
+					m.id,
+					m.type,
+					m.msg
+				FROM
+					chat_message m
+				INNER JOIN sys_user u ON (u.username = m.from_user)
+				WHERE
+					to_user = #{fromUser}
+				GROUP BY
+					from_user
+				UNION
+					SELECT
+						u.nikename AS toUserName,
+						(SELECT nikename FROM sys_user WHERE username = #{fromUser}) fromUserName,
+						u.username AS name,
+						u.user_id,
+						u.mobile,
+						u.business_id,
+						m.`timestamp`,
+						m.textType,
+						m.id,
+						m.type,
+						m.msg
+					FROM
+						chat_message m
+					INNER JOIN sys_user u ON (u.username = m.to_user)
+					WHERE
+						from_user = #{fromUser}
+					GROUP BY
+						to_user
+			) t
+		WHERE
+	          t.`timestamp` IN ( SELECT MAX(t.`timestamp`)
+		FROM
+			(
+				SELECT
+					u.nikename AS fromUserName,
+					(SELECT nikename FROM sys_user WHERE username = #{fromUser}) toUserName,
+					u.username AS name,
+					u.user_id,
+					u.mobile,
+					u.business_id,
+					m.`timestamp`,
+					m.textType,
+					m.id,
+					m.type,
+					m.msg
+				FROM
+					chat_message m
+				INNER JOIN sys_user u ON (u.username = m.from_user)
+				WHERE
+					to_user = #{fromUser}
+				GROUP BY
+					from_user
+				UNION
+					SELECT
+						u.nikename AS toUserName,
+						(SELECT nikename FROM sys_user WHERE username = #{fromUser}) fromUserName,
+						u.username AS name,
+						u.user_id,
+						u.mobile,
+						u.business_id,
+						m.`timestamp`,
+						m.textType,
+						m.id,
+						m.type,
+						m.msg
+					FROM
+						chat_message m
+					INNER JOIN sys_user u ON (u.username = m.to_user)
+					WHERE
+						from_user = #{fromUser}
+					GROUP BY
+						to_user
+			) t
+		GROUP BY
+			t.`name`
+	);
+    </select>
+
+    <select id="querytemporaryToUserList" parameterType="map" resultType="map">
+        SELECT
+			u.username AS name,
+			u.user_id,
+			u.mobile,
+			u.business_id,
+			c.company_name,
+			c.shop_logo,
+			 max(timestamp) timestamp,
+			m.textType,
+			m.id,
+			m.type,
+			m.msg
+		FROM
+		chat_message
+		m 	INNER JOIN sys_user u  ON (u.username=m.from_user)
+		LEFT JOIN merchant_company c ON (u.company_id = c.id)
+          WHERE
+                to_user = #{fromUser}
+		GROUP BY m.to_user
+		ORDER BY  timestamp DESC
+        limit  #{offset}, #{limit}
+    </select>
+
+    <select id="queryObject" resultType="com.wzlue.chain.chatMsg.entity.ChatMessageEntity">
+		SELECT * FROM chat_message WHERE id = #{value}
+	</select>
+
+
+    <select id="queryList" resultType="com.wzlue.chain.chatMsg.entity.ChatMessageEntity">
+        SELECT
+        m.* ,
+        c.shop_logo fromPic,
+        (SELECT nikename FROM sys_user WHERE username = #{fromUser}) fromUserName,
+        (SELECT nikename FROM sys_user WHERE username = #{toUser}) toUserName
+        FROM chat_message m
+        INNER JOIN sys_user u ON (u.username=m.from_user)
+        LEFT JOIN merchant_company c ON (u.company_id = c.id)
+        where 1=1 and m.msg != ''
+        <if test="curAcceptMsgObjType =='groupchat'.toString()">
+            and m.to_user =#{toUser}
+        </if>
+        <if test="curAcceptMsgObjType =='chat'.toString()">
+            and m.to_user in (#{toUser},#{fromUser}) and m.from_user in (#{toUser},#{fromUser})
+        </if>
+        ORDER BY timestamp DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM chat_message
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.chatMsg.entity.ChatMessageEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO chat_message
+		(
+		`msg_id`,
+		`timestamp`,
+		`direction`,
+		`to_user`,
+		`from_user`,
+		`msg`,
+		`type`,
+		`url`,
+		textType
+		)
+		VALUES
+		(
+		#{msgId},
+		NOW(),
+		#{direction},
+		#{toUser},
+		#{fromUser},
+		#{msg},
+		#{type},
+		#{url},
+		#{textType}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.chatMsg.entity.ChatMessageEntity">
+        UPDATE chat_message
+        <set>
+            <if test="msgId != null">`msg_id` = #{msgId},</if>
+            <if test="timestamp != null">`timestamp` = #{timestamp},</if>
+            <if test="direction != null">`direction` = #{direction},</if>
+            <if test="toUser != null">`to_user` = #{toUser},</if>
+            <if test="fromUser != null">`from_user` = #{fromUser},</if>
+            <if test="msg != null">`msg` = #{msg},</if>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="url != null">`url` = #{url}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM chat_message WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM chat_message WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertChat" parameterType="com.wzlue.chain.chatMsg.entity.ChatMessageEntity">
+		INSERT INTO chat_message(
+			timestamp,
+			to_user,
+			from_user,
+			type
+		)VALUES(
+			now(),
+			#{toUser},
+			#{fromUser},
+			#{type}
+		)
+	</insert>
+</mapper>

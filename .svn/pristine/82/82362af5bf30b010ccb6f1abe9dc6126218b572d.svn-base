@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOrderOssDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOrderOssEntity" id="declareOrderOssMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="type" column="type"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileUrl" column="file_url"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity">
+        SELECT * FROM declare_order_oss WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity">
+        SELECT * FROM declare_order_oss
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM declare_order_oss
+    </select>
+    <select id="getListById" resultType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity">
+         SELECT *
+        FROM declare_order_oss
+        WHERE order_id=#{value}
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO declare_order_oss
+        (
+        `order_id`,
+        `type`,
+        `file_name`,
+        `file_url`,
+        `company_id`,
+        `dept_id`,
+        `create_by`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{orderId},
+        #{type},
+        #{fileName},
+        #{fileUrl},
+        #{companyId},
+        #{deptId},
+        #{createBy},
+        #{authorizesId}
+        )
+    </insert>
+
+    <insert id="saveBatch" parameterType="list">
+        INSERT INTO declare_order_oss
+        (
+        `order_id`,
+        `type`,
+        `file_name`,
+        `file_url`,
+        `company_id`,
+        `dept_id`,
+        `create_by`,
+        `authorizes_id`
+        )
+        VALUES
+        <foreach collection="list" item="item"  separator="," >
+            (
+            #{item.orderId},
+            #{item.type},
+            #{item.fileName},
+            #{item.fileUrl},
+            #{item.companyId},
+            #{item.deptId},
+            #{item.createBy},
+            #{item.authorizesId}
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity">
+        UPDATE declare_order_oss
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId}, </if>
+            <if test="type != null">`type` = #{type}, </if>
+            <if test="fileName != null">`file_name` = #{fileName}, </if>
+            <if test="fileUrl != null">`file_url` = #{fileUrl},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM declare_order_oss WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM declare_order_oss WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    <delete id="deleteByOrderId">
+        DELETE FROM declare_order_oss WHERE order_id = #{value}
+    </delete>
+
+</mapper>

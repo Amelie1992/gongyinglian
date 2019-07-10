@@ -1,0 +1,246 @@
+/**
+ * Copyright (C) 2018 FZJT Co. Ltd.
+ *
+ *
+ * @className:com.wzlue.chain.web.controller.marketing.MarketAuctionJob
+ * @description:
+ * 
+ * @version:v1.0.0 
+ * @author:qianTao
+ * 
+ * Modification History:
+ * Date         Author      Version     Description
+ * -----------------------------------------------------------------
+ * 2018年11月19日    	qianTao  	v1.0.0        create
+ *
+ *
+ */
+package com.wzlue.chain.web.controller.marketing;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.wzlue.chain.marketing.entity.MarketAuctionEntity;
+import com.wzlue.chain.marketing.service.MarketAuctionCommodityService;
+import com.wzlue.chain.marketing.service.MarketAuctionService;
+
+/**
+ * @className:com.wzlue.chain.web.controller.marketing.MarketAuctionJob
+ * @description:
+ * @version:v1.0.0 
+ * @date:2018年11月19日 下午4:30:16
+ * @author:qianTao
+ */
+@Component
+public class MarketAuctionJobs
+{
+	@Autowired
+    private MarketAuctionService marketAuctionService;
+    @Autowired
+    private MarketAuctionCommodityService marketAuctionCommodityService;
+    
+	public void marketStartJob()
+	{
+		System.out.println("上架定时器执行一次***************************************************************");
+		try
+		{
+			//查询当天需要上架的数据
+			MarketAuctionEntity marketAuction=new MarketAuctionEntity();
+			marketAuction.setStatus(2);
+			List<MarketAuctionEntity> marketAuctionStartList = marketAuctionService.queryListByStatusAndTime(marketAuction);
+				//遍历数据  
+				for (MarketAuctionEntity maBean : marketAuctionStartList)
+				{
+					//计算开始时间和当前时间的毫秒差
+					long millions=millionsBetweenDays(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(maBean.getStartTime()), getStringDate());
+					//已经超时
+					if(millions<=0) 
+					{
+						//立即执行上架操作
+						marketAuctionService.updateStatusByIds(0, maBean.getId());
+					}
+					else 
+					{
+						//根据毫秒差生成任务调度
+						timer1(millions,maBean.getId());
+					}
+					
+				}
+			
+				
+			//查询当天需要结束的数据
+			MarketAuctionEntity marketAuction1=new MarketAuctionEntity();
+			marketAuction1.setStatus(1);
+			List<MarketAuctionEntity> marketAuctionEndList = marketAuctionService.queryListByStatusAndTime(marketAuction1);
+			//遍历数据  
+			for (MarketAuctionEntity maBean : marketAuctionEndList)
+			{
+				//计算结束时间和当前时间毫秒差
+				long millions=millionsBetweenDays(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(maBean.getEndTime()), getStringDate());
+				//已经超时
+				if(millions<=0) 
+				{
+					//判断是否拍卖成功
+			          if(marketAuctionService.marketAuctionIsOK(maBean.getId()))
+			          {
+			        	//拍卖成功
+					    marketAuctionService.updateStatusByIds(3, maBean.getId());
+					    //todo 生成订单
+					    
+			          }
+			          else 
+			          {
+			        	//流拍
+				        marketAuctionService.updateStatusByIds(4, maBean.getId());
+			          }
+				}
+				else 
+				{
+					//根据毫秒差生成任务调度
+					timer2(millions,maBean.getId());
+				}
+				
+			}
+					
+		}
+		catch (ParseException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+					
+		
+	}
+   
+    /**
+                   *    时间定时器-任务调度 根据毫秒数执行Timer  执行上架操作
+     * @Description:
+     * @param a
+     * @throws ParseException
+     * @version:v1.0
+     * @author:qianTao
+     * @date:2018年11月19日 上午9:21:11
+     */
+    public void timer1(long a,long id) throws ParseException {
+	      Timer timer = new Timer();
+	      timer.schedule(new TimerTask() {
+	      public void run() {
+	    	  //修改状态
+	          marketAuctionService.updateStatusByIds(0, id);
+	          timer.cancel();
+	        }
+	      }, a);// 设定指定的时间time
+    }
+    
+    /**
+                  * 时间定时器-任务调度根据毫秒数执行timer  执行下架操作
+     * @Description:
+     * @param a
+     * @param id
+     * @throws ParseException
+     * @version:v1.0
+     * @author:qianTao
+     * @date:2018年11月21日 上午9:46:06
+     */
+    public void timer2(long a,long id) throws ParseException {
+	      Timer timer = new Timer();
+	      timer.schedule(new TimerTask() {
+	      public void run() {
+	          System.out.println(id+"-------任务执行--------");
+	          //判断是否拍卖成功
+	          if(marketAuctionService.marketAuctionIsOK(id))
+	          {
+	        	//拍卖成功
+			    marketAuctionService.updateStatusByIds(3, id);
+			    //todo 生成订单
+			    
+	          }
+	          else 
+	          {
+	        	//流拍
+		        marketAuctionService.updateStatusByIds(4, id);
+	          }
+	        
+	          //关闭定时器
+	          timer.cancel();
+	        }
+	      }, a);// 设定指定的时间time
+  }
+    
+    
+    /**
+     * 计算两个时间的毫秒数（startDate-endDate）
+     * @Description:
+     * @param startDate
+     * @param endDate
+     * @return
+     * @throws ParseException
+     * @version:v1.0
+     * @author:qianTao
+     * @date:2018年11月19日 上午9:15:01
+     */
+    public  static long millionsBetweenDays(String startDate,String endDate) throws ParseException 
+    {
+		  SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		  Date sDate=sf.parse(startDate);
+		  Date eDate=sf.parse(endDate);
+		  long a = sDate.getTime();
+		  long b = eDate.getTime();
+		  return a-b;
+    }
+    
+    /**
+     * 获取现在时间
+     * @Description:
+     * @return
+     * @version:v1.0
+     * @author:qianTao
+     * @date:2018年11月19日 下午4:42:02
+     */
+    public static String getStringDate()
+	{
+		Date currentTime = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String dateString = formatter.format(currentTime);
+		return dateString;
+	}
+    /**
+     * 获取中国中央当前时间
+     * @Description:
+     * @param webUrl
+     * @return
+     * @version:v1.0
+     * @author:qianTao
+     * @date:2018年11月19日 上午9:21:50
+     */
+    private static String getWebsiteDatetime(){
+        try {
+        	//中国科学院国家授时中心 url
+        	String webUrl="http://www.ntsc.ac.cn";
+            URL url = new URL(webUrl);// 取得资源对象
+            URLConnection uc = url.openConnection();// 生成连接对象
+            uc.connect();// 发出连接
+            long ld = uc.getDate();// 读取网站日期时间
+            Date date = new Date(ld);// 转换为标准时间对象
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);// 输出北京时间
+            return sdf.format(date);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

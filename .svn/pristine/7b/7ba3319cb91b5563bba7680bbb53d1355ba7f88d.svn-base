@@ -1,0 +1,288 @@
+
+package com.wzlue.chain.web.controller.bill;
+
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+import com.alibaba.fastjson.JSONArray;
+import com.wzlue.chain.bill.entity.*;
+//import net.sf.json.JSONArray;
+
+import com.wzlue.chain.bill.service.PaymentRecordService;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.storage.dao.OrderCostDao;
+import com.wzlue.chain.storage.dao.StoragePayDao;
+import com.wzlue.chain.storage.entity.OrderCostEntity;
+import com.wzlue.chain.storage.entity.OrderEntity;
+import com.wzlue.chain.storage.service.OrderService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 应收/应付账单
+ *
+ * @author
+ * @email
+ * @date 2018-09-12 10:43:08
+ */
+@RestController
+@RequestMapping("/bill/bill")
+@Api("账单")
+public class BillController extends AbstractController {
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private PaymentRecordService paymentRecordService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    @Autowired
+    private StoragePayDao storagePayDao;
+    @Autowired
+    private OrderCostDao orderCostDao;
+    @Autowired
+    private OrderService orderService;
+
+
+    /**
+     * 应收列表
+     */
+    @GetMapping("/listReceive")
+    @ApiOperation(value = "应收账单列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R listReceive(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        if (getUser().getCompanyId()!=null){
+            query.put("payeeId", getUser().getCompanyId());
+        }
+
+        List<BillEntity> billList = billService.queryList(query);
+        int total = billService.queryTotal(query);
+
+        return R.page(billList, total);
+    }
+
+    /**
+     * 应付列表
+     */
+    @GetMapping("/listPay")
+    @ApiOperation(value = "应付账单列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R listPay(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        if (getUser().getCompanyId()!=null){
+            query.put("payerId", getUser().getCompanyId());
+        }
+
+        List<BillEntity> billList = billService.queryList(query);
+        int total = billService.queryTotal(query);
+
+        return R.page(billList, total);
+    }
+
+    /**
+     * 信息
+     */
+    @GetMapping("/info/{id}")
+    @ApiOperation(value = "账单详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R info(@PathVariable("id") Integer id) {
+        BillEntity bill = billService.queryObject(id);
+
+        return R.ok().put("bill", bill);
+    }
+
+    @GetMapping("/infoByOrderNo/{orderNo}")
+    @ApiOperation(value = "根据订单编号查询账单详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R info2(@PathVariable("orderNo") String orderNo) {
+        BillEntity bill = billService.queryByOrderNumber(orderNo);
+
+        return R.ok(bill);
+    }
+
+    /**
+     * 保存
+     */
+    @PostMapping("/save")
+    @ApiOperation(value = "账单新增")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R save(@RequestBody BillEntity bill) {
+        billService.save(bill);
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @PostMapping("/update")
+    @ApiOperation(value = "账单修改")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R update(@RequestBody BillEntity bill) {
+        billService.update(bill);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @PostMapping("/delete")
+    @ApiOperation(value = "账单删除")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R delete(@RequestBody Integer[] ids) {
+        billService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+
+    /**
+     * 款项记录 金额组成
+     */
+    @GetMapping("/chargesInfo/{recordId}")
+    @ApiOperation(value = "账单款项的金额组成")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R chargesInfo(@PathVariable("recordId") Integer recordId) {
+        HashMap<String, Object> map = new HashMap<>();
+        PaymentRecordEntity record = paymentRecordService.queryObject(recordId);
+        if (record != null) {
+            String storagePayIds = record.getStoragePayIds();   //仓储日费用ids  1,2,3 格式存储
+            Integer storageOrderCostId = record.getStorageOrderCostId();     //仓储订单其他费用id
+            if (storagePayIds != null) {
+                String[] ids = storagePayIds.split(",");
+                BigDecimal storageFee = storagePayDao.sum(ids);  //当日仓储费之和
+                if (storageFee != null) {
+                    map.put("storageFee", storageFee);
+                }
+            }
+            if (storageOrderCostId != null) {
+                OrderCostEntity orderCost = orderCostDao.queryObject(storageOrderCostId);    //当日其他仓储费用
+                if (orderCost != null) {
+                    map.put("orderCost", orderCost);
+                }
+            }
+        }
+        return R.ok().put("map", map);
+    }
+
+
+    /**
+     * 查询我的账户
+     */
+    @RequestMapping("/getMyAccount")
+    public R getMyAccount() {
+        MyAccountEntity myAccount = billService.getMyAccount();
+
+        return R.ok().put("myAccount", myAccount);
+    }
+
+    /**
+     * 查询公司公账信息
+     */
+    @RequestMapping("/getMsg")
+    public R getMsg() {
+        MerchantCompanyEntity company = merchantCompanyService.queryByUserId(getUserId());
+
+        return R.ok().put("company", company);
+    }
+
+    /**
+     * 线下转账
+     */
+    @PostMapping("/offlinePay")
+    @ApiOperation(value = "线下转账")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R offlinePay(@RequestBody PaymentVO paymentVO) {
+        List<PaymentRecordEntity> paymentRecords = paymentVO.getPaymentRecords();
+        PaymentEntity payment = paymentVO.getPayment();
+        Integer billId = paymentRecords.get(0).getBillId();
+        BillEntity bill = billService.queryObject(billId);
+        Integer repeatOrder = bill.getRepeatOrder();
+        if (repeatOrder != null && repeatOrder == 0) { //买家余额支付给平台，平台只能余额支付给卖家的账单
+            return R.error(1, "此订单为付款商家余额支付订单，平台只能余额支付给收款商家！");
+        } else {
+            billService.offlinePay(paymentRecords, payment);
+            return R.ok();
+        }
+    }
+
+    /**
+     * 确认收款
+     */
+    @PostMapping("/gathering")
+    @ApiOperation(value = "确认收款")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R gatheringMethod(@RequestBody GatheringVO gatheringVO) {
+        List<PaymentRecordEntity> paymentRecords = gatheringVO.getPaymentRecords();
+        Gathering gathering = gatheringVO.getGathering();
+
+        billService.gatheringMethod(paymentRecords, gathering);
+        //更改仓储订单状态
+        //payStatus状态: 0:仓储费未结清、1:仓储费已结清
+        //passStatus订单状态 7：交易完成
+        Integer billId = paymentRecords.get(0).getBillId();
+        BillEntity bill = billService.queryObject(billId);
+        if (bill.getOrderType() == 3 && bill.getReceivableStatus() == 1) { //仓储订单款项已清
+            OrderEntity storageOrder = orderService.queryByOrderNumber(bill.getOrderNumber());
+            if (storageOrder.getPassStatus()==6){ //仓储订单货物已全部出库
+                storageOrder.setPayStatus(1);
+                storageOrder.setPassStatus(7);
+                orderService.update(storageOrder);
+                //订单交易完成---增加双方信用分数
+                MerchantCompanyEntity company1 = new MerchantCompanyEntity();
+                MerchantCompanyEntity company2 = new MerchantCompanyEntity();
+                company1.setId(Long.valueOf(bill.getPayeeId()));
+                company2.setId(Long.valueOf(bill.getPayerId()));
+                merchantCompanyService.updateCreditType(CreditType.COMPLETEORDER,company1);
+                merchantCompanyService.updateCreditType(CreditType.COMPLETEORDER,company2);
+            }
+        }
+
+        return R.ok();
+    }
+
+}

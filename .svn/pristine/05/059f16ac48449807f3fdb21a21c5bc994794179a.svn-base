@@ -1,0 +1,51 @@
+package com.wzlue.chain.common.enums;
+
+/**
+ * 授信
+ */
+public enum CreditType {
+    UNVERIFIED(0, 0, "待审核"),
+    VERIFIED(1, 800, "审核通过"),
+    COMPLETEORDER(2, 30, "完成订单"),
+    AUDITFAILED(3, 0, "审核不通过"),
+    COMPLAINT(4, -100, "投诉"),
+    ORDEREND(5, -20, "订单结束");
+
+    // 类型
+    private Integer type;
+    //分数
+    private Integer score;
+    // 名称
+    private String name;
+
+    CreditType(int type, int score, String name) {
+        this.type = type;
+        this.score = score;
+        this.name = name;
+    }
+
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}

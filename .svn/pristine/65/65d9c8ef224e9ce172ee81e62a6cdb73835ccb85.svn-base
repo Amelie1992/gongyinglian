@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOrderOfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity" id="declareOrderOfferMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="offerId" column="offer_id"/>
+        <result property="title" column="title"/>
+        <result property="companyInfo" column="company_info"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="businessInfo" column="business_info"/>
+        <result property="contacts" column="contacts"/>
+        <result property="contactWay" column="contact_way"/>
+        <result property="commodityCode" column="commodity_code"/>
+        <result property="declareType" column="declare_type"/>
+        <result property="declareCustoms" column="declare_customs"/>
+        <result property="chargeRules" column="charge_rules"/>
+        <result property="unit" column="unit"/>
+        <result property="status" column="status"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity">
+		SELECT * FROM declare_order_offer WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity">
+        SELECT * FROM declare_order_offer
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM declare_order_offer
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO declare_order_offer
+        (
+        `order_id`,
+        `offer_id`,
+        `title`,
+        `company_info`,
+        `company_id`,
+        `dept_id`,
+        `business_info`,
+        `contacts`,
+        `contact_way`,
+        `commodity_code`,
+        `declare_type`,
+        `declare_customs`,
+        `charge_rules`,
+        `unit`,
+        `status`,
+        `transaction_time`,
+        `create_by`,
+        `authorizes_id`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `del_flag`
+        )
+        VALUES
+        (
+        #{orderId},
+        #{offerId},
+        #{title},
+        #{companyInfo},
+        #{companyId},
+        #{deptId},
+        #{businessInfo},
+        #{contacts},
+        #{contactWay},
+        #{commodityCode},
+        #{declareType},
+        #{declareCustoms},
+        #{chargeRules},
+        #{unit},
+        #{status},
+        #{transactionTime},
+        #{createBy},
+        #{authorizesId},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{delFlag}
+        )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity">
+        UPDATE declare_order_offer
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="offerId != null">`offer_id` = #{offerId},</if>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="companyInfo != null">`company_info` = #{companyInfo},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="businessInfo != null">`business_info` = #{businessInfo},</if>
+            <if test="contacts != null">`contacts` = #{contacts},</if>
+            <if test="contactWay != null">`contact_way` = #{contactWay},</if>
+            <if test="commodityCode != null">`commodity_code` = #{commodityCode},</if>
+            <if test="declareType != null">`declare_type` = #{declareType},</if>
+            <if test="declareCustoms != null">`declare_customs` = #{declareCustoms},</if>
+            <if test="chargeRules != null">`charge_rules` = #{chargeRules},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="transactionTime != null">`transaction_time` = #{transactionTime},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM declare_order_offer WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM declare_order_offer WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getListById" resultType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity">
+        SELECT *
+        FROM declare_order_offer
+        WHERE order_id=#{value}
+    </select>
+</mapper>

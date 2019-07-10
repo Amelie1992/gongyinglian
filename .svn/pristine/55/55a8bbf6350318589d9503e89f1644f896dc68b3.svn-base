@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.logistics.dao.LogisticsContractDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsContractEntity" id="logisticsContractMap">
+        <result property="id" column="id"/>
+		<result property="dataSource" column="data_source"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="partyAName" column="party_a_name"/>
+        <result property="partyAId" column="party_a_id"/>
+        <result property="partyBName" column="party_b_name"/>
+        <result property="partyBId" column="party_b_id"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="contractAmount" column="contract_amount"/>
+		<result property="customsStorageLocation" column="customs_storage_location"/>
+		<result property="merchantStorageLocation" column="merchant_storage_location"/>
+		<result property="dateOfSigning" column="date_of_signing"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="owner" column="owner"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="modityBy" column="modity_by"/>
+        <result property="modityTime" column="modity_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="type" column="type"/>
+        <result property="location" column="location"/>
+		<association property="logisticsOrder" javaType="com.wzlue.chain.logistics.entity.LogisticsOrderEntity">
+			<result property="id" column="id"/>
+			<result property="orderNumber" column="order_number"/>
+			<result property="contractNumber" column="contract_number"/>
+			<result property="currency" column="currency"/>
+			<result property="unit" column="unit"/>
+		</association>
+		<collection property="file" resultMap="annexMap"></collection>
+    </resultMap>
+	<resultMap id="annexMap" type="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+		<id column="ax_id" property="id"/>
+		<result column="file_name" property="fileName"/>
+		<result column="file_type" property="fileType"/>
+		<result column="file_url" property="url"/>
+		<result column="username" property="username"/>
+		<result column="create_time" property="createTime"/>
+		<result column="contract_type" property="contractType"/>
+	</resultMap>
+
+	<select id="checkCode" resultType="com.wzlue.chain.logistics.entity.LogisticsContractEntity">
+		SELECT * FROM logistics_contract WHERE `contract_number`=#{contractNumber} AND data_source = 2 AND company_id = #{companyId}
+	</select>
+
+	<select id="queryObject" resultMap="logisticsContractMap">
+		SELECT
+		lc.*,
+		lo.*,
+		ax.`id` AS ax_id,
+        ax.`file_name` AS file_name,
+        ax.`file_type` AS file_type,
+        ax.`url` AS file_url,
+        ax.`contract_type`,
+		ax.create_time,
+		su.username
+        FROM logistics_contract lc
+		LEFT JOIN contract_annex ax ON ax.contract_id = lc.id and ax.contract_type=4
+		LEFT JOIN sys_user su ON ax.create_by = su.user_id
+		LEFT JOIN logistics_order lo ON lo.order_number = lc.order_number
+        WHERE 1=1
+        AND lc.id = #{id}
+	</select>
+
+	<select id="queryList" resultMap="logisticsContractMap">
+		SELECT
+		DISTINCT(lc.id) AS id,
+		lc.contract_number,
+		lc.contract_name,
+		lc.order_number,
+		lc.party_a_name,
+		lc.party_b_name,
+		lc.payment_method,
+		lc.contract_amount,
+		lc.date_of_signing,
+		lc.expire_date,
+		ax.`id` AS ax_id,
+		ax.`file_name` AS file_name,
+		ax.`file_type` AS file_type,
+		ax.`url` AS file_url,
+		ax.`contract_type`,
+		lo.*
+		FROM logistics_contract lc
+		LEFT JOIN contract_annex ax ON ax.contract_id = lc.id and ax.contract_type=4
+		LEFT JOIN logistics_order lo ON lo.order_number = lc.order_number
+		<where> 1=1
+			<if test="orderNumber != null and orderNumber.trim() !=''">
+			and	lc.order_number like concat('%',#{orderNumber},'%')
+			</if>
+			<if test="contractName != null and contractName.trim() !=''">
+				and	lc.contract_name like concat('',#{contractName},'%')
+			</if>
+			<if test="contractNumber != null and contractNumber.trim() !=''">
+				and	lc.contract_number like concat('%',#{contractNumber},'%')
+			</if>
+			<if test="companyId != null and companyId !=''">
+				and lc.company_id = #{companyId}
+			</if>
+		</where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY lc.id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM logistics_contract lc
+		<where>
+			<if test="orderNumber != null and orderNumber.trim() !=''">
+				lc.order_number like concat('%',#{orderNumber},'%')
+			</if>
+			<if test="contractName != null and contractName.trim() !=''">
+				and	lc.contract_name like concat('',#{contractName},'%')
+			</if>
+			<if test="contractNumber != null and contractNumber.trim() !=''">
+				and	lc.contract_number like concat('%',#{contractNumber}'%')
+			</if>
+			<if test="companyId != null and companyId !=''">
+				and lc.company_id = #{companyId}
+			</if>
+		</where>
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.logistics.entity.LogisticsContractEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO logistics_contract
+		(
+		 	`data_source`,
+			`contract_number`,
+			`order_number`,
+			`contract_name`,
+			`party_a_name`,
+			`party_a_id`,
+			`party_b_name`,
+			`party_b_id`,
+			`payment_method`,
+			`contract_amount`,
+			`customs_storage_location`,
+			`merchant_storage_location`,
+			`date_of_signing`,
+			`expire_date`,
+			`owner`,
+			`remarks`,
+			`created_by`,
+			`created_time`,
+			`modity_by`,
+			`modity_time`,
+			`dept_id`,
+			`company_id`,
+			`type`,
+			`location`,
+			`authorizes_id`
+		)
+		VALUES
+		(
+		#{dataSource},
+		#{contractNumber},
+		#{orderNumber},
+		#{contractName},
+		#{partyAName},
+		#{partyAId},
+		#{partyBName},
+		#{partyBId},
+		#{paymentMethod},
+		#{contractAmount},
+		#{customsStorageLocation},
+		#{merchantStorageLocation},
+		#{dateOfSigning},
+		#{expireDate},
+		#{owner},
+		#{remarks},
+		#{createdBy},
+		#{createdTime},
+		#{modityBy},
+		#{modityTime},
+		#{deptId},
+		#{companyId},
+		#{type},
+		#{location},
+		#{authorizesId}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.logistics.entity.LogisticsContractEntity">
+		UPDATE logistics_contract
+		<set>
+			<if test="dataSource != null">`data_source` = #{dataSource},</if>
+			<if test="contractNumber != null">`contract_number` = #{contractNumber}, </if>
+			<if test="orderNumber != null">`order_number` = #{orderNumber}, </if>
+			<if test="contractName != null">`contract_name` = #{contractName}, </if>
+			<if test="partyAName != null">`party_a_name` = #{partyAName}, </if>
+			<if test="partyAId != null">`party_a_id` = #{partyAId}, </if>
+			<if test="partyBName != null">`party_b_name` = #{partyBName}, </if>
+			<if test="partyBId != null">`party_b_id` = #{partyBId}, </if>
+			<if test="paymentMethod != null">`payment_method` = #{paymentMethod}, </if>
+			<if test="contractAmount != null">`contract_amount` = #{contractAmount}, </if>
+			<if test="customsStorageLocation != null">`customs_storage_location` = #{customsStorageLocation},</if>
+			<if test="merchantStorageLocation != null">`merchant_storage_location` = #{merchantStorageLocation},</if>
+			<if test="dateOfSigning != null">`date_of_signing` = #{dateOfSigning}, </if>
+			<if test="expireDate != null">`expire_date` = #{expireDate}, </if>
+			<if test="owner != null">`owner` = #{owner}, </if>
+			<if test="remarks != null">`remarks` = #{remarks}, </if>
+			<if test="createdBy != null">`created_by` = #{createdBy}, </if>
+			<if test="createdTime != null">`created_time` = #{createdTime}, </if>
+			<if test="modityBy != null">`modity_by` = #{modityBy}, </if>
+			<if test="modityTime != null">`modity_time` = #{modityTime}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="type != null">`type` = #{type}, </if>
+			<if test="location != null">`location` = #{location}, </if>
+			<if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM logistics_contract WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM logistics_contract WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="checkName" resultType="int">
+		SELECT COUNT(1) FROM logistics_contract WHERE contract_number = #{contractNumber}
+	</select>
+</mapper>

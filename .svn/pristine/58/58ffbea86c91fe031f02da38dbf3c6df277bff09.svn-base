@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agreement.dao.AgreeMentDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.agreement.entity.AgreeMentEntity" id="agreeMentMap">
+        <result property="xieyiId" column="xieyi_id"/>
+        <result property="xieyiType" column="xieyi_type"/>
+        <result property="xieyiContent" column="xieyi_content"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.agreement.entity.AgreeMentEntity">
+		SELECT * FROM agree_ment WHERE xieyi_id = #{value}
+	</select>
+
+    <select id="queryObjectByType" resultType="com.wzlue.chain.agreement.entity.AgreeMentEntity">
+		SELECT * FROM agree_ment WHERE xieyi_type = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.agreement.entity.AgreeMentEntity">
+        SELECT * FROM agree_ment
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY xieyi_id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agree_ment
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.agreement.entity.AgreeMentEntity">
+		INSERT INTO agree_ment
+		(
+            `xieyi_id`,
+            `xieyi_type`,
+            `xieyi_content`
+                            )
+		VALUES
+		(
+            #{xieyiId},
+            #{xieyiType},
+            #{xieyiContent}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.agreement.entity.AgreeMentEntity">
+        UPDATE agree_ment
+        <set>
+            <if test="xieyiType != null">`xieyi_type` = #{xieyiType}, </if>
+            <if test="xieyiContent != null">`xieyi_content` = #{xieyiContent}</if>
+        </set>
+        WHERE xieyi_id = #{xieyiId}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM agree_ment WHERE xieyi_id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM agree_ment WHERE xieyi_id IN
+        <foreach item="xieyiId" collection="array" open="(" separator="," close=")">
+            #{xieyiId}
+        </foreach>
+    </delete>
+
+</mapper>

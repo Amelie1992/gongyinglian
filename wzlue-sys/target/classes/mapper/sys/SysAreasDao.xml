@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysAreasDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.sys.entity.SysAreasEntity" id="sysAreasMap">
+        <result property="id" column="id"/>
+        <result property="areaid" column="areaid"/>
+        <result property="area" column="area"/>
+        <result property="cityid" column="cityid"/>
+    </resultMap>
+
+    <select id="queryList" resultType="com.wzlue.chain.sys.entity.SysAreasEntity" parameterType="string">
+		SELECT * FROM sys_areas WHERE cityid=#{cityid}
+
+	</select>
+
+    <select id="queryBycityId" resultType="com.wzlue.chain.sys.entity.SysAreasEntity" parameterType="string">
+		SELECT * FROM sys_areas WHERE areaid=#{areaId}
+
+	</select>
+
+</mapper>

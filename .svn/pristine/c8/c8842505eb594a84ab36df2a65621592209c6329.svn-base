@@ -1,0 +1,220 @@
+package com.wzlue.chain.logistics.service.impl;
+
+import com.qiniu.util.StringUtils;
+//import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.logistics.dao.*;
+import com.wzlue.chain.logistics.entity.*;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.logistics.service.LogisticsOrderService;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Service("logisticsOrderService")
+public class LogisticsOrderServiceImpl implements LogisticsOrderService {
+    @Autowired
+    private LogisticsOrderDao logisticsOrderDao;
+    @Autowired
+    private LogisticsOfferDao logisticsOfferDao;
+    @Autowired
+    private LogisticsOrderOfferDao logisticsOrderOfferDao;
+    @Autowired
+    private LogisticsOrderCommodityDao logisticsOrderCommodityDao;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private LogisticsContractDao logisticsContractDao;
+
+
+    @Override
+    public LogisticsOrderEntity queryObject(Long id) {
+        return logisticsOrderDao.queryObject(id);
+    }
+
+    protected SysUserEntity getUser() {
+        return (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+    }
+    @Override
+    public List<LogisticsOrderEntity> queryList(Map<String, Object> map) {
+        SysUserEntity user = getUser();
+        if (user.getCompanyId() != null) {
+            //查询本公司卖出的订单信息
+            map.put("companyId", user.getCompanyId());
+            map.put("merchantCompanyId", null);
+        }
+        return logisticsOrderDao.queryList(map);
+    }
+    @Override
+    public List<LogisticsOrderEntity> queryList2(Query query) {
+        SysUserEntity user = getUser();
+        if (user.getCompanyId() != null) {
+            //查询本公司卖出的订单信息
+            query.put("merchantCompanyId", user.getCompanyId());
+            query.put("companyId",null);
+        }
+        return logisticsOrderDao.queryList(query);
+    }
+
+    //接单同时生成合同列表
+    @Override
+    public void receipt(LogisticsOrderEntity logisticsOrder) {
+        logisticsOrderDao.update(logisticsOrder);//修改订单状态
+        //生成订单合同
+        logisticsOrder = logisticsOrderDao.queryObject(logisticsOrder.getId());
+        //生成买家订单合同
+        LogisticsContractEntity logisticsContractEntity = new LogisticsContractEntity();
+        if(logisticsOrder.getContractNumber() == null){//判断来源获取合同编号
+            logisticsContractEntity.setContractNumber(sysNumberRuleService.getCodeNumber("number_contract_logistics"));
+        }else {
+            logisticsContractEntity.setContractNumber(logisticsOrder.getContractNumber());
+        }
+        logisticsContractEntity.setOrderNumber(logisticsOrder.getOrderNumber());
+        logisticsContractEntity.setDataSource(1);//合同创建来源 1.订单创建 2.自主录入
+        MerchantCompanyEntity companyEntity = merchantCompanyDao.queryObject(logisticsOrder.getCompanyId());
+        if(companyEntity != null){//获取甲方(买方)公司
+            logisticsContractEntity.setPartyAId(String.valueOf(companyEntity.getId()));
+            logisticsContractEntity.setPartyAName(companyEntity.getCompanyName());
+            logisticsContractEntity.setCreatedBy(Integer.valueOf(companyEntity.getUserId()+""));
+        }
+        MerchantCompanyEntity merchantCompanyEntity = merchantCompanyDao.queryObject(logisticsOrder.getMerchantCompanyId());
+        if(merchantCompanyEntity != null){
+            logisticsContractEntity.setPartyBId(String.valueOf(merchantCompanyEntity.getId()));
+            logisticsContractEntity.setPartyBName(merchantCompanyEntity.getCompanyName());
+            logisticsContractEntity.setCreatedBy(Integer.valueOf(merchantCompanyEntity.getUserId()+""));
+        }
+        logisticsContractEntity.setContractAmount(logisticsOrder.getTotal());
+        logisticsContractEntity.setPaymentMethod(1);
+        logisticsContractEntity.setDateOfSigning(new Date());
+        logisticsContractEntity.setCreatedTime(new Date());
+        logisticsContractEntity.setCompanyId(Math.toIntExact(logisticsOrder.getCompanyId()));//买家
+        logisticsContractDao.save(logisticsContractEntity);
+        //生成卖家订单合同
+        logisticsContractEntity.setId(null);
+        logisticsContractEntity.setCompanyId(Math.toIntExact(logisticsOrder.getMerchantCompanyId()));//卖家
+        logisticsContractDao.save(logisticsContractEntity);
+    }
+
+    @Override
+    public void updatePrice(LogisticsOrderEntity logisticsOrder) {
+        logisticsOrderDao.updatePrice(logisticsOrder);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return logisticsOrderDao.queryTotal(map);
+    }
+
+    @Override
+    @Transactional
+    public void save(LogisticsOrderEntity logisticsOrder) {
+        MerchantCompanyEntity merchantCompanyEntity = merchantCompanyDao.queryObject(logisticsOrder.getCompanyId());
+        logisticsOrder.setContactCompanyName(merchantCompanyEntity.getCompanyName());//获取买家公司名称
+        //获取商家报盘消息
+        LogisticsOrderOfferEntity logisticsOrderOfferEntity = logisticsOrder.getLogisticsOfferEntity();
+        LogisticsOfferEntity offerEntity = logisticsOfferDao.queryObject(logisticsOrderOfferEntity.getOfferId());
+        logisticsOrder.setMerchantCompanyName(offerEntity.getCompanyName());
+        logisticsOrder.setMerchantContact(offerEntity.getContact());
+        logisticsOrder.setMerchantPhone(offerEntity.getPhone());
+        logisticsOrder.setMerchantCompanyId(Long.valueOf(offerEntity.getCompanyId()));
+//        logisticsOrder.setUnit(offerEntity.getUnit());
+//        if(logisticsOrder.getNumberCode() != null){
+        if (StringUtils.isNullOrEmpty(logisticsOrder.getNumberCode())){
+            logisticsOrder.setNumberType(0);//货物来源类型: 0:无来源
+        } else {
+            logisticsOrder.setNumberType(1);//货物来源类型: 0:无来源
+        }
+        logisticsOrder.setDelFlag(0);//删除标识 0：未删除 1：删除
+        logisticsOrder.setPassStatus(0);//付款状态: 0:待确认,1:已确认,2:已取消
+        logisticsOrder.setOrderStatus(0);//订单状态0：待支付1：已付款2：待发货3：已发货4：待收货5：交易完成6:已取消
+        logisticsOrder.setBuyStatus(0);//买家投诉状态 0:未被买家投诉；1:已被买家投诉
+        logisticsOrder.setSellStatus(0);//卖家投诉状态0：未被卖家投诉；1：已被卖家投诉
+        logisticsOrder.setAlterSale(0);//售后服务0：未售后；1：已售后
+        //自动生成订单编号
+        logisticsOrder.setOrderNumber(sysNumberRuleService.getCodeNumber("number_order_logistics"));
+        if (org.apache.commons.lang.StringUtils.isBlank(logisticsOrder.getContractNumber())) {//物流合同编号
+            logisticsOrder.setContractNumber(sysNumberRuleService.getCodeNumber("number_contract_logistics"));
+        }
+        logisticsOrderDao.save(logisticsOrder);
+        //生成订单同时新增一个报盘备份
+        if( null != offerEntity){
+            LogisticsOrderOfferEntity logisticsOfferEntity = logisticsOrder.getLogisticsOfferEntity();
+            logisticsOfferEntity.setOrderId(logisticsOrder.getId());
+            logisticsOfferEntity.setOrderNumber(logisticsOrder.getOrderNumber());
+            logisticsOfferEntity.setTitle(offerEntity.getTitle());
+            logisticsOfferEntity.setContact(offerEntity.getContact());
+            logisticsOfferEntity.setPhone(offerEntity.getPhone());
+            logisticsOfferEntity.setPrice(offerEntity.getPrice());
+            logisticsOfferEntity.setNum(offerEntity.getNum());
+            logisticsOfferEntity.setUnit(offerEntity.getUnit());
+            logisticsOfferEntity.setStatus(offerEntity.getStatus());
+            logisticsOfferEntity.setCompanyName(offerEntity.getCompanyName());
+            logisticsOfferEntity.setCompanyId(offerEntity.getCompanyId());
+            logisticsOfferEntity.setCreatDate(new Date());
+            logisticsOfferEntity.setUpdateBy(Long.valueOf(offerEntity.getUpdateBy()));
+            logisticsOfferEntity.setUpdateDate(new Date());
+            logisticsOrderOfferDao.save(logisticsOfferEntity);
+        }
+        //生成商品
+        List<LogisticsOrderCommodityEntity> logisticsOrderCommodityEntityList = logisticsOrder.getLogisticsOrderCommodityEntityList();
+        for (LogisticsOrderCommodityEntity logisticsOrderCommodityEntity : logisticsOrderCommodityEntityList) {
+            logisticsOrderCommodityEntity.setOrderId(logisticsOrder.getId());
+            logisticsOrderCommodityEntity.setOrderNumber(logisticsOrder.getOrderNumber());
+        }
+        logisticsOrderCommodityDao.saveList(logisticsOrderCommodityEntityList);
+
+    }
+
+    @Override
+    public void update(LogisticsOrderEntity logisticsOrder) {
+        logisticsOrderDao.update(logisticsOrder);
+    }
+
+    @Override
+    public void delete(Long id) {
+        logisticsOrderDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        logisticsOrderDao.deleteBatch(ids);
+    }
+
+    @Override
+    public List<MerchantCompanyEntity> getCompanys(Long companyId) {
+        return logisticsOrderDao.getCompanys(companyId);
+    }
+
+    @Override
+    public List<Map> showList(Map<String, Object> map) {
+        if (null != map.get("userId").toString()) {
+            SysUserEntity sysUserEntity = sysUserDao.queryObject(Long.valueOf(map.get("userId").toString()));
+            if (null != sysUserEntity) {
+                map.put("companyId", sysUserEntity.getCompanyId());
+            }
+        }
+        List<Map> list = logisticsOrderDao.showList(map);
+        return list;
+    }
+
+    @Override
+    public LogisticsOrderEntity queryByOrderNumber(String orderNumber){
+        return logisticsOrderDao.queryByOrderNumber(orderNumber);
+    }
+}

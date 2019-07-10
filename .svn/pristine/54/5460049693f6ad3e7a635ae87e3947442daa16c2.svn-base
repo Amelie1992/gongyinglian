@@ -1,0 +1,478 @@
+$(function () {
+    //列表
+    vm.initTable();
+
+    //表单提交
+    $("form").FM({
+        fields: vm.fields,
+        success: vm.saveOrUpdate
+    })
+
+});
+
+//状态
+function statusFmt(value, rows, index) {
+    var py1 = rows.status;
+    if (py1 == '0') {
+        return '上架';
+    } else if (py1 == '1') {
+        return '下架';
+    }
+}
+
+var vm = new Vue({
+    el: '#rrapp',
+    i18n,
+    data: {
+        showList: true,
+        detail: false,
+        title: null,
+        offer: {},
+        params: {
+            title: '',
+            status: '',
+        },
+//验证字段
+        fields: {
+            code: {
+                message: '编码验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '编码不能为空'
+                    },
+                },
+            }, title: {
+                message: '标题验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '标题不能为空'
+                    },
+                    //长度校验
+                    stringLength: {
+                        min: 1,
+                        max: 20,
+                        message: '标题长度必须在1到20之间'
+                    },
+                },
+            }, phone: {
+                message: '联系方式验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '联系方式不能为空'
+                    },
+                    //正则校验
+                    regexp: {
+                        regexp: /^(13[0-9]|14[579]|15[0-3,5-9]|16[6]|17[0135678]|18[0-9]|19[89])\d{8}$/,
+                        message: '电话号码不正确'
+                    }
+                },
+            }, contact: {
+                message: '联系人验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '联系人不能为空'
+                    },
+                    //长度校验
+                    stringLength: {
+                        min: 2,
+                        max: 20,
+                        message: '联系人长度必须在2到20之间'
+                    },
+                },
+            }, price: {
+                message: '收费单价验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '收费单价不能为空'
+                    }, regexp: {
+                        regexp: /^[0-9]{1,8}([.][0-9]{1,2})?$/,
+                        message: '小数点前8位 小数点后可保留2位'
+                    }
+                },
+            }, unit: {
+                message: '单位验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '单位不能为空'
+                    },
+                },
+            }, storageName: {
+                message: '仓库名称验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '仓库名称不能为空'
+                    },
+                    //长度校验
+                    stringLength: {
+                        min: 2,
+                        max: 20,
+                        message: '仓库名称长度必须在2到20之间'
+                    },
+                },
+            }, province: {
+                message: '省验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '省不能为空'
+                    },
+                },
+            }, city: {
+                message: '市验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '市不能为空'
+                    },
+                },
+            }, county: {
+                message: '区县验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '区县不能为空'
+                    },
+                },
+            }, area: {
+                message: '详细地址验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '详细地址不能为空'
+                    }, stringLength: {min: 1, max: 30, message: '长度小于30'}
+                },
+            }, businessIntroduction: {
+                message: '业务介绍验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '业务介绍不能为空'
+                    },
+                },
+            }, status: {
+                message: '状态: 0.在售 1.下架验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '状态: 0.在售 1.下架不能为空'
+                    },
+                },
+            }
+        },
+        provinces: null,
+        cities: null,
+        areas: null,
+        ue: UE.getEditor('myEditor', {
+            initialFrameHeight: 440,
+        }),
+        flag: 1,
+        events: {
+            'click .offerDetail': function (event, value, row, index) {
+                vm.showList = false;
+                vm.detail = true;
+                vm.title = "详情";
+                vm.getInfo(value);
+            }
+        }
+    },
+    methods: {
+        initTable: function () {
+            //列表
+            $("#table").BT({
+                url: baseURL + 'storage/offer/list',
+                columns: [
+                    {checkbox: true},
+                    // {title: vm.$t('code'), field: 'code'},
+                    {title: vm.$t('title'), field: 'title'},
+                    {title: vm.$t('price'), field: 'price'},
+                    {
+                        title: vm.$t("unit"), field: 'unit',
+                        formatter: function (value) {
+                            if (value == 1) {
+                                return "元/吨/天"
+                            } else if (value == 2) {
+                                return "元/千克/天"
+                            }
+                        }
+                    },
+                    {title: vm.$t('warehouseName'), field: 'storageName'},
+                    {title: vm.$t('Province'), field: 'provinceName'},
+                    {title: vm.$t('City'), field: 'cityName'},
+                    {title: vm.$t('Country'), field: 'countyName'},
+                    // {title: vm.$t('Area'), field: 'area'},
+                    {title: vm.$t('contact'), field: 'contact'},
+                    {title: vm.$t('phone'), field: 'phone'},
+                    {title: vm.$t('LPTime'), field: 'transactionTime'},
+                    {title: vm.$t('NumberTransactions'), field: 'num'},
+                    {title: vm.$t('status'), field: 'status', formatter: statusFmt},
+                    {
+                        title: vm.$t("chaozuo"), field: 'id', formatter: function (value, row, index) {
+                            return "<a href='javascript:void(0)' class='offerDetail'>" + vm.$t('Details') + "</a>";
+                        }, events: vm.events
+                    }
+                ],
+                //条件查询
+                queryParams: vm.params
+            });
+        },
+        query: function () {
+            vm.reload();
+        },
+        add: function () {
+            vm.showList = false;
+            vm.detail = false;
+            vm.title = "新增";
+            vm.offer = {};
+            vm.flag = 1;
+            $('#code').attr("disabled", "disabled");
+            vm.ue.setContent('');
+        },
+        update: function (event) {
+            var id = getSelectedRowId("id");
+            if (id == null) {
+                return;
+            }
+            vm.showList = false;
+            vm.detail = false;
+            vm.title = "修改";
+
+            vm.getInfo(id)
+        },
+        //表单验证
+        validate: function () {
+            var bl = $('form').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        saveOrUpdate: function (event) {
+            layer.load();
+            this.offer.businessIntroduction = UE.utils.unhtml(this.ue.getContent());
+            if (this.offer.businessIntroduction == undefined || this.offer.businessIntroduction == '') {
+                alert("业务介绍不能为空！");
+                layer.closeAll();
+                return;
+            }
+            if (vm.offer.id == null && vm.flag == 0) {
+                if (vm.offer.code == null || vm.offer.code == '') {
+                    alert("手动输入时编码不能为空");
+                    layer.closeAll();
+                    return;
+                }
+                if (!vm.checkCode(vm.offer.code)) {
+                    layer.closeAll();
+                    return;
+                }
+                if (vm.offer.code.length > 50) {
+                    alert("编码长度不能大于50");
+                    layer.closeAll();
+                    return;
+                }
+            }
+            var url = vm.offer.id == null ? "storage/offer/save" : "storage/offer/update";
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(vm.offer),
+                success: function (r) {
+                    if (r.code === 0) {
+                        alert('操作成功', function (index) {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                    layer.closeAll();
+                }
+            });
+        },
+        del: function (event) {
+            var ids = getSelectedRowsId("id");
+            if (ids == null) {
+                return;
+            }
+
+            confirm('确定要删除选中的记录？', function () {
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "storage/offer/delete",
+                    contentType: "application/json",
+                    data: JSON.stringify(ids),
+                    success: function (r) {
+                        if (r.code == 0) {
+                            alert('操作成功', function (index) {
+                                vm.reload();
+                            });
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
+        getInfo: function (id) {
+            vm.offer = {};
+            vm.ue.setContent('');
+            $.get(baseURL + "storage/offer/info/" + id, function (r) {
+                vm.offer = r.offer;
+                vm.ue.setContent(UE.utils.html(vm.offer.businessIntroduction));
+                $('#code').attr("disabled", "disabled");
+            });
+        },
+        reload: function (event) {
+            vm.showList = true;
+            vm.detail = false;
+            vm.title = "";
+            //刷新 如需条件查询common.js
+            $("#table").BTF5(vm.params);
+            $("form").RF();
+        },
+        provincesChange: function (index, child, value) {
+            var str = JSON.stringify(window.getCities(value));
+            str = str.replace(/cityid/g, "value").replace(/city/g, "label");
+            this.cities = JSON.parse(str);
+            vm.offer.city = null;   //跟换省份时清除城市的选中状态
+            this.areas = null;      //清除区列表数据
+        },
+        cityChange: function (index, child, value) {
+            var str = JSON.stringify(window.getAreas(value));
+            str = str.replace(/areaid/g, "value").replace(/area/g, "label");
+            this.areas = JSON.parse(str);
+        },
+        //上架
+        onSale: function () {
+            var rows = getSelectedRows();
+            if (rows == null) {
+                // alert("请选择要上架的仓储报盘");
+                return;
+            }
+            rows.forEach(function (row) {
+                row.status = 0
+            });
+            $.ajax({
+                type: "POST",
+                url: baseURL + "storage/offer/updateList",
+                contentType: "application/json",
+                data: JSON.stringify(rows),
+                success: function (r) {
+                    if (r.code === 0) {
+                        alert('操作成功', function (index) {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
+        //下架
+        noSale: function () {
+            var rows = getSelectedRows();
+            if (rows == null) {
+                // alert("请选择要下架的仓储报盘");
+                return;
+            }
+            rows.forEach(function (row) {
+                row.status = 1;
+            });
+            console.log(rows)
+            $.ajax({
+                type: "POST",
+                url: baseURL + "storage/offer/updateList",
+                contentType: "application/json",
+                data: JSON.stringify(rows),
+                success: function (r) {
+                    if (r.code === 0) {
+                        alert('操作成功', function (index) {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
+        checkCode: function (value) {
+            if (value == '' || value == null) {
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: baseURL + "storage/offer/checkCode",
+                contentType: "application/json",
+                data: JSON.stringify({code: value}),
+                success: function (r) {
+                    if (r.code === 0) {
+                        if (r.offer != null) {
+                            alert("编码已存在");
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
+    },
+    created: function () {
+        var str = JSON.stringify(window.getProvinces());
+        str = str.replace(/provinceid/g, "value").replace(/province/g, "label");
+        this.provinces = JSON.parse(str);
+    },
+    watch: {
+        "$i18n.locale": function (value, old) {
+            if (value == 'en') {
+                $("#table").bootstrapTable.defaults.locale = "en-US";
+            } else {
+                $("#table").bootstrapTable.defaults.locale = "zh-CN";
+            }
+            $("#table").bootstrapTable("destroy")
+            this.initTable();
+        },
+        "offer.province": function (value, old) {
+            if (value != old) {
+                var str = JSON.stringify(window.getCities(value));
+                str = str.replace(/cityid/g, "value").replace(/city/g, "label");
+                this.cities = JSON.parse(str);
+                setTimeout(function () {
+                    vm.offer.city = parseInt(vm.offer.city);
+                }, 0)
+            }
+        },
+        "offer.city": function (value, old) {
+            if (value != old) {
+                var str = JSON.stringify(window.getAreas(value));
+                str = str.replace(/areaid/g, "value").replace(/area/g, "label");
+                this.areas = JSON.parse(str);
+                setTimeout(function () {
+                    vm.offer.county = parseInt(vm.offer.county);
+                }, 1)
+            }
+        },
+        "flag": function (value, old) {
+            if (value == '1') {
+                $('#code').attr("disabled", "disabled");
+            } else {
+                $('#code').removeAttr("disabled");
+            }
+        }
+    }
+});
+
+function checkCode2(value) {
+    if (value == '' || value == null) {
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: baseURL + "storage/offer/checkCode",
+        contentType: "application/json",
+        data: JSON.stringify({code: value}),
+        success: function (r) {
+            if (r.code === 0) {
+                if (r.offer != null) {
+                    alert("编码已存在");
+                }
+            } else {
+                alert(r.msg);
+            }
+        }
+    });
+}

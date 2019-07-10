@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>追溯管理</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/kdniao/css/KDNWidget.css"/>
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../plugins/kdniao/css/KDNWidget.css"/>
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('TraceBack')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" :placeholder="$t('OrderNumber')" class="form-control" v-model="params.orderNumber"/>
+            </div>
+            <div class="col-xs-2">
+                <input type="text" :placeholder="$t('ContractNumber')" class="form-control"
+                       v-model="params.contractNumber"/>
+            </div>
+            <div class="col-xs-2">
+                <select class="form-control" v-model="params.orderType">
+                    <option v-for="item in orderTypes" :value="item.type">
+                        {{item.typeName}}
+                    </option>
+                </select>
+            </div>
+            <div class="col-xs-2">
+                <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <table id="table"></table>
+        </div>
+    </div>
+
+    <div v-show="!showList">
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingOne">
+                    <h4 class="panel-title">
+                        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"
+                           aria-expanded="true" aria-controls="collapseOne">
+                            当前订单
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                    <div class="panel-body" v-if="params.orderType == 0">
+                        <order-current-goods ref="currentOrder" :contract_params.sync="contractParams" type="0"
+                                             v-if="contractParams.showInfo == true"></order-current-goods>
+                    </div>
+                    <div class="panel-body" v-if="params.orderType == 1">
+                        <order-current-logistics ref="currentOrder" :contract_params.sync="contractParams" type="0"
+                                                 v-if="contractParams.showInfo == true"></order-current-logistics>
+                    </div>
+                    <div class="panel-body" v-if="params.orderType == 2">
+                        <order-current-declare ref="currentOrder" :contract_params.sync="contractParams" type="0"
+                                               v-if="contractParams.showInfo == true"></order-current-declare>
+                    </div>
+                    <div class="panel-body" v-if="params.orderType == 3">
+                        <order-current-storage ref="currentOrder" :contract_params.sync="contractParams" type="0"
+                                               v-if="contractParams.showInfo == true"></order-current-storage>
+                    </div>
+                    <div class="panel-body" v-if="params.orderType == 4">
+                        <order-current-agent ref="currentOrder" :contract_params.sync="contractParams" type="0"
+                                             v-if="contractParams.showInfo == true"></order-current-agent>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingTwo">
+                    <h4 class="panel-title">
+                        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion"
+                           href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            来源订单
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+                    <div class="panel-body" v-if="contractParams.orderType == 0">
+                        <order-current-goods ref="sourceOrder" :contract_params.sync="contractParams" type="1"
+                                             v-if="contractParams.showInfo == true"></order-current-goods>
+                    </div>
+                    <div class="panel-body" v-if="contractParams.orderType == 1">
+                        <order-current-logistics ref="sourceOrder" :contract_params.sync="contractParams" type="1"
+                                                 v-if="contractParams.showInfo == true"></order-current-logistics>
+                    </div>
+                    <div class="panel-body" v-if="contractParams.orderType == 2">
+                        <order-current-declare ref="sourceOrder" :contract_params.sync="contractParams" type="1"
+                                               v-if="contractParams.showInfo == true"></order-current-declare>
+                    </div>
+                    <div class="panel-body" v-if="contractParams.orderType == 3">
+                        <order-current-storage ref="sourceOrder" :contract_params.sync="contractParams" type="1"
+                                               v-if="contractParams.showInfo == true"></order-current-storage>
+                    </div>
+                    <div class="panel-body" v-if="contractParams.orderType == 4">
+                        <order-current-agent ref="sourceOrder" :contract_params.sync="contractParams" type="1"
+                                             v-if="contractParams.showInfo == true"></order-current-agent>
+                    </div>
+                    <div class="panel-body" v-if="contractParams.orderType == null">
+                        <span>没有来源订单</span>
+                    </div>
+                </div>
+            </div>
+            <!--关联订单开始-->
+            <div class="panel-group" id="accordion1" role="tablist1" aria-multiselectable="true">
+                <!--                <div class="panel panel-default">
+                                    <div class="panel-heading" role="tab" id="headingOne1">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne1" aria-expanded="true" aria-controls="collapseOne1">
+                                                货物关联订单
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div id="collapseOne1" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne1">
+                                        <div class="panel-body">
+
+                                        </div>
+                                    </div>
+                                </div>-->
+                <!--关联物流-->
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingTwo1">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion1"
+                               href="#collapseTwo1" aria-expanded="false" aria-controls="collapseTwo1">
+                                物流关联订单
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseTwo1" class="panel-collapse collapse" role="tabpanel"
+                         aria-labelledby="headingTwo1">
+                        <div class="panel-body"
+                             v-if="fatherOrder != null && fatherOrder.logistics != null && fatherOrder.logistics.length >0">
+                            <!--开始循环-->
+                            <div class="panel-group" id="fatherLogisticsOrder" role="tablist1"
+                                 aria-multiselectable="true">
+                                <div class="panel panel-default" v-for="(item,index) in fatherOrder.logistics">
+                                    <div class="panel-heading" role="tab" :id="'Logistics'+item.id">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#fatherLogisticsOrder"
+                                               :href="'#collapseLogistics2'+item.id" aria-expanded="true"
+                                               :aria-controls="'#collapseLogistics2'+item.id">
+                                                关联物流订单编号:{{item.orderNumber}}
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div :id="'collapseLogistics2'+item.id" class="panel-collapse collapse"
+                                         role="tabpanel"
+                                         :aria-labelledby="'Logistics'+item.id">
+                                        <div class="panel-body">
+                                            <order-current-logistics :order_id.sync="item.id" type="2"
+                                                                     v-if="item.id != null"></order-current-logistics>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--结束循环-->
+                        </div>
+                        <div class="panel-body" v-else>
+                            无物流关联订单
+                        </div>
+                    </div>
+                </div>
+                <!--关联报关-->
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingThree1">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion1"
+                               href="#collapseThree1" aria-expanded="false" aria-controls="collapseThree1">
+                                报关关联订单
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseThree1" class="panel-collapse collapse" role="tabpanel"
+                         aria-labelledby="headingThree1">
+                        <div class="panel-body"
+                             v-if="fatherOrder != null && fatherOrder.declares != null && fatherOrder.declares.length >0">
+                            <!--开始循环-->
+                            <div class="panel-group" id="fatherDeclaresOrder" role="tablist1"
+                                 aria-multiselectable="true">
+                                <div class="panel panel-default" v-for="(item,index) in fatherOrder.declares">
+                                    <div class="panel-heading" role="tab" :id="'Declares'+item.id">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#fatherDeclaresOrder"
+                                               :href="'#collapseDeclares'+item.id" aria-expanded="true"
+                                               :aria-controls="'#collapseDeclares'+item.id">
+                                                关联物报关单编号:{{item.orderNumber}}
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div :id="'collapseDeclares'+item.id" class="panel-collapse collapse"
+                                         role="tabpanel"
+                                         :aria-labelledby="'Declares'+item.id">
+                                        <div class="panel-body">
+                                            <order-current-declare :order_id.sync="item.id" type="2"
+                                                                   v-if="item.id != null"></order-current-declare>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--结束循环-->
+                        </div>
+                        <div class="panel-body" v-else>
+                            无报关关联订单
+                        </div>
+                    </div>
+                </div>
+                <!--关联仓储-->
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingFour1">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion1"
+                               href="#collapseFour1" aria-expanded="false" aria-controls="collapseFour1">
+                                仓储关联订单
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseFour1" class="panel-collapse collapse" role="tabpanel"
+                         aria-labelledby="headingFour1">
+                        <div class="panel-body"
+                             v-if="fatherOrder != null && fatherOrder.storages != null && fatherOrder.storages.length >0">
+                            <!--开始循环-->
+                            <div class="panel-group" id="fatherStoragesOrder" role="tablist1"
+                                 aria-multiselectable="true">
+                                <div class="panel panel-default" v-for="(item,index) in fatherOrder.storages">
+                                    <div class="panel-heading" role="tab" :id="'storages'+item.id">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#fatherStoragesOrder"
+                                               :href="'#collapseStorages'+item.id" aria-expanded="true"
+                                               :aria-controls="'#collapseStorages'+item.id">
+                                                关联仓储订单编号:{{item.orderNumber}}
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div :id="'collapseStorages'+item.id" class="panel-collapse collapse"
+                                         role="tabpanel"
+                                         :aria-labelledby="'storages'+item.id">
+                                        <div class="panel-body">
+                                            <order-current-storage :order_id.sync="item.id" type="2"
+                                                                   v-if="item.id != null"></order-current-storage>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--结束循环-->
+                        </div>
+                        <div class="panel-body" v-else>
+                            无仓储关联订单
+                        </div>
+                    </div>
+                </div>
+                <!--关联代理-->
+                <div class="panel panel-default">
+                    <div class="panel-heading" role="tab" id="headingFives1">
+                        <h4 class="panel-title">
+                            <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion1"
+                               href="#collapseFives1" aria-expanded="false" aria-controls="collapseFives1">
+                                代理关联订单
+                            </a>
+                        </h4>
+                    </div>
+                    <div id="collapseFives1" class="panel-collapse collapse" role="tabpanel"
+                         aria-labelledby="headingFives1">
+                        <div class="panel-body"
+                             v-if="fatherOrder != null && fatherOrder.agents != null && fatherOrder.agents.length >0">
+                            <!--开始循环-->
+                            <div class="panel-group" id="fatherAgentsOrder" role="tablist1" aria-multiselectable="true">
+                                <div class="panel panel-default" v-for="(item,index) in fatherOrder.agents">
+                                    <div class="panel-heading" role="tab" :id="'agents'+item.id">
+                                        <h4 class="panel-title">
+                                            <a role="button" data-toggle="collapse" data-parent="#fatherAgentsOrder"
+                                               :href="'#collapseAgents'+item.id" aria-expanded="true"
+                                               :aria-controls="'#collapseAgents'+item.id">
+                                                关联代理订单编号:{{item.orderNumber}}
+                                            </a>
+                                        </h4>
+                                    </div>
+                                    <div :id="'collapseAgents'+item.id" class="panel-collapse collapse" role="tabpanel"
+                                         :aria-labelledby="'agents'+item.id">
+                                        <div class="panel-body">
+                                            <order-current-agent :order_id.sync="item.id" type="2"
+                                                                 v-if="item.id != null"></order-current-agent>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--结束循环-->
+                        </div>
+                        <div class="panel-body" v-else>
+                            无代理关联订单
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--关联订单结束-->
+            <!--            <div class="panel panel-default">
+                            <div class="panel-heading" role="tab" id="headingThree">
+                                <h4 class="panel-title">
+                                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                       关联订单
+                                    </a>
+                                </h4>
+                            </div>
+                            <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                                <div class="panel-body">
+
+                                </div>
+                            </div>
+                        </div>-->
+        </div>
+        <!--        <ul class="nav nav-tabs" role="tablist" id="tablist">
+                    <li><a href="#orderInfo" data-toggle="tab">{{$t('OrderDetails')}}</a></li>
+                    &lt;!&ndash;<li><a href="#contractInfo" data-toggle="tab">{{$t('ContractInformation')}}</a></li>&ndash;&gt;
+                </ul>-->
+        <!--    <div class="tab-content">
+                <div class="tab-pane fade" id="orderInfo">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>来源订单</h4>
+                        </div>
+                        <div class="panel-body">
+
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>当前订单</h4>
+                        </div>
+                        <div class="panel-body" v-if="params.orderType == 0">
+                            <order-current-goods ref="currentOrder" :order_id="contractParams.orderId" v-if="contractParams.showInfo == true"></order-current-goods>
+                        </div>
+                        <div class="panel-body" v-if="params.orderType == 1">
+                            <order-current-logistics ref="currentOrder" :order_id="contractParams.orderId" v-if="contractParams.showInfo == true"></order-current-logistics>
+                        </div>
+                        <div class="panel-body" v-if="params.orderType == 2">
+                            <order-current-declare ref="currentOrder" :order_id="contractParams.orderId" v-if="contractParams.showInfo == true"></order-current-declare>
+                        </div>
+                        <div class="panel-body" v-if="params.orderType == 3">
+                            <order-current-storage ref="currentOrder" :order_id="contractParams.orderId" v-if="contractParams.showInfo == true"></order-current-storage>
+                        </div>
+                        <div class="panel-body" v-if="params.orderType == 4">
+                            <order-current-agent ref="currentOrder" :order_id="contractParams.orderId" v-if="contractParams.showInfo == true"></order-current-agent>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>关联订单</h4>
+                        </div>
+                        <div class="panel-body">
+
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="contractInfo">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 v-show="params.orderType == 0">订单合同</h3>
+                            <h3 v-show="params.orderType == 1">物流合同</h3>
+                            <h3 v-show="params.orderType == 2">报关合同</h3>
+                            <h3 v-show="params.orderType == 3">仓储合同</h3>
+                            <h3 v-show="params.orderType == 4">代理合同</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div v-if="contractParams.showInfo == false"
+                                 class="page-header">
+                                <h1>当前订单还没有生成合同，请确认该订单买卖双方都已确认订单</h1>
+                            </div>
+                            <div v-else>
+                                &lt;!&ndash;货物合同&ndash;&gt;
+    &lt;!&ndash;                            <div v-if="params.orderType == 0">
+                                    <contract-goods :contract_params.sync="contractParams"></contract-goods>
+                                </div>&ndash;&gt;
+                                &lt;!&ndash;物流合同&ndash;&gt;
+    &lt;!&ndash;                            <div v-else-if="params.orderType == 1">
+                                    <contract-logistics :contract_params.sync="contractParams"></contract-logistics>
+                                </div>&ndash;&gt;
+    &lt;!&ndash;                            &lt;!&ndash;报关合同&ndash;&gt;
+                                <div v-show="params.orderType == 2">
+                                    <contract-declare :contract_params.sync="contractParams"></contract-declare>
+                                </div>
+                                &lt;!&ndash;仓储合同&ndash;&gt;
+                                <div v-show="params.orderType == 3">
+                                    <contract-storage :contract_params.sync="contractParams"></contract-storage>
+                                </div>
+                                &lt;!&ndash;代理合同&ndash;&gt;
+                                <div v-show="params.orderType == 4">
+                                    <contract-agent :contract_params.sync="contractParams"></contract-agent>
+                                </div>&ndash;&gt;
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                        </div>
+                    </div>
+                </div>-->
+        <div class="panel-footer">
+            &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.min.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.min.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+<!--<script src="../../js/modules/traceback/contract.js"></script>-->
+<script src="../../plugins/kdniao/js/KDNWidget.js"></script>
+<script src="../../js/modules/traceback/currentorder.js"></script>
+<script src="../../js/modules/traceback/traceback.js"></script>
+</body>
+</html>

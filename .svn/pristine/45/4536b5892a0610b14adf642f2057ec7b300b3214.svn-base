@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{$t('SHSCM')}}</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/AdminLTE.min.css">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+         folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="css/all-skins.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body class="hold-transition login-page">
+
+
+<div id="rrapp" v-cloak>
+    <!-- login -->
+    <div class="login-box" v-if="context=='login'">
+        <div class="login-logo">
+            <b>{{$t('hello')}}</b>
+        </div>
+        <div class="">
+            <a href="javascript:;" @click="changeen"> &nbsp;English</a>
+            <a href="javascript:;" @click="changezh"> &nbsp;中文{{$t('Chinese')}}</a>
+        </div>
+        <!-- /.login-logo -->
+        <div class="login-box-body">
+            <!--<p class="login-box-msg">{{$t('administratorLogin')}}</p>-->
+            <div v-if="error" class="alert alert-danger alert-dismissible">
+                <h4 style="margin-bottom: 0px;"><i class="fa fa-exclamation-circle"></i> {{errorMsg}}</h4>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" v-model="form.username" :placeholder="$t('account')">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="form.password" :placeholder="$t('password')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <!-- @keyup.enter="login"  enter自动提交表单 针对火狐有效-->
+                <input type="text" class="form-control" v-model="form.captcha" :placeholder="$t('verificationCode')">
+                <span class="glyphicon glyphicon-warning-sign form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <img alt="如果看不清楚，请单击图片刷新！" class="pointer" :src="src" @click="refreshCode">
+                &nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:;" @click="refreshCode">{{$t('refresh')}}</a>
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="checkbox icheck"></div>
+                </div>
+                <!-- /.col -->
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-primary btn-flat" @click="registerPage">{{$t('register')}}
+                    </button>
+                    <button type="button" class="btn btn-primary btn-flat" @click="login">{{$t('signIn')}}</button>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.social-auth-links -->
+        </div>
+        <!-- /.login-box-body -->
+    </div>
+    <!-- login end -->
+
+    <!-- regiter start -->
+    <div class="register-box" v-if="context=='register'">
+        <!-- /.register-box-body -->
+        <div class="register-box-body">
+            <div class="register-logo">
+                <b>{{$t('register')}}</b>
+            </div>
+            <div v-if="registerError" class="alert alert-danger alert-dismissible">
+                <h4 style="margin-bottom: 0px;"><i class="fa fa-exclamation-circle"></i> {{errorMsg}}</h4>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" v-model="register.mobile" :placeholder="$t('registerPhone')">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" v-model="register.nikename" :placeholder="$t('nikeName')">
+                <span class="glyphicon glyphicon-user form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="register.password" :placeholder="$t('password')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="password" class="form-control" v-model="register.confirmpassword" :placeholder="$t('ConfirmThePassword')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+            </div>
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control" id="smsCode" :placeholder="$t('verificationCode')">
+                <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+                <input type="button" class="form-control btn btn-primary" @click="sendcode" id="sendSms" :value="$t('GetVerificationCode')"/>
+            </div>
+
+            <div class="form-group">
+                <div style=" width: 100%; text-align: center;">
+                    <input type="checkbox" id="checkboxSuccess" name="checkboxSuccess" value="1" v-model="protocol">
+                    <label>
+                        <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal">
+                            {{$t('IHaveReadAndAgreed')}}《{{$t('Agreement')}}》
+                        </button>
+                    </label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-6">
+                    <div class="checkbox icheck"></div>
+                </div>
+                <!-- /.col -->
+                <div class="col-xs-6">
+                    <button type="button" class="btn btn-primary btn-flat" @click="loginPage">{{$t('return')}}</button>
+                    <button type="button" class="btn btn-primary btn-flat" @click="save">{{$t('register')}}</button>
+                </div>
+                <!-- /.col -->
+            </div>
+        </div>
+    </div>
+    <!-- register end -->
+
+    <!-- 协议（Modal） -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        注册协议
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div id="selectTree" class="ztree" style="height:300px;overflow:auto; ">
+                        {{protocolInfo}}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{$t('close')}}</button>
+                    <button type="button" class="btn btn-default" @click="agree">{{$t('Agree')}}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="libs/jquery.min.js"></script>
+<script src="libs/jquery.cookie.js"></script>
+<script src="plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/bootstrap.min.js"></script>
+<script src="plugins/layer/layer.js"></script>
+<script src="libs/app.js"></script>
+<script src="messages/zh.js"></script>
+<script src="messages/en.js"></script>
+
+<!-- 配置信息 -->
+<script src="./sdk/webim.config.js"></script>
+<script src="./sdk/strophe-1.2.8.min.js"></script>
+<!-- webSdk -->
+<script src="./sdk/websdk-1.4.12.js"></script>
+<script src="./demo/js/jquery.charfirst.pinyin.js"></script>
+
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+
+<script src="js/common.js"></script>
+
+<script type="text/javascript">
+    /*基本功能*/
+    var conn = new WebIM.connection({
+        https: WebIM.config.https,
+        // https: typeof WebIM.config.https === 'boolean' ? WebIM.config.https : location.protocol === 'https:',
+        url: WebIM.config.xmppURL,
+        apiUrl: WebIM.config.apiURL,
+        isAutoLogin: WebIM.config.isAutoLogin,
+        isMultiLoginSessions: WebIM.config.isMultiLoginSessions
+        // heartBeatWait: WebIM.config.heartBeatWait,
+        // autoReconnectNumMax: WebIM.config.autoReconnectNumMax,
+        // autoReconnectInterval: WebIM.config.autoReconnectInterval
+    }); // 创建连接
+    conn.listen({
+        onOpened: function (message) { //连接成功回调
+            // 如果isAutoLogin设置为false，那么必须手动设置上线，否则无法收消息
+            // 手动上线指的是调用conn.setPresence(); 如果conn初始化时已将isAutoLogin设置为true
+            // 则无需调用conn.setPresence();
+            // 连接成功才可以发送消息
+            console.log("%c 环信已成功连接", "color: green");
+            handleOpen(conn);
+        },
+        onClosed: function (message) {
+        }, //连接关闭回调
+        onTextMessage: function (message) {
+            // 在此接收和处理消息，根据message.type区分消息来源，私聊或群组或聊天室
+            console.log("测试是否是临时联系人");
+            handleTextMessage(message);
+        }, //收到文本消息
+        onEmojiMessage: function (message) {
+            // 当为WebIM添加了Emoji属性后，若发送的消息含WebIM.Emoji里特定的字符串，connection就会自动将
+            // 这些字符串和其它文字按顺序组合成一个数组，每一个数组元素的结构为{type: 'emoji(或者txt)', data:''}
+            // 当type='emoji'时，data表示表情图像的路径，当type='txt'时，data表示文本消息
+            console.log('表情');
+            var data = message.data;
+            for (var i = 0, l = data.length; i < l; i++) {
+                console.log(data[i]);
+            }
+        }, //收到表情消息
+        onPictureMessage: function (message) {
+            console.log('图片');
+            var options = {
+                url: message.url
+            };
+            options.onFileDownloadComplete = function () {
+                // 图片下载成功
+                var msgObjDivId = null;
+                var listObjIId = null;
+                if (message.type == "chat") {
+                    msgObjDivId = "ChatRosters-" + message.from;
+                    listObjIId = "ListRosters-" + message.from;
+                } else if (message.type == "groupchat") {
+                    msgObjDivId = "ChatGroups-" + message.to;
+                    listObjIId = "ListGroups-" + message.to;
+                }
+                // 把接受的消息添加进消息盒子中
+                var chatdiv = $('<div>').attr({
+                    'class': 'otherMsg'
+                });
+                $('<img>').attr({
+                    'src': '/images/huanxin/bb.jpg',
+                    'width': '40px',
+                    'height': '40px',
+                    'id': 'limg'
+                }).appendTo(chatdiv);
+                console.log(message);
+                $('<h4>').text(message.from).appendTo(chatdiv);
+                var span = $('<span>').appendTo(chatdiv);
+                $('<img>').attr({
+                    'src': message.url,
+                    'width': '300px',
+                }).appendTo(span);
+                $('#' + msgObjDivId).append(chatdiv);
+                setTimeout(function () {
+                    scrollBottom('#' + msgObjDivId);
+                }, 500);
+
+                // 小红点添加
+                if (curAcceptMsgObjDivId == null || msgObjDivId != curAcceptMsgObjDivId) {
+                    if (msgObjDivId in redPCache) {
+                        var redIVal = $("#" + listObjIId + " i").text();
+                        redIVal = parseInt(redIVal) + 1;
+                        $("#" + listObjIId + " i").text(redIVal);
+                    } else {
+                        var redI = $('<i>').attr({
+                            "id": "redP-" + msgObjDivId
+                        }).text(1);
+                        $("#" + listObjIId).append(redI);
+                        redPCache[msgObjDivId] = true;
+                    }
+                    ;
+                }
+                console.log('图片下载成功!');
+                console.log(message);
+
+
+            };
+            options.onFileDownloadError = function () {
+                // 图片下载失败
+                console.log('图片下载失败!');
+            };
+            WebIM.utils.download.call(conn, options); // 意义待查
+        }, //收到图片消息
+        onCmdMessage: function (message) {
+            getRoastersLocal();
+            console.log('收到命令消息');
+        }, //收到命令消息
+        onAudioMessage: function (message) {
+            getRoastersLocal();
+            console.log("收到音频消息");
+        }, //收到音频消息
+        onLocationMessage: function (message) {
+            getRoastersLocal();
+            console.log("收到位置消息");
+        }, //收到位置消息
+        onFileMessage: function (message) {
+            getRoastersLocal();
+            console.log("收到文件消息");
+        }, //收到文件消息
+        onVideoMessage: function (message) {
+            getRoastersLocal();
+            var node = document.getElementById('privateVideo');
+            var option = {
+                url: message.url,
+                headers: {
+                    'Accept': 'audio/mp4'
+                },
+                onFileDownloadComplete: function (response) {
+                    var objectURL = WebIM.utils.parseDownloadResponse.call(conn, response);
+                    node.src = objectURL;
+                },
+                onFileDownloadError: function () {
+                    console.log('文件下载失败.')
+                }
+            };
+            WebIM.utils.download.call(conn, option);
+        }, //收到视频消息
+        onPresence: function (message) {
+            getRoastersLocal();
+            handlePresence(message);
+        }, //处理“广播”或“发布-订阅”消息，如联系人订阅请求、处理群组、聊天室被踢解散等消息
+        onRoster: function (message) {
+            console.log('处理好友申请', message.type);
+        }, //处理好友申请
+        onInviteMessage: function (message) {
+            console.log('处理群组邀请');
+            $(groupList).empty();
+            $(chatBoxContent).empty();
+            getGroups();
+        }, //处理群组邀请
+        onOnline: function () {
+            console.log('本机网络连接成功');
+        }, //本机网络连接成功
+        onOffline: function () {
+            console.log('本机网络掉线');
+        }, //本机网络掉线
+        onError: function (message) {
+            console.log('失败回调');
+            console.log(message);
+            alert("尚未注册环信账号");
+            // window.location.href = "about:blank";
+            // window.close();
+            $(mainPage).addClass("hide");
+            $(loginPage).removeClass("hide");
+            if (message && message.type == 1) {
+                console.warn('连接建立失败！请确认您的登录账号是否和appKey匹配。')
+            }
+        }, //失败回调
+        onBlacklistUpdate: function (list) { //黑名单变动
+            // 查询黑名单，将好友拉黑，将好友从黑名单移除都会回调这个函数，list则是黑名单现有的所有好友信息
+            console.log(list);
+        },
+        onReceivedMessage: function (message) {
+
+        }, //收到消息送达客户端回执
+        // onDeliveredMessage: funciton(message){},   //收到消息送达服务器回执
+        onReadMessage: function (message) {
+        }, //收到消息已读回执
+        onCreateGroup: function (message) {
+        }, //创建群组成功回执（需调用createGroupNew）
+        onMutedMessage: function (message) {
+        } //如果用户在A群组被禁言，在A群发消息会走这个回调并且消息不会传递给群其它成员
+        // onBlacklistUpdate: function (list) {
+        //     // 查询黑名单，将好友拉黑，将好友从黑名单移除都会回调这个函数，list则是黑名单现有的所有好友信息
+        //     console.log(list);
+        // }     // 黑名单变动
+    }); // 回调函数
+    var vm = new Vue({
+        el: '#rrapp',
+        i18n,
+        data: {
+            isCheckForm: false,
+            protocol: false, // 是否同意协议
+            protocolInfo: '', // 协议内容
+            countdown: 60, // 倒计时
+            context: 'login', // 默认登陆页
+            register: {
+                mobile: '',
+                username: '',
+                password: '',
+                confirmpassword: '',
+                status: 1,
+                roleIdList: [3]
+            },
+            form: {
+                username: '',
+                password: '',
+                captcha: ''
+            },
+            error: false,
+            registerError: false,
+            errorMsg: '',
+            src: 'captcha.jpg'
+        }, beforeCreate: function () {
+            if (self != top) {
+                top.location.href = self.location.href;
+            }
+        }, methods: {
+            sendSms: function () { // 发送验证码
+                vm.sending = true;
+                var sms = $("#sendSms");
+                layer.load();
+                $.post(baseURL + 'sys/user/sendSMS',vm.register.mobile,function (obj) {
+                    layer.closeAll();
+                    if(obj.code =='0'){
+                        alert('短信发送成功！');
+                    	vm.settime(sms);
+                    }
+                    else{
+                        alert(obj.msg);
+                    }
+                });
+            },
+            settime: function (obj) { // 发送验证码倒计时
+                if (vm.countdown == 0) {
+                    obj.attr('disabled', false);
+                    obj.val("获取验证码");
+                    vm.countdown = 60;
+                    vm.sending = false;
+                    return;
+                } else {
+                    obj.attr('disabled', true);
+                    obj.val("重新发送(" + vm.countdown + ")");
+                    vm.countdown--;
+                }
+                setTimeout(function () {
+                    vm.settime(obj);
+                }, 1000)
+            }, sendcode() { // 验证手机号码
+                var reg = /^1[3456789]\d{9}$/;
+                //var url="/nptOfficialWebsite/apply/sendSms?mobile="+this.ruleForm.phone;
+                if (vm.register.mobile == '') {
+                    alert("请输入手机号码");
+                } else if (!reg.test(vm.register.mobile)) {
+                    alert("手机格式不正确");
+                } else {
+                    vm.sendSms();
+                }
+
+            }, changezh: function () { // 切换 中文
+                this.$i18n.locale = 'zh';
+                document.title = this.$t('SHSCM');
+
+            }, changeen: function () { // 切换 英文
+                this.$i18n.locale = 'en';
+                document.title = this.$t('SHSCM');
+
+            }, refreshCode: function () { // 刷新验证码
+                this.src = "captcha.jpg?t=" + $.now();
+
+            }, login: function () { // 登陆
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "sys/login",
+                    dataType: "json",
+                    contentType: "application/json",
+                    data: JSON.stringify(vm.form),
+                    success: function (r) {
+                        if (r.code == 0) {//登录成功
+                            var options = {
+                                apiUrl: WebIM.config.apiURL,
+                                user: vm.form.username,
+                                pwd: vm.form.username,
+                                appKey: WebIM.config.appkey
+                            };
+                            window.conn.open(options);
+                            localStorage.setItem("token", r.token);
+                            parent.location.href = 'index.html';
+                        } else {
+                            vm.error = true;
+                            vm.errorMsg = r.msg;
+                            vm.refreshCode();
+                        }
+                    }
+                });
+            }, loginPage: function () {
+                vm.context = 'login';
+                vm.form={};
+                vm.error = false;
+                vm.errorMsg = '';
+            }, save: function () { // 注册
+                vm.checkForm();
+                if (!vm.isCheckForm) return;
+
+                if (!vm.checkboxSuccess()) {
+                    alert("同意阅读协议后申请注册");
+                    return;
+                }
+                vm.register.username = vm.register.mobile;
+                vm.register.status = 1;
+                vm.register. roleIdList = [3];
+
+                layer.load();
+                $.ajax({
+                    type: 'POST',
+                    url: baseURL + 'sys/user/register?smsCode='+$("#smsCode").val(),
+                    contentType: 'application/json',
+                    data: JSON.stringify(vm.register),
+                    success: function (obj) {
+                        layer.closeAll();
+                        if (obj.code == '0') {
+                            alert('注册成功！', function () {
+                                vm.context = 'login';
+                            })
+                        } else {
+                            vm.registerError = true;
+                            vm.errorMsg = obj.msg;
+                        }
+                    }
+                })
+
+            }, registerPage: function () { // 注册 跳转注册页面
+                vm.context = 'register';
+                vm.register = {};
+                vm.registerError = false;
+                vm.errorMsg = '';
+            }, protocolPage: function () { // 协议
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "company/merchantusers/getAgreement",
+                    contentType: "application/json",
+                    data: JSON.stringify({xieyiType: '注册协议'}),
+                    success: function (r) {
+                        vm.protocolInfo = r.data.xieyiContent;
+                        if (r.code == 0) {
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+
+            }, agree: function () { // 同意协议
+                vm.protocol = true;
+                $('#myModal').modal('hide');
+
+            }, checkboxSuccess: function () { // 验证 是否同意协议
+                return $("input[name='checkboxSuccess']:checked").val() == 1 && vm.protocol;
+
+            }, checkForm: function () {
+                var msg = '';
+                var regmobile = /^1[3456789]\d{9}$/;
+                if (vm.register.mobile == '') {
+                    msg = "请输入手机号码";
+                } else if (!regmobile.test(vm.register.mobile)) {
+                    msg = "手机格式不正确";
+                } else if (vm.register.password == '') {
+                    msg = "请输入密码";
+                } else if (vm.register.confirmpassword == '') {
+                    msg = "请输入确认密码";
+                } else if (vm.register.password != vm.register.confirmpassword) {
+                    msg = "密码不相同";
+                } else if ($("#smsCode").val() == '') {
+                    msg = "请输入验证码";
+                }
+
+                if (msg == '')
+                    vm.isCheckForm = true;
+                else
+                    alert(msg);
+
+                msg = '';
+            }
+
+        }, created: function () {
+            this.protocolPage();
+            document.title = this.$t('SHSCM');
+            document.onkeydown = function(e) {
+                var key = window.event.keyCode;
+                if (key == 13) {
+                    vm.login();
+                }
+            };
+            $(function () {
+                vm.countdown = $.cookie('validateCodeCountdown');
+                if (vm.countdown > 0) {
+                    vm.sending = true;
+                    var obj = $("#sendSms");
+                    obj.attr("disabled", true);
+                    obj.val("重新发送(" + vm.countdown + ")");
+                    vm.settime(obj);
+                } else {
+                    vm.countdown = 60;
+                }
+
+                $(window).on('beforeunload unload', function () {
+                    if (vm.sending) {
+                        console.log(vm.countdown);
+                        $.cookie('validateCodeCountdown', vm.countdown);
+                    }
+                    if (!vm.sending) {
+                        console.log(vm.countdown);
+                        $.cookie('validateCodeCountdown', 0);
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

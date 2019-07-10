@@ -1,0 +1,104 @@
+package com.wzlue.chain.marketing.service.impl;
+
+import com.wzlue.chain.common.utils.SplitUtil;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.marketing.dao.MarketTenderAnnexDao;
+import com.wzlue.chain.marketing.dao.MarketTenderDao;
+import com.wzlue.chain.marketing.entity.MarketTenderAnnexEntity;
+import com.wzlue.chain.marketing.entity.MarketTenderEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import org.apache.commons.lang.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.marketing.dao.MarketTenderRecordDao;
+import com.wzlue.chain.marketing.entity.MarketTenderRecordEntity;
+import com.wzlue.chain.marketing.service.MarketTenderRecordService;
+
+
+@Service("marketTenderRecordService")
+public class MarketTenderRecordServiceImpl implements MarketTenderRecordService {
+    @Autowired
+    private MarketTenderRecordDao marketTenderRecordDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+    @Autowired
+    private MarketTenderDao marketTenderDao;
+    @Autowired
+    private MarketTenderAnnexDao annexDao;
+
+    @Override
+    public MarketTenderRecordEntity queryObject(Long id) {
+        return marketTenderRecordDao.queryObject(id);
+    }
+
+    @Override
+    public List<MarketTenderRecordEntity> queryList(Map<String, Object> map) {
+        return marketTenderRecordDao.queryList(map);
+    }
+
+    @Override
+    public int queryTotal(Map<String, Object> map) {
+        return marketTenderRecordDao.queryTotal(map);
+    }
+
+    @Override
+    public void save(MarketTenderRecordEntity marketTenderRecord) {
+        if(marketTenderRecord !=null){
+            //当前用户提交自身招标信息时，招标数据自动增加一条招标数量
+            MarketTenderEntity mt = marketTenderDao.queryObject(marketTenderRecord.getMarketTenderId());
+            mt.setCount(mt.getCount()+1);//只是改变对象属性，最终还得操作数据库修改
+            marketTenderDao.update(mt);
+        }
+        Integer companyId = marketTenderRecord.getCompanyId();
+        if (companyId != null) {
+            MerchantCompanyEntity companyEntity = merchantCompanyDao.queryObject(companyId);
+            marketTenderRecord.setCompanyName(companyEntity.getCompanyName());
+        }
+        marketTenderRecordDao.save(marketTenderRecord);
+
+        // 保存附件
+        MarketTenderAnnexEntity file = new MarketTenderAnnexEntity() {{
+            setMarketTenderId(marketTenderRecord.getId());
+            setFileName(marketTenderRecord.getFile().getFileName());
+            setUrl(marketTenderRecord.getFile().getUrl());
+            setCreateBy(marketTenderRecord.getCreateBy() + "");
+            setCreateTime(new Date());
+        }};
+        if (StringUtils.isBlank(file.getFileName())){
+            file.setFileName(SplitUtil.splitPicName(file.getUrl()));
+        }
+        annexDao.save(file);
+    }
+
+    @Override
+    public void update(MarketTenderRecordEntity marketTenderRecord) {
+        marketTenderRecordDao.update(marketTenderRecord);
+    }
+
+    @Override
+    public void delete(Long id) {
+        marketTenderRecordDao.delete(id);
+    }
+
+    @Override
+    public void deleteBatch(Long[] ids) {
+        marketTenderRecordDao.deleteBatch(ids);
+    }
+
+    @Override
+    public int queryTotalById(Integer marketTenderId) {
+        return marketTenderRecordDao.queryTotalById(marketTenderId);
+    }
+
+    public SysUserEntity getUser() {
+        return (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+    }
+
+}

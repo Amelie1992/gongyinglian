@@ -1,0 +1,221 @@
+
+package com.wzlue.chain.web.controller.company;
+
+import java.util.*;
+
+import cn.hutool.Hutool;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+import com.wzlue.chain.chatMsg.service.ChatMessageService;
+import com.wzlue.chain.common.annotation.JsonObject;
+import com.wzlue.chain.common.annotation.SysLog;
+import com.wzlue.chain.common.base.LogSource;
+import com.wzlue.chain.common.utils.Constant;
+import com.wzlue.chain.sys.entity.SysMenuEntity;
+import com.wzlue.chain.sys.entity.SysRoleEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.*;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.company.entity.EmployeeEntity;
+import com.wzlue.chain.company.service.EmployeeService;
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+
+import javax.jws.Oneway;
+
+
+/**
+ * 员工
+ *
+ * @author
+ * @email
+ * @date 2018-08-22 14:37:00
+ */
+@RestController
+@RequestMapping("/company/employee")
+public class EmployeeController extends AbstractController {
+    @Autowired
+    private EmployeeService employeeService;
+    @Autowired
+    private ChatMessageService chatMessageService;
+    @Autowired
+    private SysMenuService sysMenuService;
+    @Autowired
+    private SysRoleService sysRoleService;
+    @Autowired
+    private SysRoleMenuService sysRoleMenuService;
+    @Autowired
+    private SysUserRoleService sysUserRoleService;
+    @Autowired
+    private SysUserService sysUserService;
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<EmployeeEntity> employeeList = employeeService.queryList(query);
+        int total = employeeService.queryTotal(query);
+
+        return R.page(employeeList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+    @RequiresPermissions("company:employee:info")
+    public R info(@PathVariable("id") Integer id) {
+        EmployeeEntity employee = employeeService.queryObject(id);
+
+        //获取用户所属的角色列表
+        List<Long> roleIdList = sysUserRoleService.queryRoleIdList(employee.getUserId());
+        employee.getUser().setRoleIdList(roleIdList);
+
+        return R.ok().put("employee", employee);
+    }
+
+    /**
+     * 保存
+     */
+    @SysLog(value = "保存员工", source = LogSource.PC)
+    @RequestMapping("/save")
+    @RequiresPermissions("company:employee:save")
+    public R save(@JsonObject EmployeeEntity employee , @JsonObject SysUserEntity user) {
+        String gh = getGH();
+        if (StrUtil.isBlank(gh)) return R.error("系统繁忙，稍后再试！");
+        employee.setWorknumber(gh);
+        employee.setCreateBy(getUserId().intValue());
+        employeeService.save(employee,user);
+
+        chatMessageService.createNewIMUser(user.getUsername());
+        return R.ok();
+    }
+
+    /**
+     * 生成工号
+     *
+     * @return
+     */
+    private String getGH() {
+        String gh = "";
+        gh = (employeeService.getGH() + 1) + "";
+        return gh;
+
+    }
+
+    /**
+     * 修改
+     */
+    @SysLog(value = "修改员工", source = LogSource.PC)
+    @RequestMapping("/update")
+//    @RequiresPermissions("company:employee:update")
+    public R update(@JsonObject EmployeeEntity employee , @JsonObject SysUserEntity user) {
+        employeeService.update(employee);
+        // 更新用户客服信息
+        sysUserService.updateCustomerServiceById(user);
+        // 保存用户与角色关系
+        sysUserRoleService.saveOrUpdate(user.getUserId(), user.getRoleIdList());
+
+        // 更新用户data_authorizes
+        sysUserService.updateDataAuthorizes(user);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @SysLog(value = "删除员工", source = LogSource.PC)
+    @RequestMapping("/delete")
+    @RequiresPermissions("company:employee:delete")
+    public R delete(@RequestBody Integer[] ids) {
+        employeeService.deleteBatch(ids);
+        return R.ok();
+    }
+
+    /**
+     * 授权菜单
+     * @return
+     */
+    @RequestMapping("/menulist/{userId}")
+    @RequiresPermissions("company:employee:info")
+    public R list(@PathVariable Long userId) {
+
+        List<SysMenuEntity> menuList = sysMenuService.getGrantMenuList(getUserId());
+        List<Long> longs = sysUserRoleService.queryRoleIdList(userId);
+
+        return R.ok().put("menuList", menuList).put("roleId", longs);
+    }
+
+    /**
+     * 获取授权
+     * @param roleId
+     * @return
+     */
+    @RequestMapping("/grantInfo/{roleId}")
+    @RequiresPermissions("company:employee:info")
+    public R grantInfo(@PathVariable("roleId") Long roleId) {
+        SysRoleEntity role = sysRoleService.queryObject(roleId);
+
+        //查询角色对应的菜单
+        List<Long> menuIdList = sysRoleMenuService.queryMenuIdList(roleId);
+        role.setMenuIdList(menuIdList);
+
+        return R.ok().put("role", role);
+    }
+
+    /**
+     * 保存授权
+     * @param role
+     * @return
+     */
+    @RequestMapping("/saveRole")
+    @RequiresPermissions("company:employee:info")
+    public R saveRole(@JsonObject SysRoleEntity role, @JsonObject EmployeeEntity employeeEntity) {
+
+        // 设置创建人ID
+        role.setCreateUserId(getUserId());
+        // 随机角色名称
+        role.setRoleName(DateUtil.format(new Date(), "yyyyMMddHHmmss") + RandomUtil.randomInt(20));
+        // 保存角色
+        sysRoleService.save(role);
+        // 获取员工的 userid
+
+        sysUserRoleService.saveOrUpdate(employeeEntity.getUserId(), new ArrayList<Long>() {{
+            add(role.getRoleId());
+        }});
+
+        return R.ok();
+    }
+
+    /**
+     * 更新授权
+     * @param role
+     * @return
+     */
+    @RequestMapping("/updateRole")
+    @RequiresPermissions("company:employee:info")
+    public R updateRole(@JsonObject SysRoleEntity role, @JsonObject EmployeeEntity employeeEntity) {
+
+        role.setCreateUserId(getUserId());
+        sysRoleService.update(role);
+
+
+        return R.ok();
+    }
+
+}

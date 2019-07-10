@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>付款（收款）记录</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('paymentRecord:paymentrecord:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('paymentRecord:paymentrecord:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('paymentRecord:paymentrecord:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">账单号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="billId" class="form-control" v-model="paymentRecord.billId" placeholder="账单号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">金额</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amount" class="form-control" v-model="paymentRecord.amount" placeholder="金额"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">日期</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="date" class="form-control" v-model="paymentRecord.date" placeholder="日期"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">支付状态 0：待付款 1：已付款</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payStatus" class="form-control" v-model="paymentRecord.payStatus" placeholder="支付状态 0：待付款 1：已付款"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">支付方式 0：线下支付 1：在线支付</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payMethod" class="form-control" v-model="paymentRecord.payMethod" placeholder="支付方式 0：线下支付 1：在线支付"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收款账号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payeeNumber" class="form-control" v-model="paymentRecord.payeeNumber" placeholder="收款账号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">付款账号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payerNumber" class="form-control" v-model="paymentRecord.payerNumber" placeholder="付款账号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收款方户名</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payeeName" class="form-control" v-model="paymentRecord.payeeName" placeholder="收款方户名"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">付款方户名</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payerName" class="form-control" v-model="paymentRecord.payerName" placeholder="付款方户名"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">收款方银行</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payeeBank" class="form-control" v-model="paymentRecord.payeeBank" placeholder="收款方银行"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">付款方银行</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="payerBank" class="form-control" v-model="paymentRecord.payerBank" placeholder="付款方银行"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">付款时间</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="paymentTime" class="form-control" v-model="paymentRecord.paymentTime" placeholder="付款时间"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">确认收款时间</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="receivingTime" class="form-control" v-model="paymentRecord.receivingTime" placeholder="确认收款时间"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">确认状态 0：待确认 1：已确认</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="confirmStatus" class="form-control" v-model="paymentRecord.confirmStatus" placeholder="确认状态 0：待确认 1：已确认"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">实收金额</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="amountCollected" class="form-control" v-model="paymentRecord.amountCollected" placeholder="实收金额"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">备注</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="remarks" class="form-control" v-model="paymentRecord.remarks" placeholder="备注"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">操作人</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="operator" class="form-control" v-model="paymentRecord.operator" placeholder="操作人"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">权限部门id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="deptId" class="form-control" v-model="paymentRecord.deptId" placeholder="权限部门id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">创建人</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="createBy" class="form-control" v-model="paymentRecord.createBy" placeholder="创建人"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">创建时间</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="createdTime" class="form-control" v-model="paymentRecord.createdTime" placeholder="创建时间"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">修改人</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="updateBy" class="form-control" v-model="paymentRecord.updateBy" placeholder="修改人"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">修改时间</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="updateTime" class="form-control" v-model="paymentRecord.updateTime" placeholder="修改时间"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">公司id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="companyId" class="form-control" v-model="paymentRecord.companyId" placeholder="公司id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">授权用户id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="authorizesId" class="form-control" v-model="paymentRecord.authorizesId" placeholder="授权用户id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                    <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" value="确定"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/paymentRecord/paymentrecord.js"></script>
+</body>
+</html>

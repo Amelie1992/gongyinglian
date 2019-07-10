@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.highcharts.dao.HighchartsDao">
+
+    <!-- 报关订单量-->
+
+    <select id="queryDeclareOrderAmount" resultType="map">
+        SELECT COUNT(1) FROM declare_order p
+        <include refid="highChartsParams"/>
+        GROUP BY MONTH(p.create_time)
+    </select>
+
+    <!-- 期货/现货订单量-->
+
+    <select id="queryPutgoodsOrderAmount" resultType="map">
+        SELECT COUNT(1) FROM goods_order p
+        <include refid="highChartsParams"/>
+        GROUP BY MONTH(p.create_time)
+    </select>
+
+    <!-- 物流订单量-->
+
+    <select id="queryLogisticsOrderAmount" resultType="map">
+        SELECT COUNT(1) FROM logistics_order p
+        <include refid="highChartsParams"/>
+        GROUP BY MONTH(p.create_time)
+    </select>
+
+    <!-- 仓储订单量-->
+
+    <select id="queryOrderBuyAmount" resultType="map">
+        SELECT COUNT(1) FROM storage_order p
+        <include refid="highChartsParams"/>
+        GROUP BY MONTH(p.create_time)
+    </select>
+
+    <!-- 代理订单量-->
+
+    <select id="queryAgentOrderAmount" resultType="map">
+        SELECT COUNT(1) FROM agent_order p
+        <include refid="highChartsParams"/>
+        GROUP BY MONTH(p.create_time)
+    </select>
+
+    <!-- 应收应付  月 季度 年-->
+
+    <select id="queryCollectPayment">
+        SELECT COUNT(1) FROM bill p
+        <include refid="highChartsParams"/>
+
+    </select>
+
+    <!-- 新增客服量-->
+
+    <select id="queryAddAcount">
+        SELECT COUNT(1) FROM sys_user p
+        <include refid="highChartsParams"/>
+
+    </select>
+
+    <!-- 支付方式 线上，线下-->
+
+    <select id="queryPaymentMethod">
+			SELECT COUNT(1) FROM bill p
+		</select>
+
+    <!-- 帅选条件 -->
+
+    <sql id="highChartsParams">
+
+        <where>
+            <!--年-->
+            <if test="type=='YEAR'">
+                YEAR (now()) = YEAR (p.create_time)
+            </if>
+
+            <!--月-->
+            <if test="type=='MONTH'">
+                YEAR (now()) = YEAR (p.create_time) AND MONTH(now()) = MONTH(p.create_time)
+            </if>
+
+            <!--季-->
+            <if test="type=='QUARTER'">
+                YEAR (now()) = YEAR (p.create_time) AND QUARTER(now()) = QUARTER(p.create_time)
+            </if>
+        </where>
+
+
+    </sql>
+
+</mapper>

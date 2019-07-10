@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.offer.dao.GoodsCompanyDetailsDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.offer.entity.GoodsCompanyDetailsEntity" id="goodsCompanyDetailsMap">
+        <result property="id" column="id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="companyName" column="company_name"/>
+        <result property="transactionsCount" column="transactions_count"/>
+        <result property="renegeCount" column="renege_count"/>
+        <result property="companyContactsId" column="company_contacts_id"/>
+        <result property="companyContactsName" column="company_contacts_name"/>
+        <result property="companyContactsPhone" column="company_contacts_phone"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.offer.entity.GoodsCompanyDetailsEntity">
+		SELECT * FROM goods_company_details WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.offer.entity.GoodsCompanyDetailsEntity">
+        SELECT * FROM goods_company_details
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM goods_company_details
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.offer.entity.GoodsCompanyDetailsEntity">
+        INSERT INTO goods_company_details
+        (
+        `company_id`,
+        `company_name`,
+        `transactions_count`,
+        `renege_count`,
+        `company_contacts_id`,
+        `company_contacts_name`,
+        `company_contacts_phone`
+        )
+        VALUES
+        (
+        #{companyId},
+        #{companyName},
+        #{transactionsCount},
+        #{renegeCount},
+        #{companyContactsId},
+        #{companyContactsName},
+        #{companyContactsPhone}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.offer.entity.GoodsCompanyDetailsEntity">
+        UPDATE goods_company_details
+        <set>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="transactionsCount != null">`transactions_count` = #{transactionsCount},</if>
+            <if test="renegeCount != null">`renege_count` = #{renegeCount},</if>
+            <if test="companyContactsId != null">`company_contacts_id` = #{companyContactsId},</if>
+            <if test="companyContactsName != null">`company_contacts_name` = #{companyContactsName},</if>
+            <if test="companyContactsPhone != null">`company_contacts_phone` = #{companyContactsPhone}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_company_details WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_company_details WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

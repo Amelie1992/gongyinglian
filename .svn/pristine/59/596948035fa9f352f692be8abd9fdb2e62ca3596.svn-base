@@ -1,0 +1,261 @@
+package com.wzlue.chain.agent.entity;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+
+
+/**
+ * 代理(订单)货物信息表
+ *
+ * @author
+ * @email
+ * @date 2018-08-31 15:52:17
+ */
+public class AgentOrderGoodsEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	//自增主键,id
+	private Long id;
+
+	// 货物名称
+	private String goodsName;
+	// 单价
+	private String goodsPrice;
+	// 货物数量
+	private String goodsCount;
+	// 价格
+	private String goodsTotalPrice;
+
+
+	//订单编号
+	private String orderNumber;
+	//来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单
+	private Integer originFlag;
+	//来源单号
+	private String originNumber;
+	//商品编号
+	private Long commodityId;
+	//商品名称
+	private String commodityName;
+	//商品编码
+	private String commodityNumber;
+	//厂号
+	private String factoryNo;
+	//产地
+	private String commodityCountry;
+	//商品价格
+	private BigDecimal commodityPrice;
+	//商品数量
+	private BigDecimal commodityCount;
+	//重量
+	private BigDecimal weight;
+	//重量单位
+	private String goodsUnit;
+    //产地名称
+    private String commodityCountryName;
+
+    public String getCommodityCountryName() {
+        return commodityCountryName;
+    }
+
+    public void setCommodityCountryName(String commodityCountryName) {
+        this.commodityCountryName = commodityCountryName;
+    }
+
+    /**
+	 * 设置：自增主键,id
+	 */
+	public void setId(Long id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：自增主键,id
+	 */
+	public Long getId() {
+		return id;
+	}
+	/**
+	 * 设置：订单编号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：订单编号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单
+	 */
+	public void setOriginFlag(Integer originFlag) {
+		this.originFlag = originFlag;
+	}
+	/**
+	 * 获取：来源判断表示 0.无来源 1.来源货物订单 2.来源物流订单 3.来源仓储订单 4来源报关订单
+	 */
+	public Integer getOriginFlag() {
+		return originFlag;
+	}
+	/**
+	 * 设置：来源单号
+	 */
+	public void setOriginNumber(String originNumber) {
+		this.originNumber = originNumber;
+	}
+	/**
+	 * 获取：来源单号
+	 */
+	public String getOriginNumber() {
+		return originNumber;
+	}
+	/**
+	 * 设置：商品名称
+	 */
+	public void setCommodityId(Long commodityId) {
+		this.commodityId = commodityId;
+	}
+	/**
+	 * 获取：商品名称
+	 */
+	public Long getCommodityId() {
+		return commodityId;
+	}
+	/**
+	 * 设置：商品名称
+	 */
+	public void setCommodityName(String commodityName) {
+		this.commodityName = commodityName;
+	}
+	/**
+	 * 获取：商品名称
+	 */
+	public String getCommodityName() {
+		return commodityName;
+	}
+	/**
+	 * 设置：商品编号
+	 */
+	public void setCommodityNumber(String commodityNumber) {
+		this.commodityNumber = commodityNumber;
+	}
+	/**
+	 * 获取：商品编号
+	 */
+	public String getCommodityNumber() {
+		return commodityNumber;
+	}
+	/**
+	 * 设置：厂号
+	 */
+	public void setFactoryNo(String factoryNo) {
+		this.factoryNo = factoryNo;
+	}
+	/**
+	 * 获取：厂号
+	 */
+	public String getFactoryNo() {
+		return factoryNo;
+	}
+	/**
+	 * 设置：产地
+	 */
+	public void setCommodityCountry(String commodityCountry) {
+		this.commodityCountry = commodityCountry;
+	}
+	/**
+	 * 获取：产地
+	 */
+	public String getCommodityCountry() {
+		return commodityCountry;
+	}
+	/**
+	 * 设置：商品价格
+	 */
+	public void setCommodityPrice(BigDecimal commodityPrice) {
+		this.commodityPrice = commodityPrice;
+	}
+	/**
+	 * 获取：商品价格
+	 */
+	public BigDecimal getCommodityPrice() {
+		return commodityPrice;
+	}
+	/**
+	 * 设置：商品数量
+	 */
+	public void setCommodityCount(BigDecimal commodityCount) {
+		this.commodityCount = commodityCount;
+	}
+	/**
+	 * 获取：商品数量
+	 */
+	public BigDecimal getCommodityCount() {
+		return commodityCount;
+	}
+	/**
+	 * 设置：重量
+	 */
+	public void setWeight(BigDecimal weight) {
+		this.weight = weight;
+	}
+	/**
+	 * 获取：重量
+	 */
+	public BigDecimal getWeight() {
+		return weight;
+	}
+	/**
+	 * 设置：重量单位
+	 */
+	public void setGoodsUnit(String goodsUnit) {
+		this.goodsUnit = goodsUnit;
+	}
+
+	public String getGoodsUnit() {
+		return goodsUnit;
+	}
+
+	/**
+	 * 获取：重量单位
+	 */
+
+
+
+	//////////////////
+
+
+	public String getGoodsName() {
+		return goodsName;
+	}
+
+	public void setGoodsName(String goodsName) {
+		this.goodsName = goodsName;
+	}
+
+	public String getGoodsPrice() {
+		return goodsPrice;
+	}
+
+	public void setGoodsPrice(String goodsPrice) {
+		this.goodsPrice = goodsPrice;
+	}
+
+	public String getGoodsCount() {
+		return goodsCount;
+	}
+
+	public void setGoodsCount(String goodsCount) {
+		this.goodsCount = goodsCount;
+	}
+
+	public String getGoodsTotalPrice() {
+		return goodsTotalPrice;
+	}
+
+	public void setGoodsTotalPrice(String goodsTotalPrice) {
+		this.goodsTotalPrice = goodsTotalPrice;
+	}
+}

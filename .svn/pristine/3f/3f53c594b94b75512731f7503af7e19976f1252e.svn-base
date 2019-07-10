@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(物流订单)合同信息表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-fileinput-master/css/fileinput.css">
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <section class="content-header">
+        <h1>
+            {{$t('LogisticsContract')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <!--<li v-if="title==null"><a href="#" @click="reload">刷新</a></li>-->
+            <li v-if="title=='详情'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='修改'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title=='新增'"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.contractName" :placeholder="$t('EnterContractName')"/>
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.contractNumber" :placeholder="$t('EnterContractNumber')"/>
+                </div>
+                <div class="col-xs-2" style="padding-left: 0px;">
+                    <input type="text" class="form-control" v-model="params.orderNumber" :placeholder="$t('EnterOrderNumber')"/>
+                </div>
+                <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+                </button>
+                <button v-if="hasPermission('logistics:logisticscontract:save')" class="btn btn-primary"
+                        @click="add">
+                    <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+                </button>
+               <!-- <button class="btn btn-success" @click="upload">&nbsp;{{$t('DownloadAttachments')}}</button>-->
+
+            </div>
+            <!--<button v-if="hasPermission('logistics:logisticscontract:update')" class="btn btn-warning"-->
+            <!--@click="update">-->
+            <!--<i class="fa fa-edit"></i>&nbsp;修改-->
+            <!--</button>-->
+            <!--<button v-if="hasPermission('logistics:logisticscontract:delete')" class="btn btn-danger"-->
+            <!--@click="del">-->
+            <!--<i class="fa fa-trash-o"></i>&nbsp;删除-->
+            <!--</button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ContractNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" id="contractNumber" name="contractNumber" class="form-control" onblur="checkCode(this.value)"
+                                           v-model="logisticsContract.contractNumber" :placeholder="$t('ContractNumber')" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('OrderNumber')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="" class="form-control" id="orderNumber"
+                                           v-model="logisticsContract.orderNumber" :placeholder="$t('OrderNumber')" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ContractName')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="contractName" class="form-control"
+                                           v-model="logisticsContract.contractName" :placeholder="$t('ContractName')"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('NameOfPartyA')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="partyAName" class="form-control" id="partyAName"
+                                           v-model="logisticsContract.partyAName" :placeholder="$t('NameOfPartyA')" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('NameOfPartyB')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="partyBName" class="form-control" id="partyBName"
+                                           v-model="logisticsContract.partyBName" :placeholder="$t('NameOfPartyB')" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('PaymentMethod')}}</div>
+                                <div class="col-sm-10">
+                                    <select class="form-control" name="paymentMethod"
+                                            id="paymentMethod" disabled="disabled" :placeholder="$t('PleaseChoosePaymentMethod')"
+                                            v-model="logisticsContract.paymentMethod">
+                                        <option value="1" >{{$t('LumpSumPayment')}}</option>
+                                        <option value="2" >{{$t('InstallmentPayment')}}</option>
+                                        <option value="3" >{{$t('Other')}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ContractAmount')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" id="contractAmount" name="contractAmount" class="form-control" setp="0.01" min="0.001"
+                                           v-model="logisticsContract.contractAmount" :placeholder="$t('ContractAmount')" disabled="disabled"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('DateOfSigning')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="dateOfSigning" class="form-control select-box-input" id="dateOfSigning"
+                                           disabled="disabled" v-model="logisticsContract.dateOfSigning" :placeholder="$t('DateOfSigning')"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('ExpirationDate')}}</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="expireDate" class="form-control select-box-input" id="expireDate"
+                                           v-model="logisticsContract.expireDate" :placeholder="$t('ExpirationDate')"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('StoragePosition')}}</div>
+                                <div class="col-sm-10">
+                                    <input id="location" name="location" class="form-control" v-model="logisticsContract.location" :placeholder="$t('inputStorageLocation')" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('Remarks')}}</div>
+                                <div class="col-sm-10">
+                                    <textarea type="text" name="remarks" class="form-control"
+                                              v-model="logisticsContract.remarks"
+                                              :placeholder="$t('Remarks')"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="col-sm-4">-->
+                            <!--<div class="form-group">-->
+                                <!--<div class="col-sm-2 control-label">0：卖方1：买方</div>-->
+                                <!--<div class="col-sm-10">-->
+                                    <!--<input type="text" name="owner" class="form-control"-->
+                                           <!--v-model="logisticsContract.owner"-->
+                                           <!--placeholder="0：卖方1：买方"/>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        <!--</div>-->
+
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-8">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">{{$t('appendicesOfAContract')}}</div>
+                                <div class="col-sm-10">
+                                    <commodity-fileinput ref="file" :this_multiple="false" :drop_zone_enabled="false"
+                                                         :show_preview="false" :max_file_count='5' :files="files"
+                                                         :image_list="logisticsContract.file"
+                                                         ></commodity-fileinput>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('appendicesOfAContract')}}</div>
+                        <div class="col-sm-10">
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>附件名</th>
+                                    <!--<th>附件路径</th>-->
+                                    <th>上传人</th>
+                                    <th>上传时间</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(item,index) in logisticsContract.fileList">
+                                    <td>
+                                        {{item.picName}}
+                                    </td>
+                                    <!--<td>
+                                        {{item.picUrl}}
+                                    </td>-->
+                                    <td>
+                                        {{item.username}}
+                                    </td>
+                                    <td>
+                                        {{item.createTime}}
+                                    </td>
+                                    <td><a class="glyphicon glyphicon-trash" href="javascript:void(0)" @click="removeFile(index)"></a>&nbsp;&nbsp;
+                                        <a title="预览" class="glyphicon glyphicon-zoom-in"  href="javascript:void(0)" @click="preview(index)"></a>&nbsp;&nbsp;
+                                        <a title="下载" class="glyphicon glyphicon-download-alt" href="javascript:void(0)" @click="downloadFile(index)"></a>&nbsp;&nbsp;
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group" v-if="title=='新增'|| title=='修改'">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                    <div class="form-group" v-if="title=='详情'">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+
+<!--文件上传插件-->
+<script src="../../plugins/bootstrap-fileinput-master/js/fileinput.js"></script>
+<script src="../../plugins/bootstrap-fileinput-master/js/locales/zh.js"></script>
+<!--时间插件-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/components.js"></script>
+
+<script src="../../js/modules/logistics/logisticscontract.js"></script>
+</body>
+</html>

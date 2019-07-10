@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储日费用记录表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.orderNumber" :placeholder="$t('OrderNumber')"/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('Inquire')}}
+            </button>
+            <!--<button v-if="hasPermission('storage:storagepay:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('storage:storagepay:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('storage:storagepay:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>-->
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('OrderListOfGoods')}}id</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="orderCommodityId" class="form-control" v-model="storagePay.orderCommodityId" :placeholder="$t('OrderGoodsListID')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('order')}}id</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="orderId" class="form-control" v-model="storagePay.orderId" :placeholder="$t('OrderID')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('OrderNumber')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="orderNumber" class="form-control" v-model="storagePay.orderNumber" :placeholder="$t('OrderNumber')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('TheOfferOfGoods')}}id</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="goodsOfferId" class="form-control" v-model="storagePay.goodsOfferId" :placeholder="$t('CargoOfferID')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('goods')}}id</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityId" class="form-control" v-model="storagePay.commodityId" :placeholder="$t('CommodityID')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('productName')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityName" class="form-control" v-model="storagePay.commodityName" :placeholder="$t('productName')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('ProductId')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityNumber" class="form-control" v-model="storagePay.commodityNumber" :placeholder="$t('ProductId')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('CommodityUnit')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityUnit" class="form-control" v-model="storagePay.commodityUnit" :placeholder="$t('CommodityUnit')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('CommodityPrices')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityPrice" class="form-control" v-model="storagePay.commodityPrice" :placeholder="$t('CommodityPrices')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('TheNumber')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityCount" class="form-control" v-model="storagePay.commodityCount" :placeholder="$t('TheNumber')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('FactoryNumber')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityFactoryNumber" class="form-control" v-model="storagePay.commodityFactoryNumber" :placeholder="$t('FactoryNumber')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('place')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="commodityCountry" class="form-control" v-model="storagePay.commodityCountry" :placeholder="$t('place')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('height')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="weight" class="form-control" v-model="storagePay.weight" :placeholder="$t('height')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('TheWarehouseOfferUnit')}}：0，{{$t('Yuan')}}/{{$t('ton')}}/{{$t('day')}}；1，{{$t('Yuan')}}/{{$t('Support')}}/{{$t('day')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="unit" class="form-control" v-model="storagePay.unit" :placeholder="$t('WarehouseOffer0YuanOrtonOrDay1YuanOrDayOrDay')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('cost')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="payMoney" class="form-control" v-model="storagePay.payMoney" :placeholder="$t('cost')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('status')}}: 0:{{$t('PendingPayment')}}、1:{{$t('PaymentHasBeen')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="payStatus" class="form-control" v-model="storagePay.payStatus" :placeholder="$t('Status0PendingPayment1Paid')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">{{$t('CreationTime')}}</div>
+                        <div class="col-sm-10">
+                            <input type="text" name="createdTime" class="form-control" v-model="storagePay.createdTime" :placeholder="$t('CreationTime')"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/storage/storagepay.js"></script>
+</body>
+</html>

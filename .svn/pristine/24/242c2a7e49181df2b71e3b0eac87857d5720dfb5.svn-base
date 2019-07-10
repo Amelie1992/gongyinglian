@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareContractDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareContractEntity" id="declareContractMap">
+        <result property="id" column="id"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="dataSource" column="data_source"/>
+        <result property="contractName" column="contract_name"/>
+        <result property="customsCopName" column="customs_cop_name"/>
+        <result property="merchantCopName" column="merchant_cop_name"/>
+        <result property="payMethod" column="pay_method"/>
+        <result property="contractAmount" column="contract_amount"/>
+        <result property="customsStorageLocation" column="customs_storage_location"/>
+        <result property="location" column="location"/>
+        <result property="cusCompanyId" column="cus_company_id"/>
+        <result property="cusDeptId" column="cus_dept_id"/>
+        <result property="merchantStorageLocation" column="merchant_storage_location"/>
+        <result property="merCompanyId" column="mer_company_id"/>
+        <result property="merDeptId" column="mer_dept_id"/>
+        <result property="remarks" column="remarks"/>
+        <result property="dateOfSigning" column="date_of_signing"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="owner" column="owner"/>
+        <collection property="file" ofType="com.wzlue.chain.agent.entity.ContractAnnexEntity"
+                    select="com.wzlue.chain.agent.dao.ContractAnnexDao.queryListByContractIdAndTypeTwo"
+                    column="{contractId=id}">
+            <id column="id" property="id"/>
+            <result column="file_name" property="fileName"/>
+            <result column="file_type" property="fileType"/>
+            <result column="url" property="url"/>
+            <result column="create_by" property="createBy"/>
+            <result column="username" property="username"/>
+            <result column="create_time" property="createTime"/>
+            <result column="contract_type" property="contractType"/>
+        </collection>
+    </resultMap>
+    <resultMap id="annexMap" type="com.wzlue.chain.agent.entity.ContractAnnexEntity">
+        <id column="ax_id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_type" property="fileType"/>
+        <result column="url" property="url"/>
+        <result column="contract_type" property="contractType"/>
+    </resultMap>
+
+    <select id="queryObject" resultMap="declareContractMap">
+		SELECT * FROM declare_contract WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="declareContractMap">
+        SELECT * FROM declare_contract ct
+        <where>
+            <if test="contractName!=null and contractName!=''">ct.`contract_name`=#{contractName}</if>
+            <if test="contractNumber!=null and contractNumber!=''">AND ct.`contract_number`=#{contractNumber}</if>
+            <if test="orderNumber!=null and orderNumber!=''">AND ct.`order_number`=#{orderNumber}</if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM declare_contract
+        <where>
+            <if test="contractName!=null and contractName!=''">`contract_name`=#{contractName}</if>
+            <if test="contractNumber!=null and contractNumber!=''">AND `contract_number`=#{contractNumber}</if>
+            <if test="orderNumber!=null and orderNumber!=''">AND `order_number`=#{orderNumber}</if>
+        </where>
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareContractEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO declare_contract
+        (
+                `contract_number`,
+                `location`,
+        `order_number`,
+        `data_source`,
+        `contract_name`,
+        `customs_cop_name`,
+        `merchant_cop_name`,
+        `pay_method`,
+        `contract_amount`,
+        `customs_storage_location`,
+        `cus_company_id`,
+        `cus_dept_id`,
+        `merchant_storage_location`,
+        `mer_company_id`,
+        `mer_dept_id`,
+        `remarks`,
+        `date_of_signing`,
+        `expire_date`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `owner`
+        )
+		VALUES
+        (
+        #{contractNumber},
+        #{location},
+        #{orderNumber},
+        #{dataSource},
+        #{contractName},
+        #{customsCopName},
+        #{merchantCopName},
+        #{payMethod},
+        #{contractAmount},
+        #{customsStorageLocation},
+        #{cusCompanyId},
+        #{cusDeptId},
+        #{merchantStorageLocation},
+        #{merCompanyId},
+        #{merDeptId},
+        #{remarks},
+        #{dateOfSigning},
+        #{expireDate},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{owner}
+        )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareContractEntity">
+        UPDATE declare_contract
+        <set>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="location != null">`location` = #{location},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="dataSource != null">`data_source` = #{dataSource},</if>
+            <if test="contractName != null">`contract_name` = #{contractName},</if>
+            <if test="customsCopName != null">`customs_cop_name` = #{customsCopName},</if>
+            <if test="merchantCopName != null">`merchant_cop_name` = #{merchantCopName},</if>
+            <if test="payMethod != null">`pay_method` = #{payMethod},</if>
+            <if test="contractAmount != null">`contract_amount` = #{contractAmount},</if>
+            <if test="customsStorageLocation != null">`customs_storage_location` = #{customsStorageLocation},</if>
+            <if test="cusCompanyId != null">`cus_company_id` = #{cusCompanyId},</if>
+            <if test="cusDeptId != null">`cus_dept_id` = #{cusDeptId},</if>
+            <if test="merchantStorageLocation != null">`merchant_storage_location` = #{merchantStorageLocation},</if>
+            <if test="merCompanyId != null">`mer_company_id` = #{merCompanyId},</if>
+            <if test="merDeptId != null">`mer_dept_id` = #{merDeptId},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="dateOfSigning != null">`date_of_signing` = #{dateOfSigning},</if>
+            <if test="expireDate != null">`expire_date` = #{expireDate},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM declare_contract WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM declare_contract WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <delete id="deleteByOrderNumberAndContractNumber">
+        DELETE from declare_contract where `order_number` = #{orderNumber} and  `contract_number` = #{contractNumber}
+    </delete>
+
+
+    <select id="queryInfo" resultMap="declareContractMap">
+        SELECT
+          *
+        FROM declare_contract ct
+        WHERE 1=1
+        AND ct.id = #{id}
+    </select>
+
+    <select id="checkName" resultType="com.wzlue.chain.declare.entity.DeclareContractEntity">
+        select
+        count(*)
+        from declare_contract
+        where contract_name=#{value}
+    </select>
+    <select id="pageTotal" resultType="java.lang.Integer">
+        SELECT
+        COUNT(1)
+        FROM declare_contract ct
+        WHERE 1=1
+        <if test="owner !=null and owner !=''">
+            AND ct.owner = #{owner}
+        </if>
+        <if test="contractName !=null and contractName !=''">
+            AND ct.contract_name = #{contractName}
+        </if>
+        <if test="orderNumber !=null and orderNumber !=''">
+            AND ct.order_number = #{orderNumber}
+        </if>
+        <if test="contractNumber != null and contractNumber != ''">
+            <choose>
+                <when test="check !=null and check != ''">
+                    and ct.contract_number = #{contractNumber}
+                </when>
+                <otherwise>
+                    and ct.contract_number LIKE concat('%',#{contractNumber},'%')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="companyName!=null and companyName!=''">
+            AND (ct.customs_cop_name = #{companyName} or ct.merchant_cop_name = #{companyName})
+        </if>
+    </select>
+    <select id="pageList" resultMap="declareContractMap">
+        SELECT
+        *
+        FROM declare_contract ct
+        WHERE 1=1
+        <if test="owner !=null and owner !=''">
+            AND ct.owner = #{owner}
+        </if>
+        <if test="contractName !=null and contractName !=''">
+            AND ct.contract_name = #{contractName}
+        </if>
+        <if test="orderNumber !=null and orderNumber !=''">
+            AND ct.order_number = #{orderNumber}
+        </if>
+        <if test="contractNumber != null and contractNumber != ''">
+            <choose>
+                <when test="check !=null and check != ''">
+                    and ct.contract_number = #{contractNumber}
+                </when>
+                <otherwise>
+                    and ct.contract_number LIKE concat('%',#{contractNumber},'%')
+                </otherwise>
+            </choose>
+        </if>
+        <if test="companyName!=null and companyName!=''">
+            AND (ct.customs_cop_name = #{companyName} or ct.merchant_cop_name = #{companyName})
+        </if>
+        order by create_time desc
+        limit #{offset}, #{limit}
+    </select>
+</mapper>

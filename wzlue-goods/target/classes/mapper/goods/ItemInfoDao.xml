@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.goods.dao.ItemInfoDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.goods.entity.ItemInfoEntity" id="itemInfoMap">
+        <result property="id" column="id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="itemCode" column="item_code"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="factoryNo" column="factory_no"/>
+        <result property="pricingMethod" column="pricing_method"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="taxNumber" column="tax_number"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="placeName" column="place_name"/>
+        <result property="placeId" column="place_id"/>
+        <result property="numerical" column="numerical"/>
+        <collection property="places" resultMap="item_place_map"></collection>
+    </resultMap>
+
+    <resultMap id="item_place_map" type="com.wzlue.chain.goods.entity.ItemOriginPlaceEntity">
+        <id column="place_id" property="id"/>
+        <result column="place_code" property="place"/>
+        <result column="place_name" property="placeName"/>
+        <result column="numerical" property="numerical"/>
+        <result column="place_tariff" property="tariff"/>
+        <result column="place_value_add_tariff" property="valueAddTariff"/>
+        <result column="place_addition_duty" property="additionDuty"/>
+        <result column="place_remark" property="remark"/>
+        <result column="place_goods_id" property="goodsId"/>
+    </resultMap>
+    <select id="queryObject" resultType="com.wzlue.chain.goods.entity.ItemInfoEntity">
+        SELECT * FROM item_info WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.goods.entity.ItemInfoEntity">
+        SELECT * FROM item_info
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM item_info
+    </select>
+
+    <insert id="saveItem" parameterType="com.wzlue.chain.goods.entity.ItemInfoEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO item_info
+        (
+        `item_name`,
+        `item_code`,
+        `category_id`,
+        `factory_no`,
+        `pricing_method`,
+        `dept_id`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `company_id`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{itemName},
+        #{itemCode},
+        #{categoryId},
+        #{factoryNo},
+        #{pricingMethod},
+        #{deptId},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{companyId},
+        #{authorizesId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.goods.entity.ItemInfoEntity">
+        UPDATE item_info
+        <set>
+            <if test="itemName != null">`item_name` = #{itemName}, </if>
+            <if test="itemCode != null">`item_code` = #{itemCode}, </if>
+            <if test="categoryId != null">`category_id` = #{categoryId}, </if>
+            <if test="factoryNo != null">`factory_no` = #{factoryNo}, </if>
+            <if test="pricingMethod != null">`pricing_method` = #{pricingMethod}, </if>
+            <if test="deptId != null">`dept_id` = #{deptId}, </if>
+            <if test="updateBy != null">`update_by` = #{updateBy}, </if>
+            <if test="updateTime != null">`update_time` = #{updateTime}, </if>
+            <if test="companyId !=null">`company_id` = #{companyId}, </if>
+            <if test="authorizesId !=null">`authorizes_id` = #{authorizesId} </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM item_info WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM item_info WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="pageList" resultMap="itemInfoMap">
+        SELECT
+            item.id AS id,
+            item.item_name,
+            item.item_code,
+            item.factory_no,
+            item.pricing_method,
+            item.create_by,
+            item.create_time,
+            item.update_by,
+            item.update_time,
+            item.category_id,
+            item.dept_id,
+            item.company_id,
+            item.authorizes_id,
+            sd.`value` AS category_name,
+            cate.tax_number,
+            place.id AS place_id,
+            place.place AS place_code,
+            place.numerical AS numerical,
+            place.tariff AS place_tariff,
+            place.value_add_tariff AS place_value_add_tariff,
+            place.addition_duty AS place_addition_duty,
+            place.goods_id AS place_goods_id,
+            place.remark AS place_remark,
+            dict. NAME AS place_name
+        FROM
+            item_info item
+        LEFT JOIN item_category cate ON cate.id = item.category_id
+        LEFT JOIN sys_dict sd ON cate.parent_id = sd. CODE
+        AND sd. NAME = '商品分类'
+        AND sd.del_flag = '0'
+        LEFT JOIN item_places place ON place.goods_id = item.id
+        LEFT JOIN sys_dict dict ON dict. CODE = place.place
+        AND dict.type = '国家编码'
+        WHERE
+        1 = 1
+        AND item.item_status = 1
+          <if test="goodsName != null and goodsName !='' ">
+              AND item.item_name LIKE  concat ('%',#{goodsName},'%')
+          </if>
+        <if test="categoryName != null and categoryName !='' ">
+            AND item.category_id = #{categoryName}
+        </if>
+        <if test="purchasePlanNo != null and purchasePlanNo !='' ">
+            AND item.item_name LIKE  concat ('%',#{purchasePlanNo},'%')
+        </if>
+        <if test="factoryNo != null and factoryNo !='' ">
+            AND item.factory_no LIKE  concat ('%',#{factoryNo},'%')
+        </if>
+        GROUP BY
+        item.id
+      ORDER  By item.create_time desc
+      LIMIT #{offset}, #{limit}
+    </select>
+
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+          COUNT( DISTINCT(item.id))
+        FROM item_info item
+        WHERE 1=1
+        AND item.item_status = 1
+        <if test="goodsName != null and goodsName !=''">
+            AND item.item_name LIKE concat ('%',#{goodsName},'%')
+        </if>
+        <if test="categoryName != null and categoryName !='' ">
+            AND item.category_id = #{categoryName}
+        </if>
+        <if test="purchasePlanNo != null and purchasePlanNo !='' ">
+            AND item.item_name LIKE  concat ('%',#{purchasePlanNo},'%')
+        </if>
+    </select>
+
+    <select id="queryInfo" resultMap="itemInfoMap">
+        SELECT
+          DISTINCT (item.id) AS id,
+          item.item_name,
+          item.item_code,
+          item.factory_no,
+          item.pricing_method,
+          item.create_by,
+          item.create_time,
+          item.update_by,
+          item.update_time,
+          item.category_id,
+          sd.`value`  AS category_name,
+          item.dept_id,
+          item.company_id,
+          item.authorizes_id,
+          place.id AS place_id,
+          place.place AS place_code,
+          place.numerical AS numerical,
+          place.tariff AS place_tariff,
+          place.value_add_tariff AS place_value_add_tariff,
+          place.addition_duty AS place_addition_duty,
+          place.goods_id AS place_goods_id,
+          place.remark AS place_remark,
+          dict.name AS place_name,
+          item.dept_id
+      FROM item_info item
+      LEFT JOIN item_category cate ON  cate.id = item.category_id
+      LEFT JOIN sys_dict sd ON cate.parent_id = sd. CODE
+        AND sd. NAME = '商品分类'
+        AND sd.del_flag = '0'
+      LEFT JOIN item_places place ON place.goods_id = item.id
+      LEFT JOIN sys_dict dict ON dict.code = place.place AND dict.type = '国家编码'
+      WHERE 1=1
+      AND item.id = #{id}
+    </select>
+
+    <update id="updateDel">
+        UPDATE item_info item
+        SET item.item_status = 2
+        WHERE 1=1
+        AND item.id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="deletePlace">
+        DELETE FROM item_places WHERE goods_id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getTaxNumber" resultType="com.wzlue.chain.goods.entity.ItemCategoryEntity">
+        SELECT * FROM item_category WHERE now_status = '1'
+    </select>
+</mapper>

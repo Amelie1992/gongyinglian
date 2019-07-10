@@ -1,0 +1,393 @@
+//生成菜单  中文
+var menuItem = Vue.extend({
+    name: 'menu-item',
+    props: {item: {}, index: 0},
+    template: [
+        '<li :class="{active: (item.type===0 && index === 0)}">',
+        '<a v-if="item.type === 0" href="javascript:;">',
+        '<i v-if="item.icon != null" :class="item.icon"></i>',
+        '<span>{{$i18n.locale =="en" ?  item.enName : item.name}} </span>',
+        '<i class="fa fa-angle-left pull-right"></i>',
+        '</a>',
+        '<ul v-if="item.type === 0" class="treeview-menu">',
+        '<menu-item :item="item" :index="index" v-for="(item, index) in item.list"></menu-item>',
+        '</ul>',
+        '<a v-if="item.type === 1" :href="\'#\'+item.url">' +
+        '<i v-if="item.icon != null" :class="item.icon"></i>' +
+        '<i v-else class="fa fa-circle-o"></i> {{$i18n.locale =="en" ? item.enName: item.name}}' +
+        '</a>',
+        '</li>'
+    ].join('')
+});
+
+
+//iframe自适应
+$(window).on('resize', function () {
+    var $content = $('.content');
+    $content.height($(this).height() - 120);
+    $content.find('iframe').each(function () {
+        $(this).height($content.height());
+    });
+}).resize();
+
+//注册菜单组件
+Vue.component('menuItem', menuItem);
+
+var vm = new Vue({
+    el: '#rrapp',
+    i18n,
+    data: {
+        pushMsgs:'',
+        modify: '修改',
+        cancel: '取消',
+        changePassword: '修改密码',
+        user: {},
+        menuList: {},
+        main: "main.html",
+        form: {
+            password: '',
+            newPassword: ''
+        },
+        navTitle: "欢迎页"
+    },
+    methods: {
+        downloadTemplate:function(){
+            window.location.href=baseURL+"contract/template/download";
+        },
+        toSuHang:function(){
+            //登录token
+            var token = localStorage.getItem("token");
+            if (token != 'null') {
+                $.get(baseURL + "sys/user/info/", function (r) {
+                    if(r.msg == 'success'){
+                        localStorage.setItem("username", r.user.username);
+                        localStorage.setItem("isLogin", "true");
+                        console.log(localStorage);
+                        window.location.href="http://www.suhangline.com/index?isLogin=true&userName="+r.user.username+"&userToken="+token;
+                    }
+                })
+            }
+        },
+        kefu: function () {
+            console.log("测试客服");
+            // MerchantCompanyController-getUserCompany()
+            var obj = {
+                "msg": "",
+                "user_id": "",
+                "name": "",
+                "textType": 1,
+                "company_name": "平台客服",
+                "type": "chat",
+                "business_id": 1,
+                "timestamp": "",
+                "shop_logo": "/images/huanxin/kefu.jpg"
+            };
+
+          var url= "company/merchantusers/getCustomerService?companyId="+'';
+            var kefuNum = 1;
+            $.ajax({
+                type: "get",
+                url: baseURL + url,
+                contentType: "application/json",
+                // data: JSON.stringify(vm.schedule),
+                async: false,//使用同步的方式,true为异步方式
+                success: function(r){
+                    if(r.code === 0){
+                        console.log(JSON.stringify(r));
+                        if(r.data != null){
+                            kefuNum = 0;
+                        }else{
+                            obj.name= r.data.username;
+                        }
+                    }else{
+                        alert(r.msg);
+                    }
+                }
+            });
+            if(kefuNum < 1){
+                alert("没有客服");
+                return false;
+            }else{
+                var a = encodeURIComponent(encodeURIComponent(vm.user.username));
+                var b = encodeURIComponent(encodeURIComponent(JSON.stringify(obj)));
+                window.open(window.location.origin + '/modules/huanxin/jQuery/index.html?username=' + a + "&kefu=" + b);
+            }
+        },
+        huanxin: function () {
+            var a = encodeURIComponent(encodeURIComponent(vm.user.username));
+            window.open(window.location.origin + '/modules/huanxin/jQuery/index.html?username=' + a + "&kefu=");
+        },
+        //聊天
+        wechat: function () {
+            console.log("聊天弹出穿");
+            // window.open(window.location.origin + '/modules/wechat/wechat.html')
+            window.open(window.location.origin + '/modules/im/im/im.html')
+
+        },
+        changezh: function () {
+            this.$i18n.locale = 'zh'
+            vm.modify = '修改';
+            vm.cancel = '取消';
+            vm.changePassword = '修改密码';
+            this.$refs.ss.contentWindow.vm.$i18n.locale = 'zh'
+        },
+        changeen: function () {
+            this.$i18n.locale = 'en'
+            vm.modify = 'modify';
+            vm.cancel = 'cancel';
+            vm.changePassword = 'change Password';
+            this.$refs.ss.contentWindow.vm.$i18n.locale = 'en'
+        },
+        getMenuList: function () {
+            $.getJSON(baseURL + "sys/menu/nav", function (r) {
+                vm.menuList = r.menuList;
+                window.permissions = r.permissions;
+            });
+        },
+        getUser: function () {
+            $.getJSON(baseURL + "sys/user/info", function (r) {
+                vm.user = r.user;
+                localStorage.setItem("user", JSON.stringify(vm.user));
+            });
+        },
+        updatePassword: function () {
+            layer.open({
+                type: 1,
+                skin: 'layui-layer-molv',
+                title: vm.changePassword,
+                area: ['550px', '270px'],
+                shadeClose: false,
+                content: jQuery("#passwordLayer"),
+                btn: [vm.modify, vm.cancel],
+                btn1: function (index) {
+                    $.ajax({
+                        type: "POST",
+                        url: baseURL + "sys/user/password",
+                        dataType: "json",
+                        contentType: "application/json",
+                        data: JSON.stringify(vm.form),
+                        success: function (r) {
+                            if (r.code == 0) {
+                                layer.close(index);
+                                layer.alert('修改成功', function () {
+                                    location.reload();
+                                });
+                            } else {
+                                layer.alert(r.msg);
+                            }
+                        }
+                    });
+                }
+            });
+        },
+        logout: function () {
+            $.ajax({
+                type: "POST",
+                url: baseURL + "sys/logout",
+                dataType: "json",
+                success: function (r) {
+                    //删除本地token
+                    localStorage.removeItem("token");
+                    //跳转到登录页面
+                    location.href = baseURL + 'login.html';
+                }
+            });
+        },
+        donate: function () {
+            layer.open({
+                type: 2,
+                title: false,
+                area: ['806px', '467px'],
+                closeBtn: 1,
+                shadeClose: false,
+                content: ['http://cdn.renren.io/donate.jpg', 'no']
+            });
+        },
+        //访问统计
+        Accessstatistics: function () {
+
+            var ip = returnCitySN["cip"];	//定义IP
+            var cname = returnCitySN["cname"];
+            var myBrowser = this.myBrowser()
+            console.log("执行统计", myBrowser + ip + cname);
+            var obj = {
+                ip: ip,
+                browser: myBrowser
+            }
+            $.ajax({
+                type: "POST",
+                url: baseURL + "huanxin/ipbrowser/save",
+                contentType: "application/json",
+                data: JSON.stringify(obj),
+                success: function (r) {
+                    console.log("添加当前访问", r)
+                }
+            });
+        },
+        //获取当前浏览器
+        myBrowser: function () {
+            var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+            var isOpera = userAgent.indexOf("Opera") > -1; //判断是否Opera浏览器
+            var isIE = userAgent.indexOf("compatible") > -1
+                && userAgent.indexOf("MSIE") > -1 && !isOpera; //判断是否IE浏览器
+            var isEdge = userAgent.indexOf("Edge") > -1; //判断是否IE的Edge浏览器
+            var isFF = userAgent.indexOf("Firefox") > -1; //判断是否Firefox浏览器
+            var isSafari = userAgent.indexOf("Safari") > -1
+                && userAgent.indexOf("Chrome") == -1; //判断是否Safari浏览器
+            var isChrome = userAgent.indexOf("Chrome") > -1
+                && userAgent.indexOf("Safari") > -1; //判断Chrome浏览器
+
+            if (isIE) {
+                var reIE = new RegExp("MSIE (\\d+\\.\\d+);");
+                reIE.test(userAgent);
+                var fIEVersion = parseFloat(RegExp["$1"]);
+                if (fIEVersion == 7) {
+                    return "IE7";
+                } else if (fIEVersion == 8) {
+                    return "IE8";
+                } else if (fIEVersion == 9) {
+                    return "IE9";
+                } else if (fIEVersion == 10) {
+                    return "IE10";
+                } else if (fIEVersion == 11) {
+                    return "IE11";
+                } else {
+                    return "0";
+                }//IE版本过低
+                return "IE";
+            }
+            if (isOpera) {
+                return "Opera";
+            }
+            if (isEdge) {
+                return "Edge";
+            }
+            if (isFF) {
+                return "FF";
+            }
+            if (isSafari) {
+                return "Safari";
+            }
+            if (isChrome) {
+                return "Chrome";
+            }
+
+        },
+        getSysNotice:function () {
+            $.post(baseURL + "sys/sysnotice/getNow",JSON.stringify({positionId:'后台首页'}), function (r) {
+                vm.$nextTick(function () {
+                	if(!isBlank(r.sysNotices))
+                	{
+                		this.pushMsgs=r.sysNotices.noticeContent;
+                	}
+                    vm.$nextTick(function () {
+                        $('.dowebok').liMarquee({
+                            direction: 'left'
+                        });
+                    })
+                })
+            });
+        },
+        initWebSocket: function () { //初始化weosocket\
+            //ws地址
+            var wsuri = "ws://test-admin.suhangline.com/websocket/houtaishouye";
+            this.websocket = new WebSocket(wsuri);
+            this.websocket.onopen = this.websocketonopen;
+            this.websocket.onerror = this.websocketonerror;
+            this.websocket.onmessage = this.websocketonmessage;
+            this.websocket.onclose = this.websocketclose;
+        },
+
+        websocketonopen: function () {
+            console.log("WebSocket连接成功");
+        },
+        websocketonerror: function (e) { //错误
+            console.log("WebSocket连接发生错误");
+        },
+        websocketonmessage: function (e) { //数据接收
+            vm.$nextTick(function () {
+                this.pushMsgs=JSON.parse(e.data);
+            })
+            //this.pushMsg = "通知：" + e.data;
+            //const redata = JSON.parse(e.data);
+            //注意：长连接我们是后台直接1秒推送一条数据，
+            //但是点击某个列表时，会发送给后台一个标识，后台根据此标识返回相对应的数据，
+            //这个时候数据就只能从一个出口出，所以让后台加了一个键，例如键为1时，是每隔1秒推送的数据，为2时是发送标识后再推送的数据，以作区分
+            //console.log(redata.value);
+        },
+
+        websocketsend: function (agentData) {//数据发送
+            this.websocket.send(agentData);
+        },
+
+        websocketclose: function (e) { //关闭
+            console.log("connection closed (" + e.code + ")");
+        },
+    },
+    created: function () {
+        this.getMenuList();
+        this.getUser();
+        this.initWebSocket();
+        this.getSysNotice();
+        document.title = this.$t('SHSCM')
+    }
+    ,
+    updated: function () {
+        //路由
+        var router = new Router();
+        routerList(router, vm.menuList);
+        router.start();
+
+    },
+    destroyed:function () {
+        this.websocket.close()
+    }
+})
+window.onbeforeunload =function () {
+    this.websocket.close()
+}
+
+function routerList(router, menuList){
+    for (var key in menuList) {
+        var menu = menuList[key];
+        if (menu.type == 0) {
+            routerList(router, menu.list);
+        } else if (menu.type == 1) {
+            router.add('#' + menu.url, function () {
+                var url = window.location.hash;
+
+                //替换iframe的url
+                vm.main = url.replace('#', '');
+
+                //导航菜单展开
+                $(".treeview-menu li").removeClass("active");
+                $(".sidebar-menu li").removeClass("active");
+                $("a[href='" + url + "']").parents("li").addClass("active");
+
+                vm.navTitle = $("a[href='" + url + "']").text();
+            });
+        }
+    }
+}
+
+
+function parseParams(data) {
+    try {
+        var tempArr = [];
+        for (var i in data) {
+            var key = encodeURIComponent(i);
+            var value = encodeURIComponent(data[i]);
+            tempArr.push(key + '=' + value);
+        }
+        var urlParamsStr = tempArr.join('&');
+        return urlParamsStr;
+    } catch (err) {
+        return '';
+    }
+}
+var vm1=vm.$refs.iframe.contentWindow;
+var obj = {
+    name: 'zhangsan',
+    age: 100
+};
+

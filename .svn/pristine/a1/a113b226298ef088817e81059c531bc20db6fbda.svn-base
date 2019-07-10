@@ -1,0 +1,386 @@
+
+package com.wzlue.chain.web.controller.logistics;
+
+import java.util.*;
+
+import cn.hutool.poi.excel.ExcelPicUtil;
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.logistics.entity.*;
+import com.wzlue.chain.logistics.service.*;
+import com.wzlue.chain.sys.entity.SysDictEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysDictService;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import com.wzlue.chain.web.controller.wechat.MyWebSocket;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.common.utils.PageUtils;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 物流订单
+ *
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-08-29 19:25:49
+ */
+@SuppressWarnings("ALL")
+@RestController
+@RequestMapping("/logistics/logisticsorder")
+@Api(value = "物流订单")
+public class LogisticsOrderController extends AbstractController {
+    @Autowired
+    private LogisticsOrderService logisticsOrderService;
+    @Autowired
+    private LogisticsOrderOfferService logisticsOrderOfferService;
+    @Autowired
+    private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private LogisticsOrderCommodityService logisticsOrderCommodityService;
+    @Autowired
+    private LogisticsContractService logisticsContractService;
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private LogisticsOfferService logisticsOfferService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    @Autowired
+    private LogisticsOrderShipService logisticsOrderShipService;
+    @Autowired
+    private SysDictService dictService;
+
+    /**
+     * 买家列表
+     */
+    @GetMapping("/list")
+    @ApiOperation(value = "物流订单列表-买家")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "companyId", dataType = "int", value = "传入买家公司id", paramType = "query"),
+            @ApiImplicitParam(name = "orderNumber", dataType = "string", value = "订单编号", paramType = "query"),
+            @ApiImplicitParam(name = "token",paramType="header", value = "token", required = true, dataType = "string")
+    })
+    public R list(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<LogisticsOrderEntity> logisticsOrderList = logisticsOrderService.queryList(query);
+        int total = logisticsOrderService.queryTotal(query);
+
+        return R.page(logisticsOrderList, total);
+    }
+    /**
+     * 卖家列表
+     */
+    @GetMapping("/list2")
+    @ApiOperation(value = "物流订单列表-卖家")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(name = "merchantCompanyId", dataType = "int", value = "传入卖家公司id", paramType = "query"),
+            @ApiImplicitParam(name = "orderNumber", dataType = "string", value = "订单编号", paramType = "query"),
+            @ApiImplicitParam(name = "token",paramType="header", value = "token", required = true, dataType = "string")
+    })
+    public R list2(@ApiIgnore @RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<LogisticsOrderEntity> logisticsOrderList = logisticsOrderService.queryList2(query);
+        int total = logisticsOrderService.queryTotal(query);
+
+        return R.page(logisticsOrderList, total);
+    }
+    /**
+     * 首页展示数据查询(物流订单成交统计)
+     * queryBy: year season month week days
+     *
+     * */
+    @RequestMapping("/showList")
+    public R showList(@RequestBody Map<String,Object> map){
+        List<Map> list = new ArrayList<>();
+        Map Obj = new HashMap();
+        List<Object> dataList = new ArrayList();
+        Long userId = getUserId();
+        map.put("userId", userId);
+        List<Map> logisticsOrder = logisticsOrderService.showList(map);
+        List<String> itemList = (List)map.get("itemList");
+        Map temp = new HashMap();
+        //循环时期节点Array 空值处理
+        for(String item: itemList){
+            temp = new HashMap();
+            temp.put("time",item);
+            temp.put("data",null);
+            // 遍历对比数据库的日期节点,当节点有统计值则赋值,否则默认为null;
+            for(Map logisticsData:logisticsOrder){
+                String val = (String)logisticsData.get("title");
+                if (val.equals(temp.get("time"))){
+                    temp.put("data",logisticsData.get("total"));
+                }
+            }
+            dataList.add(temp);
+            //todo 循环其他订单的数据进行封装处理
+        }
+        Obj.put("name","物流订单");
+        Obj.put("data",dataList);
+        list.add(Obj);
+
+
+        return R.ok().put("list",list).put("itemList",itemList);
+    }
+    /**
+     * 详情信息
+     */
+    @GetMapping("/info")
+    @ApiOperation(value = "物流订单详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", dataType = "int", value = "订单id", paramType = "query"),
+            @ApiImplicitParam(name = "token",paramType="header", value = "token", required = true, dataType = "string")
+    })
+    public R info(@RequestParam Long id) {
+        //下单基本信息
+        LogisticsOrderEntity logisticsOrder = logisticsOrderService.queryObject(id);
+        List<LogisticsOrderCommodityEntity> orderCommodityEntityList = logisticsOrder.getLogisticsOrderCommodityEntityList();
+        for (LogisticsOrderCommodityEntity commodityEntity : orderCommodityEntityList) {
+            SysDictEntity dictEntities = dictService.queryByCountryName(commodityEntity.getCommodityCountry());
+            commodityEntity.setCommodityCountryName(dictEntities.getName());
+        }
+        //物流报盘信息
+        LogisticsOrderOfferEntity logisticsOrderOffer = null;
+        if(logisticsOrder.getId() != null){
+            logisticsOrderOffer = logisticsOrderOfferService.queryByOrderId(logisticsOrder.getId());
+        }
+        Map<String,Object> map = new HashMap<>(16);
+        map.put("logisticsOrder",logisticsOrder);
+        return R.ok(map);
+    }
+
+    /**
+     * 订单待确认下基本查看详情
+     */
+    @RequestMapping("/detail/{id}")
+    @RequiresPermissions("logistics:logisticsorder:info")
+    public R detail(@PathVariable("id") Long id) {
+        //下单基本信息
+        LogisticsOrderEntity logisticsOrder = logisticsOrderService.queryObject(id);
+        //物流报盘备份信息
+        LogisticsOrderOfferEntity logisticsOrderOffer = null;
+        if(logisticsOrder.getId() != null){
+            logisticsOrderOffer = logisticsOrderOfferService.queryByOrderId(logisticsOrder.getId());
+        }
+        Map<String,Object> map=new HashMap<>();
+        map.put("orderId",id);
+        List<LogisticsOrderCommodityEntity> logisticsOrderCommodityList = logisticsOrderCommodityService.queryList(map);
+        R r = R.ok();
+        r.put("logisticsOrder",logisticsOrder);
+        r.put("logisticsOffer",logisticsOrderOffer);
+        r.put("logisticsOrderCommodityList",logisticsOrderCommodityList);
+        return r;
+    }
+
+    /**
+     * 保存
+     */
+    @PostMapping("/save")
+    @RequiresPermissions("logistics:logisticsorder:save")
+    @ApiOperation(value = "物流新增下单")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R save(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        SysUserEntity user = getUser();
+        logisticsOrder.setCompanyId(user.getCompanyId());//根据当前登录人获取所属公司id
+        logisticsOrder.setCreateBy(user.getUserId());
+        logisticsOrder.setCreatedTime(new Date());
+        logisticsOrderService.save(logisticsOrder);
+        try{
+            MyWebSocket socket = new MyWebSocket();
+            socket.sendMessage(logisticsOrder.getMerchantCompanyName()+ " "+
+                    (logisticsOrder.getLogisticsOrderCommodityEntityList().get(0).getCommodityName()) +"商品 成交时间："+
+                    logisticsOrder.getCreatedTime(),"zuixinchengjiao");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @PostMapping("/update")
+    @ApiOperation(value="订单修改接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+    public R update(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        logisticsOrder.setUpdatedBy(getUserId());
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.update(logisticsOrder);
+
+        return R.ok();
+    }
+
+    /**
+     * 买卖双方取消订单
+     * @param logisticsOrder
+     * @return
+     */
+    @PostMapping("/cancelOrder")
+    @ApiOperation(value="取消订单")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+    public R cancelOrder(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        logisticsOrder.setUpdatedBy(getUserId());
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.update(logisticsOrder);
+        if(logisticsOrder.getOrderStatus() == 7){//订单状态取消时，应收应付账单变为失效
+            LogisticsOrderEntity logisticsOrderEntity = logisticsOrderService.queryObject(logisticsOrder.getId());
+            BillEntity bill = billService.queryByOrderNumber(logisticsOrderEntity.getOrderNumber());
+            if(bill != null){
+                bill.setValidState(1);//改的是程序，
+                billService.update(bill);//最终修改表
+            }
+            //订单取消时，报盘数量-1
+            logisticsOfferService.updateByOrderId2(logisticsOrder.getId());
+        }
+        //截单前双方均可直接取消订单，商家接单后，前台传入订单状态1，并判断哪一方取消订单，传入对应状态
+        if(logisticsOrder.getOrderStatus() == 7 || logisticsOrder.getOrderStatus() == 8 || logisticsOrder.getOrderStatus() == 9){
+            //买家or卖家结束订单---扣减信用分数
+            MerchantCompanyEntity companyEntity = merchantCompanyService.queryByUserId(getUserId());
+            merchantCompanyService.updateCreditType(CreditType.ORDEREND,companyEntity);
+        }
+        if(logisticsOrder.getOrderStatus() == 6){
+            //买家确认收货---加信用分数30
+            MerchantCompanyEntity companyEntity = merchantCompanyService.queryByUserId(getUserId());
+            merchantCompanyService.updateCreditType(CreditType.COMPLETEORDER,companyEntity);
+        }
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @RequestMapping("/delete")
+    @RequiresPermissions("logistics:logisticsorder:delete")
+    public R delete(@RequestBody Long[] ids) {
+        logisticsOrderService.deleteBatch(ids);
+
+        return R.ok();
+    }
+    /**
+     * 商家接单
+     *
+     * @param order
+     * @return
+     */
+    @PostMapping("/receipt")
+    @ApiOperation(value = "商家接单")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R receipt(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        SysUserEntity user = getUser();
+        logisticsOrder.setReceiptDetpId(null);//接单人部门id
+        logisticsOrder.setReceiptTime(new Date());//接单时间
+        logisticsOrder.setOrderStatus(1);//0:待确认、1:已接单、
+        logisticsOrder.setUpdatedBy(user.getUserId());
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.receipt(logisticsOrder);
+        LogisticsOrderEntity logisticsOrder1 = logisticsOrderService.queryObject(logisticsOrder.getId());
+        //生成应收应付账单
+        BillEntity bill = new BillEntity();
+        bill.setBillType(0);
+        bill.setContractNumber(logisticsOrder1.getContractNumber());
+        bill.setOrderNumber(logisticsOrder1.getOrderNumber());
+        bill.setOrderType(2);
+        billService.save(bill);
+
+        return R.ok();
+    }
+    /**
+     * 获取所有对物流报盘的公司(除本公司)
+     * @return
+     */
+    @GetMapping("/getCompanys")
+    @ApiOperation(value = "获取报盘公司(除本公司)")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "companyId", dataType = "int", value = "传入报盘公司id", paramType = "query"),
+            @ApiImplicitParam(name = "token",paramType="header", value = "token", required = true, dataType = "string")
+    })
+    public R getCompanys(@RequestParam Long companyId){
+        SysUserEntity user = getUser();//最终sql去掉本公司
+        List<MerchantCompanyEntity> company = logisticsOrderService.getCompanys(user.getCompanyId());
+        Map<String,Object> map = new HashMap<>(16);
+        map.put("company",company);
+        return R.ok(map);
+    }
+
+    /**
+     * 查询是否存在相同编号
+     * @param contractNumber
+     * @return
+     */
+    @RequestMapping("/checkName")
+    @RequiresPermissions("declare:declarecontract:info")
+    public R checkName(@RequestBody String contractNumber){
+        int count=logisticsContractService.checkName(contractNumber);
+        return R.ok().put("count",count);
+    }
+
+    /**
+     * 改价
+     */
+    @PostMapping("/updatePrice")
+    @ApiOperation(value = "卖家改价")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "token",paramType="header", value = "token", required = true, dataType = "string")
+    })
+    public R updatePrice(@RequestBody LogisticsOrderEntity logisticsOrder) {
+        logisticsOrder.setUpdatedTime(new Date());
+        logisticsOrderService.updatePrice(logisticsOrder);
+
+        return R.ok();
+    }
+
+    /**
+     * 添加物流信息
+     */
+    @PostMapping("/saveShip")
+    @ApiOperation(value = "添加物流发货信息")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R save(@RequestBody LogisticsOrderShipEntity logisticsOrderShip){
+        logisticsOrderShipService.save(logisticsOrderShip);
+
+        return R.ok();
+    }
+
+    /**
+     * 获取物流公司名称
+     * @param type
+     * @return
+     */
+    @GetMapping("/getByType")
+    @ApiOperation(value = "获取物流公司")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "type", dataType = "string", value = "类型", paramType = "query"),
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R getByType(String type){
+        List<SysDictEntity> dictEntities = dictService.queryByType(type);
+        return R.ok(dictEntities);
+    }
+}

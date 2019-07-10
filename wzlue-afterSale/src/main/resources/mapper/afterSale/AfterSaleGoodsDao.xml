@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.afterSale.dao.AfterSaleGoodsDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity" id="afterSaleGoodsMap">
+        <result property="id" column="id"/>
+        <result property="afterSaleId" column="after_sale_id"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="unitPrice" column="unit_price"/>
+        <result property="number" column="number"/>
+        <result property="totalPrice" column="total_price"/>
+        <result property="afterSaleNumber" column="after_sale_number"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="goodsImageUrl" column="goods_image_url"/>
+        <result property="unit" column="unit"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity">
+		SELECT * FROM after_sale_goods WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity">
+        SELECT * FROM after_sale_goods
+        <where>
+            <if test="afterSaleId!=null and afterSaleId !=''">
+                `after_sale_id`=#{afterSaleId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM after_sale_goods
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO after_sale_goods
+(
+			`after_sale_id`,
+			`goods_name`,
+			`unit_price`,
+			`number`,
+			`total_price`,
+			`after_sale_number`,
+			`dept_id`,
+            `create_by`,
+            `created_time`,
+            `update_by`,
+            `update_time`,
+            `goods_image_url`,
+            `unit`,
+            `commodity_country`,
+            `commodity_factory_number`,
+            `commodity_packing`
+									)
+		VALUES
+		(
+			#{afterSaleId},
+			#{goodsName},
+			#{unitPrice},
+			#{number},
+			#{totalPrice},
+			#{afterSaleNumber},
+			#{deptId},
+            #{createBy},
+            #{createdTime},
+            #{updateBy},
+            #{updateTime},
+            #{goodsImageUrl},
+            #{unit},
+            #{commodityCountry},
+            #{commodityFactoryNumber},
+            #{commodityPacking}
+									)
+	</insert>
+
+    <insert id="saveList" parameterType="java.util.List">
+        INSERT INTO after_sale_goods
+        (
+        `after_sale_id`,
+        `goods_name`,
+        `unit_price`,
+        `number`,
+        `total_price`,
+        `after_sale_number`,
+        `dept_id`,
+        `create_by`,
+        `created_time`,
+        `update_by`,
+        `update_time`,
+        `goods_image_url`,
+        `unit`,
+        `commodity_country`,
+        `commodity_factory_number`,
+        `commodity_packing`
+        )
+        VALUES
+        <foreach item="item" collection="list" separator=",">
+            (
+            #{item.afterSaleId},
+            #{item.goodsName},
+            #{item.unitPrice},
+            #{item.number},
+            #{item.totalPrice},
+            #{item.afterSaleNumber},
+            #{item.deptId},
+            #{item.createBy},
+            #{item.createdTime},
+            #{item.updateBy},
+            #{item.updateTime},
+            #{item.goodsImageUrl},
+            #{item.unit},
+            #{item.commodityCountry},
+            #{item.commodityFactoryNumber},
+            #{item.commodityPacking}
+            )
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.afterSale.entity.AfterSaleGoodsEntity">
+        UPDATE after_sale_goods
+        <set>
+            <if test="afterSaleId != null">`after_sale_id` = #{afterSaleId},</if>
+            <if test="goodsName != null">`goods_name` = #{goodsName},</if>
+            <if test="unitPrice != null">`unit_price` = #{unitPrice},</if>
+            <if test="number != null">`number` = #{number},</if>
+            <if test="totalPrice != null">`total_price` = #{totalPrice},</if>
+            <if test="afterSaleNumber != null">`after_sale_number` = #{afterSaleNumber},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="goodsImageUrl != null">`goods_image_url` = #{goodsImageUrl},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodity_packing != null">`commodity_packing` = #{commodityPacking}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM after_sale_goods WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM after_sale_goods WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

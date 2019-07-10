@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.promotion.dao.PromotionDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.promotion.entity.PromotionEntity" id="promotionMap">
+        <result property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="ruleType" column="rule_type"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="discountRate" column="discount_rate"/>
+        <result property="discountPrice" column="discount_price"/>
+        <result property="description" column="description"/>
+        <result property="status" column="status"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.promotion.entity.PromotionEntity">
+		SELECT * FROM promotion WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.promotion.entity.PromotionEntity">
+        SELECT * FROM promotion
+        <where>
+            <if test="name != null and name.trim() != ''">
+                `title` LIKE concat('%',#{name},'%')
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND status=#{status}
+            </if>
+            <!--<if test="companyId != null and companyId != ''">
+                AND company_id=#{companyId}
+            </if>-->
+            <if test="createdTime != null and createdTime != ''">
+                AND start_time <![CDATA[<]]> #{createdTime} and end_time > #{createdTime}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id DESC
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM promotion
+        <where>
+            <if test="name != null and name.trim() != ''">
+                `title` LIKE concat('%',#{name},'%')
+            </if>
+            <if test="status != null and status.trim() != ''">
+                AND status=#{status}
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.promotion.entity.PromotionEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO promotion
+(
+        `type`,
+        `title`,
+        `rule_type`,
+        `start_time`,
+        `end_time`,
+        `discount_rate`,
+        `discount_price`,
+        `description`,
+        `status`,
+        `dept_id`,
+        `create_by`,
+        `created_time`,
+        `update_by`,
+        `update_time`,
+        `company_id`,
+        `authorizes_id`
+									)
+		VALUES
+		(
+        #{type},
+        #{title},
+        #{ruleType},
+        #{startTime},
+        #{endTime},
+        #{discountRate},
+        #{discountPrice},
+        #{description},
+        #{status},
+        #{deptId},
+        #{createBy},
+        #{createdTime},
+        #{updateBy},
+        #{updateTime},
+        #{companyId},
+        #{authorizesId}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.promotion.entity.PromotionEntity">
+        UPDATE promotion
+        <set>
+            <if test="type != null">`type` = #{type},</if>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="ruleType != null">`rule_type` = #{ruleType},</if>
+            <if test="startTime != null">`start_time` = #{startTime},</if>
+            <if test="endTime != null">`end_time` = #{endTime},</if>
+            <if test="discountRate != null">`discount_rate` = #{discountRate},</if>
+            <if test="discountPrice != null">`discount_price` = #{discountPrice},</if>
+            <if test="description != null">`description` = #{description},</if>
+            <if test="status != null">`status` = #{status},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!--更改状态-->
+    <update id="updateStatus" parameterType="map">
+        UPDATE promotion
+        <set>
+            <if test="status==0">`status` = 1,</if>
+            <if test="status==1">`status` = 0,</if>
+            `update_by` = #{userId},
+            `update_time` = now()
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+		DELETE FROM promotion WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM promotion WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,111 @@
+package com.wzlue.chain.logistics.service.impl;
+
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.sys.dao.SysUserDao;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import org.apache.shiro.SecurityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import com.wzlue.chain.logistics.dao.LogisticsOfferDao;
+import com.wzlue.chain.logistics.entity.LogisticsOfferEntity;
+import com.wzlue.chain.logistics.service.LogisticsOfferService;
+
+
+
+@Service("logisticsOfferService")
+public class LogisticsOfferServiceImpl implements LogisticsOfferService {
+	@Autowired
+	private LogisticsOfferDao logisticsOfferDao;
+	@Autowired
+	private SysNumberRuleService sysNumberRuleService;
+    @Autowired
+    private SysUserDao sysUserDao;
+    @Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+	
+	@Override
+	public LogisticsOfferEntity queryObject(Long  id){
+		return logisticsOfferDao.queryObject( id);
+	}
+
+	//获取当前登录人所属公司信息
+	@Override
+	public List<LogisticsOfferEntity> queryList(Map<String, Object> map){
+		return logisticsOfferDao.queryList(map);
+	}
+	//前端传入指定companyId，查询对应公司所报盘信息(买入订单调用此接口)
+	@Override
+	public List<LogisticsOfferEntity> queryList1(Map<String, Object> map){
+		return logisticsOfferDao.queryList(map);
+	}
+
+	protected SysUserEntity getUser() {
+		return (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+	}
+    //物流编码的重复判断
+	@Override
+	public LogisticsOfferEntity checkCode(LogisticsOfferEntity logisticsOfferEntity) {
+		return logisticsOfferDao.checkCode(logisticsOfferEntity);
+	}
+
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return logisticsOfferDao.queryTotal(map);
+	}
+
+	@Override
+    public void save(LogisticsOfferEntity logisticsOffer) {
+        //创建报盘信息同时生成(传入)该报盘商家信息
+        SysUserEntity userEntity = sysUserDao.queryObject(logisticsOffer.getCreateBy());
+        if (userEntity != null) {
+            logisticsOffer.setCompanyId(Math.toIntExact(userEntity.getCompanyId()));
+            //根据报盘中的公司id作为条件查询公司名称
+            MerchantCompanyEntity companyEntity = merchantCompanyDao.queryObject(logisticsOffer.getCompanyId());
+            logisticsOffer.setCompanyName(companyEntity.getCompanyName());
+        }
+        //生成商品编码
+        if (logisticsOffer.getCommodityCode() == null || "".equals(logisticsOffer.getCommodityCode())) {//为传入编码时，自动生成
+            logisticsOffer.setCommodityCode(sysNumberRuleService.getCodeNumber("number_order_logistics"));
+        }
+        logisticsOfferDao.save(logisticsOffer);
+    }
+	
+	@Override
+	public void update(LogisticsOfferEntity logisticsOffer){
+		logisticsOfferDao.update(logisticsOffer);
+	}
+	
+	@Override
+	public void delete(Long  id){
+		logisticsOfferDao.delete( id);
+	}
+	
+	@Override
+	public void deleteBatch(Long[]  ids){
+		logisticsOfferDao.deleteBatch( ids);
+	}
+
+	@Override
+	public void updateStatus(Map<String, Object> map) {
+		logisticsOfferDao.updateStatus(map);
+	}
+	@Override
+	public void updateStatus1(Map<String, Object> map) {
+		logisticsOfferDao.updateStatus(map);
+	}
+
+	@Override
+	public void updateByOrderId2(Long id) {
+		logisticsOfferDao.updateByOrderId2(id);
+	}
+
+}

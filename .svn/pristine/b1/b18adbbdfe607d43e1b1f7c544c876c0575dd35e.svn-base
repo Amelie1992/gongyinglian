@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.company.dao.ServiceTypeDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.company.entity.ServiceTypeEntity" id="serviceTypeMap">
+        <result property="id" column="id"/>
+        <result property="serviceName" column="service_name"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.company.entity.ServiceTypeEntity">
+		SELECT * FROM service_type WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.company.entity.ServiceTypeEntity">
+        SELECT * FROM service_type
+        <where>
+        del_flag != -1
+        <if test="serviceName!=null and serviceName!=''"> AND `service_name` like concat('%',#{serviceName},'%')</if>
+       </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id ASC
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM service_type
+        <where>
+         del_flag != -1
+         <if test="serviceName!=null and serviceName!=''"> AND `service_name` like concat('%',#{serviceName},'%')</if>
+        </where>
+
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.company.entity.ServiceTypeEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO service_type ( `service_name`, `update_time`, `create_time`, `del_flag` )
+		 VALUES ( #{serviceName}, #{updateTime}, #{createTime}, #{delFlag} )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.company.entity.ServiceTypeEntity">
+        UPDATE service_type
+        <set>
+            <if test="serviceName != null">`service_name` = #{serviceName},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM service_type WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM service_type WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="getSltList" resultMap="serviceTypeMap">
+		SELECT
+		s.id,
+		s.service_name
+		FROM service_type s
+		WHERE 1=1
+		AND s.del_flag = 0
+	</select>
+
+    <select id="getById" resultType="com.wzlue.chain.company.entity.ServiceTypeEntity">
+        SELECT id, service_name FROM service_type
+        WHERE id IN
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>

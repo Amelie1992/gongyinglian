@@ -1,0 +1,354 @@
+$(function () {
+
+    vm.initTable();
+
+    //表单提交
+    $("form").FM({
+        fields : vm.fields,
+        success : vm.saveOrUpdate
+
+    })
+
+});
+
+function returnReload(){
+    location.reload();
+}
+
+//报送类型
+function pricringMethodFmt(value, rows, index) {
+    if (rows.pricingMethod == '1') {
+        return ['从价'].join('');
+    } else if (rows.pricingMethod == '2') {
+        return ['从量'].join('');
+    }
+}
+//分类状态
+function nowStatusFmt(value, rows, index) {
+    if (rows.nowStatus == '1') {
+        return ['启用'].join('');
+    } else if (rows.nowStatus == '2') {
+        return ['停用'].join('');
+    }
+}
+
+function operFormatter(value, row, index) {
+	var result = '';
+	var flag=hasPermission('item:info:update');
+	var flag1=hasPermission('item:info:delete');
+	var a='';
+    if (flag) {
+    	result +='<a id="btn_edit" class="">'+vm.$t("modify")+'</a>';
+    }
+    /*if(flag1)
+    {
+    	result +='<a id="btn_del" class="">'+vm.$t("delete")+'</a>';
+    }*/
+    return result;
+}
+window.operateEvents = {
+    'click #btn_edit': function (e, value, row, index) {
+        var rowId = row.id;
+        console.log( 'row:',rowId);
+        vm.update(rowId);
+    },
+    'click #btn_del': function (e, value, row, index) {
+        var rowId = row.id;
+        vm.del(rowId);
+    },
+};
+
+
+var vm = new Vue({
+    el:'#cateDiv',
+    i18n,
+    data:{
+        categoryList:[],
+        showList: true,
+        title: null,
+        itemCategory: {},
+        params:{
+            categoryName:'',
+        },
+        //验证字段
+        fields :{
+            categoryName : {
+                message :'分类名称验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '分类名称不能为空'
+                    }
+                },
+            },
+            taxNumber : {
+                message :'税号验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '税号不能为空'
+                    },stringLength:{min:1,max:30,message:'长度小于30'}
+                },
+            },
+            pricingMethod : {
+                message :'计价方式: 1.从价 2.从量验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '计价方式: 1.从价 2.从量不能为空'
+                    },
+                },
+            },
+            nowStatus : {
+                message :'分类状态: 1.启用 2.冻结验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '分类状态: 1.启用 2.冻结不能为空'
+                    },
+                },
+            },
+            parentId : {
+                message :'上级id,为0则为一级验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '上级id,为0则为一级不能为空'
+                    },
+                },
+            },
+            deptId : {
+                message :'权限部门id验证失败',
+                validators: {
+                    notEmpty: {
+                        message: '权限部门id不能为空'
+                    },
+                },
+            }
+        }
+    },
+    methods: {
+        //获取所属商品分类
+        getGoodsType: function () {
+            $.get(baseURL + 'goods/category/getCategoryList', function (res) {
+                if (res.code == 0) {
+                    vm.categoryList = res.data;
+
+                }
+            });
+        },
+
+        initTable: function () {
+
+            //列表
+            $("#table").bootstrapTable("destroy");     //**********对于查询必不可少
+            if(hasPermission('item:category:save')){
+                $("#table").BT({
+                    url: baseURL + 'goods/category/list',
+                    columns: [
+                        {checkbox: true},
+                        { title: vm.$t("ClassificationName"), field: 'categoryName'},
+                        { title: vm.$t("TaxNumber"), field: 'taxNumber'},
+                        { title: vm.$t("ValuationMethod"), field: 'pricingMethod', formatter:pricringMethodFmt},
+                        { title: vm.$t("ClassificationState"), field: 'nowStatus', formatter:nowStatusFmt},
+                        { title: vm.$t("CategoryParent"), field: 'parentName',
+                            /*formatter: function (value, row) {
+                               var str;
+                               if(row.parentId == 0){
+                                   str = '猪肉';
+                               }else if(row.parentId == 1){
+                                   str = '牛肉';
+                               }else if(row.parentId == 2){
+                                   str = '羊肉';
+                               }else if(row.parentId == 3){
+                                   str = '鸡肉';
+                               }
+                                return str;
+                            }*/},
+                       /* { title: vm.$t("AuthorityDepartmentID"), field: 'deptId'},
+                        { title: vm.$t("Founder"), field: 'createBy'},*/
+                        { title: vm.$t("CreationTime"), field: 'createTime'},
+                        { title: vm.$t("chaozuo"), formatter:operFormatter, events:operateEvents}
+                    ],
+                    //条件查询
+                    queryParams:vm.params
+                });
+            }else{
+                $("#table").BT({
+                    url: baseURL + 'goods/category/list',
+                    columns: [
+                        { title: vm.$t("ClassificationName"), field: 'categoryName'},
+                        { title: vm.$t("TaxNumber"), field: 'taxNumber'},
+                        { title: vm.$t("ValuationMethod"), field: 'pricingMethod', formatter:pricringMethodFmt},
+                        { title: vm.$t("ClassificationState"), field: 'nowStatus', formatter:nowStatusFmt},
+                        { title: vm.$t("CategoryParent"), field: 'parentName'},
+                        /*{ title: vm.$t("AuthorityDepartmentID"), field: 'deptId'},
+                        { title: vm.$t("Founder"), field: 'createBy'},*/
+                        { title: vm.$t("CreationTime"), field: 'createTime'}
+                    ],
+                    //条件查询
+                    queryParams:vm.params
+                });
+            }
+
+        },
+
+        query: function () {
+            vm.reload();
+        },
+        add: function(){
+        	vm.itemCategory = {};
+            vm.showList = false;
+            vm.title = "新增";
+            bindSelect("sltParent","goods/category/getList");
+            vm.getGoodsType();
+        },
+        update: function (rowId) {
+            if(rowId == null){
+                return ;
+            }
+            vm.showList = false;
+            vm.title = "修改";
+            vm.getGoodsType();
+            vm.getInfo(rowId)
+        },
+        //表单验证
+        validate: function () {
+            var bl = $('form').VF();//启用验证
+            if (!bl) {
+                return;
+            }
+        },
+        saveOrUpdate: function (event) {
+            $.get(baseURL + "goods/category/checkOnly?categoryName="+vm.itemCategory.categoryName+"&taxNumber="+vm.itemCategory.taxNumber, function(r){
+                if(r.data > 0){
+                    alert("分类名称或税号已存在");
+                    return false;
+                }else{
+                    var url = vm.itemCategory.id == null ? "goods/category/save" : "goods/category/update";
+                    $.ajax({
+                        type: "POST",
+                        url: baseURL + url,
+                        contentType: "application/json",
+                        data: JSON.stringify(vm.itemCategory),
+                        success: function(r){
+                            if(r.code === 0){
+                                alert('操作成功', function(index){
+                                    location.reload();
+                                });
+                            }else{
+                                alert(r.msg);
+                            }
+                        }
+                    });
+                }
+            })
+
+        },
+        del: function (rowId) {
+          /*  if(rowId == null){
+                return ;
+            }*/
+            rowId = getSelectedRowsId("id");
+            confirm('确定要删除选中的记录？', function(){
+                $.ajax({
+                    type: "POST",
+                    url: baseURL + "goods/category/delete",
+                    dataType: "JSON",
+                    data: JSON.stringify(rowId),
+                    success: function(r){
+                        if(r.code == 0){
+                            alert('操作成功', function(index){
+                                vm.reload();
+                            });
+                        }else{
+                            alert(r.msg);
+                        }
+                    }
+                });
+            });
+        },
+        getInfo: function(id){
+            bindSelect("sltParent","goods/category/getList");
+            $.get(baseURL + "goods/category/info/"+id, function(r){
+                vm.itemCategory = r.data;
+                $(".selectPricingMethod").val(vm.itemCategory.pricingMethod).trigger("change");
+                $(".selectNowStatus").val(vm.itemCategory.nowStatus).trigger("change");
+                $(".selectParentId").val(vm.itemCategory.parentId).trigger("change");
+            });
+        },
+        reload: function (event) {
+            vm.showList = true;
+            vm.title = "";
+            //刷新 如需条件查询common.js
+            $("#table").BTF5(vm.params);
+            $("form").RF();
+        }
+    },
+    i18n,
+
+    watch: {
+        "$i18n.locale": function (value) {
+            if (value == 'en') {
+                $("#table").bootstrapTable.defaults.locale = "en-US";
+            } else {
+                $("#table").bootstrapTable.defaults.locale = "zh-CN";
+            }
+            $("#table").bootstrapTable("destroy");
+            this.initTable();
+        },
+
+    },
+
+});
+
+//分类状态
+$(".selectNowStatus").on("select2:select",function(){
+    var data = $(this).val();
+    vm.itemCategory.nowStatus = data;
+    vm.$forceUpdate();
+
+});
+$(".selectPricingMethod").on("select2:select",function(){
+    var data = $(this).val();
+    vm.itemCategory.pricingMethod = data;
+    vm.$forceUpdate();
+
+});
+$(".selectParentId").on("select2:select",function(){
+    var data = $(this).val();
+    vm.itemCategory.parentId = data;
+    vm.$forceUpdate();
+
+});
+
+function bindSelect(ctrlName, url) {
+	var control = $('#' + ctrlName);
+	//设置Select2的处理
+    control.select2({
+        allowClear: false,
+        tags: true,
+        width: "100%",
+        placeholder: "请选择",
+        // escapeMarkup: function (m) {
+        //     return m;
+        // }
+    });
+    
+    //绑定Ajax的内容
+    $.get(baseURL + url, function (res) {
+        //control.empty();//清空下拉框
+        addItem(res.data,ctrlName);
+    });
+}
+
+function addItem(list, nodeName) {
+    var $node = $('#' + nodeName);
+    $node.append("<option value=''>请选择分类</option>");
+    $.each(list, function (i, item) {
+        if(item.id == 0){
+            $node.append("<option value='" + item.id + "'>" + item.categoryName + "</option>");
+        }else{
+            $node.append("<option value='" + item.id + "'>&nbsp;&nbsp;&nbsp;&nbsp;" + item.categoryName + "</option>");
+        }
+        if (item.list!=null && item.list.length >0){
+            addItem(item.list,nodeName);
+        }}
+    );
+    return $node;
+}

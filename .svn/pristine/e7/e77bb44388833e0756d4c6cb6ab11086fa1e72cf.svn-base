@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.StoragePayDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.StoragePayEntity" id="storagePayMap">
+        <result property="id" column="id"/>
+        <result property="orderCommodityId" column="order_commodity_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="goodsOfferId" column="goods_offer_id"/>
+        <result property="commodityId" column="commodity_id"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityNumber" column="commodity_number"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityCount" column="commodity_count"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="weight" column="weight"/>
+        <result property="unit" column="unit"/>
+        <result property="payMoney" column="pay_money"/>
+        <result property="payStatus" column="pay_status"/>
+        <result property="createdTime" column="created_time"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.storage.entity.StoragePayEntity">
+		SELECT * FROM storage_pay WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.storage.entity.StoragePayEntity">
+        SELECT a.* ,b.name countryName
+        FROM storage_pay a
+        LEFT JOIN sys_dict b ON a.commodity_country=b.code and b.type='国家编码'
+        <where>
+            <if test="orderNumber!=null and orderNumber.trim() != ''">
+                a.order_number = #{orderNumber}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY a.pay_status ASC, a.id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM storage_pay
+        <where>
+            <if test="orderNumber!=null and orderNumber != ''">
+                order_number like concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.storage.entity.StoragePayEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_pay
+		(
+            `order_commodity_id`,
+            `order_id`,
+            `order_number`,
+            `goods_offer_id`,
+            `commodity_id`,
+            `commodity_name`,
+            `commodity_number`,
+            `commodity_unit`,
+            `commodity_price`,
+            `commodity_count`,
+            `commodity_factory_number`,
+            `commodity_country`,
+            `weight`,
+            `unit`,
+            `pay_money`,
+            `pay_status`,
+            `created_time`
+									)
+		VALUES
+		(
+            #{orderCommodityId},
+            #{orderId},
+            #{orderNumber},
+            #{goodsOfferId},
+            #{commodityId},
+            #{commodityName},
+            #{commodityNumber},
+            #{commodityUnit},
+            #{commodityPrice},
+            #{commodityCount},
+            #{commodityFactoryNumber},
+            #{commodityCountry},
+            #{weight},
+            #{unit},
+            #{payMoney},
+            #{payStatus},
+            #{createdTime}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.StoragePayEntity">
+        UPDATE storage_pay
+        <set>
+            <if test="orderCommodityId != null">`order_commodity_id` = #{orderCommodityId},</if>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="goodsOfferId != null">`goods_offer_id` = #{goodsOfferId},</if>
+            <if test="commodityId != null">`commodity_id` = #{commodityId},</if>
+            <if test="commodityName != null">`commodity_name` = #{commodityName},</if>
+            <if test="commodityNumber != null">`commodity_number` = #{commodityNumber},</if>
+            <if test="commodityUnit != null">`commodity_unit` = #{commodityUnit},</if>
+            <if test="commodityPrice != null">`commodity_price` = #{commodityPrice},</if>
+            <if test="commodityCount != null">`commodity_count` = #{commodityCount},</if>
+            <if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber},</if>
+            <if test="commodityCountry != null">`commodity_country` = #{commodityCountry},</if>
+            <if test="weight != null">`weight` = #{weight},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="payMoney != null">`pay_money` = #{payMoney},</if>
+            <if test="payStatus != null">`pay_status` = #{payStatus},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM storage_pay WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM storage_pay WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--根据订单编号，查询该订单的多日仓储费用-->
+    <select id="queryListByOrderNumber" resultType="com.wzlue.chain.storage.entity.StoragePayEntity">
+		SELECT * FROM storage_pay WHERE order_number = #{orderNumber}
+	</select>
+
+    <!--根据订单编号和日期，查询该订单当天的（包含多种商品）仓储费用总和-->
+    <!--<select id="sum" resultType="java.math.BigDecimal">-->
+    <!--SELECT SUM(pay_money) FROM storage_pay WHERE order_number = #{orderNumber}-->
+    <!--AND DATE_FORMAT(created_time,'%Y-%m-%d') = #{date}-->
+    <!--</select>-->
+
+    <!--求当日仓储费用之和-->
+    <select id="sum" resultType="java.math.BigDecimal">
+        SELECT SUM(pay_money) FROM storage_pay WHERE id IN
+        <foreach item="item" collection="array" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <select id="queryListToSave" resultType="com.wzlue.chain.storage.entity.StoragePayEntity">
+        SELECT
+        b.id order_id,
+        b.order_number,
+        a.id order_commodity_id,
+        a.goods_offer_id,
+        a.commodity_id,
+        a.commodity_name,
+        a.commodity_number,
+        a.commodity_price,
+        a.commodity_unit,
+        a.commodity_count,
+        a.commodity_factory_number,
+        a.commodity_country,
+        IFNULL(a.merchant_weight,0)-IFNULL(a.out_weight_num,0) weight,
+        a.merchant_unit unit,
+        c.price*(IFNULL(a.merchant_weight,0)-IFNULL(a.out_weight_num,0)) pay_money
+        FROM storage_order_commodity a
+        JOIN storage_order b ON a.order_id=b.id and b.pass_status=2
+        JOIN storage_order_offer c ON a.order_id=c.order_id AND IFNULL(a.merchant_weight,0)-IFNULL(a.out_weight_num,0)>0
+    </select>
+    <!--WHERE NOT EXISTS (SELECT id FROM storage_pay d WHERE a.id=d.order_commodity_id and TO_DAYS(d.created_time)=TO_DAYS(NOW()))-->
+
+    <insert id="saveList" parameterType="com.wzlue.chain.storage.entity.StoragePayEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO storage_pay
+        (
+        `order_commodity_id`,
+        `order_id`,
+        `order_number`,
+        `goods_offer_id`,
+        `commodity_id`,
+        `commodity_name`,
+        `commodity_number`,
+        `commodity_unit`,
+        `commodity_price`,
+        `commodity_count`,
+        `commodity_factory_number`,
+        `commodity_country`,
+        `weight`,
+        `unit`,
+        `pay_money`,
+        `pay_status`,
+        `created_time`
+        )
+        VALUES
+        <foreach collection="list" separator="," item="item">
+            (
+            #{item.orderCommodityId},
+            #{item.orderId},
+            #{item.orderNumber},
+            #{item.goodsOfferId},
+            #{item.commodityId},
+            #{item.commodityName},
+            #{item.commodityNumber},
+            #{item.commodityUnit},
+            #{item.commodityPrice},
+            #{item.commodityCount},
+            #{item.commodityFactoryNumber},
+            #{item.commodityCountry},
+            #{item.weight},
+            #{item.unit},
+            #{item.payMoney},
+            '0',
+            now()
+            )
+        </foreach>
+    </insert>
+
+    <select id="queryListByOutId" resultType="com.wzlue.chain.storage.entity.StoragePayEntity">
+        SELECT
+        b.id order_id,
+        b.order_number,
+        a.id order_commodity_id,
+        a.goods_offer_id,
+        a.commodity_id,
+        a.commodity_name,
+        a.commodity_number,
+        a.commodity_price,
+        a.commodity_unit,
+        a.commodity_count,
+        a.commodity_factory_number,
+        a.commodity_country,
+        IFNULL(c.out_weight,0) weight,
+        a.unit unit,
+        b.price*(IFNULL(c.out_weight,0)) pay_money
+        FROM
+            storage_order_commodity a
+        JOIN storage_order b ON a.order_id = b.id
+        JOIN storage_out_commodity c ON c.order_id = a.order_id AND c.order_commodity_id = a.id AND c.out_id = #{outId}
+    </select>
+    <!--WHERE NOT EXISTS (SELECT id FROM storage_pay d WHERE a.id=d.order_commodity_id and TO_DAYS(d.created_time)=TO_DAYS(NOW()))-->
+    <!--JOIN storage_order_offer d ON a.order_id=d.order_id-->
+    <!--
+        IFNULL(c.out_weight_num,0) weight,
+        a.merchant_unit unit,
+        d.price*(IFNULL(c.out_weight_num,0)) pay_money
+    -->
+</mapper>

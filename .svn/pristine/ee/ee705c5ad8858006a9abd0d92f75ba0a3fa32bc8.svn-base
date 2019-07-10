@@ -1,0 +1,27 @@
+package com.wzlue.chain.bill.dao;
+
+import com.wzlue.chain.bill.entity.PaymentRecordEntity;
+import com.wzlue.chain.common.base.BaseDao;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
+
+/**
+ * 付款（收款）记录
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-12 18:59:16
+ */
+@Mapper
+public interface PaymentRecordDao extends BaseDao<PaymentRecordEntity> {
+
+    List<PaymentRecordEntity> queryListByBillId(Integer payeeBillId);
+
+    List<PaymentRecordEntity> queryStoragePayToPaymentRecord();
+    List<PaymentRecordEntity> queryStoragePayToPaymentRecord2( List<Long> idList);
+
+    void saveList(List<PaymentRecordEntity> paymentRecordEntityList);
+
+    PaymentRecordEntity queryListBillId(Integer billId);
+}

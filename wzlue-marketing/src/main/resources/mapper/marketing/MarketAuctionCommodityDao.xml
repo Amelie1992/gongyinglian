@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.marketing.dao.MarketAuctionCommodityDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity" id="marketAuctionCommodityMap">
+        <result property="id" column="id"/>
+        <result property="auctionId" column="auction_id"/>
+        <result property="auctionNumber" column="auction_number"/>
+        <result property="commodityId" column="commodity_id"/>
+        <result property="commodityName" column="commodity_name"/>
+        <result property="commodityNumber" column="commodity_number"/>
+        <result property="commodityUnit" column="commodity_unit"/>
+        <result property="commodityPrice" column="commodity_price"/>
+        <result property="commodityCount" column="commodity_count"/>
+        <result property="commodityTransactionCount" column="commodity_transaction_count"/>
+        <result property="commodityFactoryNumber" column="commodity_factory_number"/>
+        <result property="commodityCountry" column="commodity_country"/>
+        <result property="commodityPacking" column="commodity_packing"/>
+        <result property="commodityClassification" column="commodity_classification"/>
+        <result property="weight" column="weight"/>
+        <result property="unit" column="unit"/>
+        <result property="createBy" column="create_by"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity">
+		SELECT * FROM market_auction_commodity WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity">
+		SELECT * FROM market_auction_commodity
+		<where>
+            <if test="auctionId != null and auctionId !=''">
+                auction_id = #{auctionId}
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+			<otherwise>
+                ORDER BY id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM market_auction_commodity
+	</select>
+	 
+	<insert id="save" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO market_auction_commodity
+		(
+			`auction_id`,
+			`auction_number`,
+			`commodity_id`,
+			`commodity_name`,
+			`commodity_number`,
+			`commodity_unit`,
+			`commodity_price`,
+			`commodity_count`,
+			`commodity_transaction_count`,
+			`commodity_factory_number`,
+			`commodity_country`,
+			`commodity_packing`,
+			`commodity_classification`,
+			`weight`,
+			`unit`,
+			`create_by`,
+			`company_id`,
+			`authorizes_id`,
+			`dept_id`,
+			`create_time`
+		)
+		VALUES
+		(
+			#{auctionId},
+			#{auctionNumber},
+			#{commodityId},
+			#{commodityName},
+			#{commodityNumber},
+			#{commodityUnit},
+			#{commodityPrice},
+			#{commodityCount},
+			#{commodityTransactionCount},
+			#{commodityFactoryNumber},
+			#{commodityCountry},
+			#{commodityPacking},
+			#{commodityClassification},
+			#{weight},
+			#{unit},
+			#{createBy},
+			#{companyId},
+			#{authorizesId},
+			#{deptId},
+			#{createTime}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity">
+		UPDATE market_auction_commodity
+		<set>
+			<if test="auctionId != null">`auction_id` = #{auctionId}, </if>
+			<if test="auctionNumber != null">`auction_number` = #{auctionNumber}, </if>
+			<if test="commodityId != null">`commodity_id` = #{commodityId}, </if>
+			<if test="commodityName != null">`commodity_name` = #{commodityName}, </if>
+			<if test="commodityNumber != null">`commodity_number` = #{commodityNumber}, </if>
+			<if test="commodityUnit != null">`commodity_unit` = #{commodityUnit}, </if>
+			<if test="commodityPrice != null">`commodity_price` = #{commodityPrice}, </if>
+			<if test="commodityCount != null">`commodity_count` = #{commodityCount}, </if>
+			<if test="commodityTransactionCount != null">`commodity_transaction_count` = #{commodityTransactionCount}, </if>
+			<if test="commodityFactoryNumber != null">`commodity_factory_number` = #{commodityFactoryNumber}, </if>
+			<if test="commodityCountry != null">`commodity_country` = #{commodityCountry}, </if>
+			<if test="commodityPacking != null">`commodity_packing` = #{commodityPacking}, </if>
+			<if test="commodityClassification != null">`commodity_classification` = #{commodityClassification}, </if>
+			<if test="weight != null">`weight` = #{weight}, </if>
+			<if test="unit != null">`unit` = #{unit}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="companyId != null">`company_id` = #{companyId}, </if>
+			<if test="authorizesId != null">`authorizes_id` = #{authorizesId}, </if>
+			<if test="deptId != null">`dept_id` = #{deptId}, </if>
+			<if test="createTime != null">`create_time` = #{createTime}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM market_auction_commodity WHERE id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		DELETE FROM market_auction_commodity WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<insert id="saveList" parameterType="com.wzlue.chain.marketing.entity.MarketAuctionCommodityEntity"
+			useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO market_auction_commodity
+		(
+		`auction_id`,
+		`auction_number`,
+		`commodity_id`,
+		`commodity_name`,
+		`commodity_number`,
+		`commodity_unit`,
+		`commodity_price`,
+		`commodity_count`,
+		`commodity_transaction_count`,
+		`commodity_factory_number`,
+		`commodity_country`,
+		`commodity_packing`,
+		`commodity_classification`,
+		`weight`,
+		`unit`,
+		`create_by`,
+		`company_id`,
+		`authorizes_id`,
+		`dept_id`,
+		`create_time`
+		)
+		VALUES
+		<foreach collection="list" separator="," item="item" >
+		(
+		#{item.auctionId},
+		#{item.auctionNumber},
+		#{item.commodityId},
+		#{item.commodityName},
+		#{item.commodityNumber},
+		#{item.commodityUnit},
+		#{item.commodityPrice},
+		#{item.commodityCount},
+		#{item.commodityTransactionCount},
+		#{item.commodityFactoryNumber},
+		#{item.commodityCountry},
+		#{item.commodityPacking},
+		#{item.commodityClassification},
+		#{item.weight},
+		#{item.unit},
+		#{item.createBy},
+		#{item.companyId},
+		#{item.authorizesId},
+		#{item.deptId},
+		#{item.createTime}
+		)
+		</foreach>
+	</insert>
+
+	<delete id="deleteByAuctionId">
+		DELETE FROM market_auction_commodity WHERE auction_id = #{value}
+	</delete>
+</mapper>

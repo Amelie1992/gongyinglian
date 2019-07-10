@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.pre.dao.GoodsOrderPreDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.pre.entity.GoodsOrderPreEntity" id="goodsOrderPreMap">
+        <result property="id" column="id"/>
+        <result property="preStatus" column="pre_status"/>
+        <result property="orderId" column="order_id"/>
+        <result property="preContent" column="pre_content"/>
+        <result property="preRemarks" column="pre_remarks"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="authorizesId" column="authorizes_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.pre.entity.GoodsOrderPreEntity">
+		SELECT * FROM goods_order_pre WHERE id = #{value}
+	</select>
+    <select id="getByOrderId" resultType="com.wzlue.chain.pre.entity.GoodsOrderPreEntity">
+		SELECT * FROM goods_order_pre WHERE order_id = #{orderId}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.pre.entity.GoodsOrderPreEntity">
+        SELECT * FROM goods_order_pre
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM goods_order_pre
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.pre.entity.GoodsOrderPreEntity">
+        INSERT INTO goods_order_pre
+        (
+        `id`,
+        `pre_status`,
+        `order_id`,
+        `pre_content`,
+        `pre_remarks`,
+        `create_by`,
+        `create_time`,
+        `modify_by`,
+        `modify_time`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{id},
+        #{preStatus},
+        #{orderId},
+        #{preContent},
+        #{preRemarks},
+        #{createBy},
+        #{createTime},
+        #{modifyBy},
+        #{modifyTime},
+        #{authorizesId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.pre.entity.GoodsOrderPreEntity">
+        UPDATE goods_order_pre
+        <set>
+            <if test="preStatus != null">`pre_status` = #{preStatus},</if>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="preContent != null">`pre_content` = #{preContent},</if>
+            <if test="preRemarks != null">`pre_remarks` = #{preRemarks},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modifyBy != null">`modify_by` = #{modifyBy},</if>
+            <if test="modifyTime != null">`modify_time` = #{modifyTime},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM goods_order_pre WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM goods_order_pre WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateStatus" parameterType="com.wzlue.chain.order.entity.GoodsOrderEntity">
+        UPDATE goods_order
+        <set>
+            <if test="orderStatus != null">`order_status` = #{orderStatus},</if>
+        </set>
+        <where>
+            <choose>
+                <when test="orderId != null">
+                    order_id = #{orderId}
+                </when>
+                <otherwise>
+                    `order_number` = #{orderNumber}
+                </otherwise>
+            </choose>
+        </where>
+    </update>
+</mapper>

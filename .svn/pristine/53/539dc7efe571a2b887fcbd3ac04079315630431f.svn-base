@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.storage.dao.OrderDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.storage.entity.OrderEntity" id="orderMap">
+        <result property="id" column="id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="goodNumber" column="good_number"/>
+        <result property="intTime" column="int_time"/>
+        <result property="outTime" column="out_time"/>
+        <result property="phone" column="phone"/>
+        <result property="contact" column="contact"/>
+        <result property="email" column="email"/>
+        <result property="address" column="address"/>
+        <result property="remarks" column="remarks"/>
+        <result property="total" column="total"/>
+        <result property="numberType" column="number_type"/>
+        <result property="number" column="number"/>
+        <result property="merchantContact" column="merchant_contact"/>
+        <result property="merchantPhone" column="merchant_phone"/>
+        <result property="merchantEmail" column="merchant_email"/>
+        <result property="merchantAddress" column="merchant_address"/>
+        <result property="receiptTime" column="receipt_time"/>
+        <result property="receiptDetpId" column="receipt_detp_id"/>
+        <result property="receiptMerchantId" column="receipt_merchant_id"/>
+        <result property="goodRemarks" column="good_remarks"/>
+        <result property="merchantId" column="merchant_id"/>
+        <result property="passStatus" column="pass_status"/>
+        <result property="payStatus" column="pay_status"/>
+        <result property="stockStatus" column="stock_status"/>
+        <result property="buyStatus" column="buy_status"/>
+        <result property="sellStatus" column="sell_status"/>
+        <result property="alterSale" column="alter_sale"/>
+        <result property="arrivalTime" column="arrival_time"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="buyCompanyName" column="buy_company_name"/>
+        <result property="saleCompanyName" column="sale_company_name"/>
+        <result property="price" column="price"/>
+        <result property="unit" column="unit"/>
+        <result property="money1" column="money1"/>
+        <result property="money2" column="money2"/>
+        <result property="money3" column="money3"/>
+        <result property="money4" column="money4"/>
+        <result property="money5" column="money5"/>
+        <result property="money6" column="money6"/>
+        <result property="money7" column="money7"/>
+        <result property="money8" column="money8"/>
+        <result property="money9" column="money9"/>
+        <result property="money10" column="money10"/>
+        <result property="money11" column="money11"/>
+        <result property="money12" column="money12"/>
+        <result property="money13" column="money13"/>
+        <result property="money14" column="money14"/>
+        <result property="money15" column="money15"/>
+        <association property="orderOfferEntity"
+                     javaType="com.wzlue.chain.storage.entity.OrderOfferEntity"
+                     column="{orderId=id}"
+                     select="com.wzlue.chain.storage.dao.OrderOfferDao.queryByOrderId"/>
+        <collection property="commodityEntityList"
+                    javaType="java.util.ArrayList"
+                    ofType=" com.wzlue.chain.storage.entity.OrderCommodityEntity"
+                    column="{orderId=id}"
+                    select="com.wzlue.chain.storage.dao.OrderCommodityDao.queryList"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.storage.entity.OrderEntity">
+		SELECT * FROM storage_order WHERE id = #{id}
+	</select>
+
+    <select id="queryObjectByOrderNumber" resultType="com.wzlue.chain.storage.entity.OrderEntity">
+        SELECT * FROM storage_order WHERE order_number = #{orderNumber}
+    </select>
+    <select id="queryListByNumberCode" resultType="com.wzlue.chain.storage.entity.OrderEntity">
+        SELECT * FROM storage_order WHERE number = #{numberCode}
+    </select>
+
+    <select id="queryList" resultMap="orderMap">
+        SELECT
+        `id`,
+        `order_number`,
+        `contract_number`,
+        `good_number`,
+        `int_time`,
+        `out_time`,
+        `phone`,
+        `contact`,
+        `email`,
+        `address`,
+        `remarks`,
+        `total`,
+        `number_type`,
+        `number`,
+        `merchant_contact`,
+        `merchant_phone`,
+        `merchant_email`,
+        `merchant_address`,
+        `receipt_time`,
+        `receipt_detp_id`,
+        `receipt_merchant_id`,
+        `good_remarks`,
+        `merchant_id`,
+        `pass_status`,
+        `pay_status`,
+        `stock_status`,
+        `buy_status`,
+        `sell_status`,
+        `alter_sale`,
+        `arrival_time`,
+        `dept_id`,
+        `created_by`,
+        `created_time`,
+        `updated_by`,
+        `updated_time`,
+        `del_flag`,
+        `buy_company_name`,
+        `sale_company_name`
+        FROM storage_order
+        <where>
+            del_flag=0
+            <if test="merchantId!=null">and merchant_id=#{merchantId}</if>
+            <if test="receiptMerchantId!=null">and receipt_merchant_id=#{receiptMerchantId}</if>
+            <if test="orderNumber!=null and orderNumber!=''">and order_number like concat('%',#{orderNumber},'%')</if>
+            <if test="passStatus!=null and passStatus!=''">and pass_status=#{passStatus}</if>
+        </where>
+        ORDER BY <!-- pass_status asc, -->created_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM storage_order
+        <where>
+            del_flag=0
+            <if test="merchantId!=null">and merchant_id=#{merchantId}</if>
+            <if test="receiptMerchantId!=null">and receipt_merchant_id=#{receiptMerchantId}</if>
+            <if test="orderNumber!=null and orderNumber!=''">and order_number like concat('%',#{orderNumber},'%')</if>
+            <if test="passStatus!=null and passStatus!=''">and pass_status=#{passStatus}</if>
+        </where>
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.storage.entity.OrderEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO storage_order
+		(
+            `order_number`,
+            `contract_number`,
+            `good_number`,
+            `int_time`,
+            `out_time`,
+            `phone`,
+            `contact`,
+            `email`,
+            `address`,
+            `remarks`,
+            `total`,
+            `number_type`,
+            `number`,
+            `merchant_contact`,
+            `merchant_phone`,
+            `merchant_email`,
+            `merchant_address`,
+            `receipt_time`,
+            `receipt_detp_id`,
+            `receipt_merchant_id`,
+            `good_remarks`,
+            `merchant_id`,
+            `pass_status`,
+            `pay_status`,
+            `stock_status`,
+            `buy_status`,
+            `sell_status`,
+            `alter_sale`,
+            `arrival_time`,
+            `dept_id`,
+            `created_by`,
+            `created_time`,
+            `updated_by`,
+            `updated_time`,
+            `del_flag`,
+            `buy_company_name`,
+            `sale_company_name`,
+            `price`,
+            `unit`,
+            `money1`,
+            `money2`,
+            `money3`,
+            `money4`,
+            `money5`,
+            `money6`,
+            `money7`,
+            `money8`,
+            `money9`,
+            `money10`,
+            `money11`,
+            `money12`,
+            `money13`,
+            `money14`,
+            `money15`
+		)
+		VALUES
+		(
+            #{orderNumber},
+            #{contractNumber},
+            #{goodNumber},
+            #{intTime},
+            #{outTime},
+            #{phone},
+            #{contact},
+            #{email},
+            #{address},
+            #{remarks},
+            #{total},
+            #{numberType},
+            #{number},
+            #{merchantContact},
+            #{merchantPhone},
+            #{merchantEmail},
+            #{merchantAddress},
+            #{receiptTime},
+            #{receiptDetpId},
+            #{receiptMerchantId},
+            #{goodRemarks},
+            #{merchantId},
+            #{passStatus},
+            #{payStatus},
+            #{stockStatus},
+            #{buyStatus},
+            #{sellStatus},
+            #{alterSale},
+            #{arrivalTime},
+            #{deptId},
+            #{createdBy},
+            #{createdTime},
+            #{updatedBy},
+            #{updatedTime},
+            #{delFlag},
+            #{buyCompanyName},
+            #{saleCompanyName},
+            #{price},
+            #{unit},
+            #{money1},
+            #{money2},
+            #{money3},
+            #{money4},
+            #{money5},
+            #{money6},
+            #{money7},
+            #{money8},
+            #{money9},
+            #{money10},
+            #{money11},
+            #{money12},
+            #{money13},
+            #{money14},
+            #{money15}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.storage.entity.OrderEntity">
+        UPDATE storage_order
+        <set>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="goodNumber != null">`good_number` = #{goodNumber},</if>
+            <if test="intTime != null">`int_time` = #{intTime},</if>
+            <if test="outTime != null">`out_time` = #{outTime},</if>
+            <if test="phone != null">`phone` = #{phone},</if>
+            <if test="contact != null">`contact` = #{contact},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="address != null">`address` = #{address},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="total != null">`total` = #{total},</if>
+            <if test="numberType != null">`number_type` = #{numberType},</if>
+            <if test="number != null">`number` = #{number},</if>
+            <if test="merchantContact != null">`merchant_contact` = #{merchantContact},</if>
+            <if test="merchantPhone != null">`merchant_phone` = #{merchantPhone},</if>
+            <if test="merchantEmail != null">`merchant_email` = #{merchantEmail},</if>
+            <if test="merchantAddress != null">`merchant_address` = #{merchantAddress},</if>
+            <if test="receiptTime != null">`receipt_time` = #{receiptTime},</if>
+            <if test="receiptDetpId != null">`receipt_detp_id` = #{receiptDetpId},</if>
+            <if test="receiptMerchantId != null">`receipt_merchant_id` = #{receiptMerchantId},</if>
+            <if test="goodRemarks != null">`good_remarks` = #{goodRemarks},</if>
+            <if test="merchantId != null">`merchant_id` = #{merchantId},</if>
+            <if test="passStatus != null">`pass_status` = #{passStatus},</if>
+            <if test="payStatus != null">`pay_status` = #{payStatus},</if>
+            <if test="stockStatus != null">`stock_status` = #{stockStatus},</if>
+            <if test="buyStatus != null">`buy_status` = #{buyStatus},</if>
+            <if test="sellStatus != null">`sell_status` = #{sellStatus},</if>
+            <if test="alterSale != null">`alter_sale` = #{alterSale},</if>
+            <if test="arrivalTime != null">`arrival_time` = #{arrivalTime},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="createdBy != null">`created_by` = #{createdBy},</if>
+            <if test="createdTime != null">`created_time` = #{createdTime},</if>
+            <if test="updatedBy != null">`updated_by` = #{updatedBy},</if>
+            <if test="updatedTime != null">`updated_time` = #{updatedTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag},</if>
+            <if test=" buyCompanyName!= null">`buy_company_name` = #{buyCompanyName},</if>
+            <if test=" saleCompanyName!= null">`sale_company_name` = #{saleCompanyName},</if>
+            <if test=" price!= null">`price` = #{price},</if>
+            <if test=" unit!= null">`unit` = #{unit},</if>
+            <if test=" money1!= null">`money1` = #{money1},</if>
+            <if test=" money2!= null">`money2` = #{money2},</if>
+            <if test=" money3!= null">`money3` = #{money3},</if>
+            <if test=" money4!= null">`money4` = #{money4},</if>
+            <if test=" money5!= null">`money5` = #{money5},</if>
+            <if test=" money6!= null">`money6` = #{money6},</if>
+            <if test=" money7!= null">`money7` = #{money7},</if>
+            <if test=" money8!= null">`money8` = #{money8},</if>
+            <if test=" money9!= null">`money9` = #{money9},</if>
+            <if test=" money10!= null">`money10` = #{money10},</if>
+            <if test=" money11!= null">`money11` = #{money11},</if>
+            <if test=" money12!= null">`money12` = #{money12},</if>
+            <if test=" money13!= null">`money13` = #{money13},</if>
+            <if test=" money14!= null">`money14` = #{money14},</if>
+            <if test=" money15!= null">`money15` = #{money15}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		UPDATE storage_order SET del_flag=1 WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        UPDATE storage_order SET del_flag=1
+        WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <select id="getCompanys" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+        SELECT DISTINCT a.id,a.company_name
+        FROM merchant_company a
+        INNER JOIN storage_offer b ON a.id=b.merchant_id AND  b.status=0 AND b.del_flag=0
+        WHERE a.id != #{companyId}
+    </select>
+
+    <select id="getBuyCompany" parameterType="String" resultType="String">
+       SELECT
+            company_name
+        FROM
+            merchant_company
+        WHERE
+            id = #{companyId}
+    </select>
+    <select id="queryListByNumberCodeAndNumberType" resultType="map">
+        SELECT s.id id,order_number orderNumber FROM storage_order s
+        <where>
+            s.number=#{numberCode}
+            and s.number_type=#{numberType}
+            and (s.merchant_id=#{companyId} or s.receipt_merchant_id=#{companyId})
+        </where>
+        limit 1
+    </select>
+
+    <!--更改订单金额-->
+    <update id="updateList" parameterType="com.wzlue.chain.bill.entity.PaymentRecordEntity">
+        <foreach collection="list" separator=";" item="item">
+            UPDATE storage_order
+            <set>
+                <if test="item.amount != null and item.amount != 0">
+                    total = total + #{item.amount},
+                </if>
+                `updated_time` = NOW()
+            </set>
+            WHERE order_number = (SELECT b.order_number FROM bill b WHERE b.id = #{item.billId})
+        </foreach>
+    </update>
+
+    <select id="showList" resultType="java.util.Map">
+        SELECT
+        IFNULL(COUNT(so.`id`),0) AS total
+        <choose>
+            <when test="dateType !=null and dateType=='year' ">
+                ,CONCAT(MONTH(so.`created_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType=='quarter' ">
+                ,CONCAT(MONTH(so.`created_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType =='month'">
+                ,CONCAT(MONTH(so.`created_time`),'-',DAYOFMONTH(so.`created_time`)) AS title
+            </when>
+        </choose>
+        FROM storage_order so
+        WHERE 1=1
+        AND so.`del_flag` != 1
+        <if test="companyId !=null ">
+           <!-- AND so.company_id = #{companyId} -->
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(so.`created_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND
+            TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(so.`created_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(so.`created_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+</mapper>

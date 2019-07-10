@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>促销表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <!--下拉列表插件-->
+    <link rel="stylesheet" href="../../plugins/bootstrap-select/css/bootstrap-select.min.css">
+    <!--日期时间插件-->
+    <link rel="stylesheet" href="../../plugins/datetimepicker/css/bootstrap-datetimepicker.min.css">
+    <!--文本输入插件-->
+    <!--<link href="../../plugins/bootstrap-fileinput-master/css/fileinput.min.css" media="all" rel="stylesheet"-->
+    <!--type="text/css"/>-->
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <!--新增标题-->
+    <section class="content-header">
+        <h1>
+            {{$t('PromotionManagement')}} &nbsp;<small v-if="title!=''">{{title}}</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li v-if="title==null"><a href="#" @click="reload">{{$t('refresh')}}</a></li>
+            <li v-if="title==$t('modify')"><a href="#" @click="reload">{{$t('return')}}</a></li>
+            <li v-if="title==$t('added')"><a href="#" @click="reload">{{$t('return')}}</a></li>
+        </ol>
+    </section>
+    <!---->
+
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" :placeholder="$t('QueryMsg')"/>
+                <!---->
+                <!--<div class="form-group">-->
+                <!--<select class="form-control" data-width="auto"-->
+                <!--v-model="params.title">-->
+                <!--<option value="">{{$t('whole')}}</option>-->
+                <!--<option v-for="item in declareList" :value="item.value">-->
+                <!--{{item.label}}-->
+                <!--</option>-->
+                <!--</select>-->
+                <!--</div>-->
+
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;{{$t('query')}}
+            </button>
+            <button v-if="hasPermission('promotion:promotion:save')" class="btn btn-primary" @click="add">
+                <i class="fa fa-plus"></i>&nbsp;{{$t('added')}}
+            </button>
+            <button v-if="hasPermission('promotion:promotion:update')" class="btn btn-warning" @click="update">
+                <i class="fa fa-edit"></i>&nbsp;{{$t('modify')}}
+            </button>
+            <button v-if="hasPermission('promotion:promotion:delete')" class="btn btn-danger" @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;{{$t('delete')}}
+            </button>
+            <button class="btn btn-success" id="onSale" @click="onSale">
+                <i class="fa"></i>&nbsp;{{$t('UpperShelves')}}
+            </button>
+            <button class="btn btn-success" id="noSale" @click="noSale">
+                <i class="fa"></i>&nbsp;{{$t('LowerShelves')}}
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal" onkeydown="if(event.keyCode==13){return false;}">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('PromotionType')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="type" class="form-control" v-model="promotion.type"-->
+                                    <!--placeholder="促销类型1：单品促销"/>-->
+                                    <!--下拉框-->
+                                    <select class="form-control col-sm-10" style="width:100%" v-model="promotion.type" name="type"
+                                            :placeholder="$t('SingleProductPromotion')" id="type" disabled="disabled">
+                                        <option v-for="item in promotionList" :label="item.label" :value="item.value">
+                                            {{item.name}}
+                                        </option>
+                                    </select>
+                                    <!---->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('PromotionTitle')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" name="title" class="form-control" v-model="promotion.title"
+                                           id="title" disabled="disabled"/>
+                                    <!--placeholder="促销标题"/>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--并列一行显示-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">促销标题</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="title" class="form-control" v-model="promotion.title"-->
+                <!--placeholder="促销标题"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('StartTime')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" id="datetimepickerstart" name="startTime" class="form-control datetimepicker"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss" readonly
+                                           v-model="promotion.startTime"/>
+                                    <!--placeholder="开始时间"/>-->
+                                </div>
+                            </div>
+                        </div>
+                        <!--<div class="col-xs-4">-->
+                        <!--<div class="form-group">-->
+                        <!--<div class="col-sm-2 control-label">出生日期</div>-->
+                        <!--<div class="col-sm-10">-->
+                        <!--<input type="text" name="dateofbirth" class="form-control"
+                                   v-model="employee.dateofbirth" placeholder="出生日期"/>-->
+                        <!--</div>-->
+                        <!--</div>-->
+                        <!--</div>-->
+
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('EndTime')}}</label>
+                                <div class="col-sm-10">
+                                    <input type="text" id="datetimepickerend" name="endTime" class="form-control datetimepicker"
+                                           data-date-format="yyyy-mm-dd hh:ii:ss" readonly
+                                           v-model="promotion.endTime"/>
+                                    <!--placeholder="结束时间"/>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">结束时间</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="endTime" class="form-control" v-model="promotion.endTime"-->
+                <!--placeholder="结束时间"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('RuleType')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="text" name="ruleType" class="form-control" v-model="promotion.ruleType"-->
+                                    <!--placeholder="规则类型 0：打折 1：折价"/>-->
+                                    <!--下拉框-->
+                                    <select class="form-control col-sm-10" style="width: 100%" v-model="promotion.ruleType"
+                                            :placeholder="$t('RuleType')" id="ruleType" disabled="disabled">
+                                        <option
+                                                v-for="item in ruleTypeList"
+                                                :label="item.label"
+                                                :value="item.value"
+                                        >{{item.name}}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="promotion.ruleType==0" class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('DiscountRate')}}</label>
+                                <div class="col-sm-10">
+                                    <!--%显示在尾部-->
+                                    <div class="input-group">
+                                        <input type="text" name="discountRate" class="form-control" id="discountRate"
+                                               v-model="promotion.discountRate" disabled="disabled"/>
+                                        <!--placeholder="折扣率"/>-->
+                                        <!--加上%-->
+                                        <div class="input-group-addon" style="width: 15%">%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-show="promotion.ruleType==1" class="col-sm-4">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('DiscountPrice')}}</label>
+                                <div class="col-sm-10">
+                                    <div class="input-group">
+                                        <input type="text" name="discountPrice" class="form-control" id="discountPrice"
+                                               v-model="promotion.discountPrice" disabled="disabled"/>
+                                        <!--placeholder="折扣价"/>-->
+                                        <div class="input-group-addon" style="width: 15%">{{$t('Yuan')}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--<div class="row">-->
+                    <!--<div class="form-group">-->
+                    <!--<div class="col-sm-2 control-label">折扣率</div>-->
+                    <!--<div class="col-sm-10">-->
+                    <!--<input type="text" name="discountRate" class="form-control"-->
+                    <!--v-model="promotion.discountRate"-->
+                    <!--placeholder="折扣率"/>-->
+                    <!--</div>-->
+                    <!--</div>-->
+                    <!--</div>-->
+                    <!--<div class="row">-->
+                    <!--<div class="col-sm-12">-->
+                    <!--<div v-show="promotion.ruleType==1" class="col-sm-4">-->
+                    <!--<div class="form-group">-->
+                    <!--<div class="col-sm-2 control-label">{{$t('DiscountPrice')}}</div>-->
+                    <!--<div class="col-sm-10">-->
+                    <!--<input type="text" name="discountPrice" class="form-control"-->
+                    <!--v-model="promotion.discountPrice"/>-->
+                    <!--&lt;!&ndash;placeholder="折扣价"/>&ndash;&gt;-->
+                    <!--</div>-->
+                    <!--</div>-->
+                    <!--</div>-->
+                    <!--</div>-->
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="col-sm-6">
+                            <div class="form-group required">
+                                <label class="col-sm-2 control-label">{{$t('PromotionDescription')}}</label>
+                                <div class="col-sm-10">
+                                    <!--<input type="textarae" name="description" class="form-control"-->
+                                    <!--style="width: 167%;height: 100px"-->
+                                    <!--v-model="promotion.description"/>-->
+                                    <!--placeholder="促销描述"/>-->
+                                    <textarea name="description" class="form-control" rows="5"
+                                              style="width: 167%;height: 100px"
+                                              v-model="promotion.description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--写在controller里面-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">状态</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--&lt;!&ndash;<input type="text" name="status" class="form-control" v-model="promotion.status"&ndash;&gt;-->
+                <!--&lt;!&ndash;placeholder="状态 0：下架 1： 上架"/>&ndash;&gt;-->
+                <!--&lt;!&ndash;下拉框&ndash;&gt;-->
+                <!--<select class="form-control col-sm-10" style="width: 100%"-->
+                <!--v-model="promotion.status"-->
+                <!--placeholder="状态">-->
+                <!--<option-->
+                <!--v-for="item in stateList"-->
+                <!--:label="item.label"-->
+                <!--:value="item.value"-->
+                <!--&gt;{{item.name}}-->
+                <!--</option>-->
+                <!--</select>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">权限部门id</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="deptId" class="form-control" v-model="promotion.deptId"-->
+                <!--placeholder="权限部门id"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">创建人</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="createdBy" class="form-control"-->
+                <!--v-model="promotion.createdBy"-->
+                <!--placeholder="创建人"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">创建时间</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="createdTime" class="form-control"-->
+                <!--v-model="promotion.createdTime"-->
+                <!--placeholder="创建时间"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">修改人</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="updateBy" class="form-control" v-model="promotion.updateBy"-->
+                <!--placeholder="修改人"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--<div class="row">-->
+                <!--<div class="form-group">-->
+                <!--<div class="col-sm-2 control-label">修改时间</div>-->
+                <!--<div class="col-sm-10">-->
+                <!--<input type="text" name="updateTime" class="form-control"-->
+                <!--v-model="promotion.updateTime"-->
+                <!--placeholder="修改时间"/>-->
+                <!--</div>-->
+                <!--</div>-->
+                <!--</div>-->
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input v-if="showSure" type="button" class="btn btn-primary" @click="validate"
+                               :value="$t('sure')"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload"
+                                           :value="$t('return')"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<!--下拉框-->
+<script src="../../plugins/bootstrap-select/js/bootstrap-select.js"></script>
+<script src="../../plugins/bootstrap-select/js/i18n/defaults-zh_CN.js"></script>
+<!--日期时间-->
+<script src="../../plugins/datetimepicker/js/bootstrap-datetimepicker.js"></script>
+<script src="../../plugins/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js"></script>
+
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="https://unpkg.com/vue-i18n/dist/vue-i18n.js"></script>
+<!--<script src="../../libs/vue-i18n.js"></script>-->
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/promotion/promotion.js"></script>
+
+<script>
+    $(".datetimepicker").datetimepicker({
+        language:'zh-CN',
+        format: 'yyyy-mm-dd hh:ii:ss',//显示格式
+        weekStart: 1,
+        todayHighlight: 1,//今天高亮
+        // minView: 'month',//设置只显示到月份
+        minView: 0,//从小时视图开始，选分
+        startView:2,
+        startDate: new Date(),//设置开始日期
+        forceParse: 0,
+        showMeridian: 1,
+        autoclose: true,//选择后自动关闭
+    });
+</script>
+
+</body>
+</html>

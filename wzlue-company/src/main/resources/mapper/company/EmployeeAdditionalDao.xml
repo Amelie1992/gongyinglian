@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.company.dao.EmployeeAdditionalDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.company.entity.EmployeeAdditionalEntity" id="employeeAdditionalMap">
+        <result property="id" column="id"/>
+        <result property="employeeid" column="employeeid"/>
+        <result property="healthy" column="healthy"/>
+        <result property="censusregistertype" column="censusregistertype"/>
+        <result property="maritalstatus" column="maritalstatus"/>
+        <result property="children" column="children"/>
+        <result property="education" column="education"/>
+        <result property="recruitmentsource" column="recruitmentsource"/>
+        <result property="jobsalarylevel" column="jobsalarylevel"/>
+        <result property="belongtothepost" column="belongtothepost"/>
+        <result property="homeaddress" column="homeaddress"/>
+        <result property="graduateschool" column="graduateschool"/>
+        <result property="major" column="major"/>
+        <result property="family" column="Family"/>
+        <result property="familyphone" column="Familyphone"/>
+        <result property="emergencycontact" column="emergencycontact"/>
+        <result property="emergencycontactphone" column="emergencycontactphone"/>
+        <result property="correctionofsalary" column="correctionofsalary"/>
+        <result property="departuretime" column="departuretime"/>
+        <result property="reasonsforleaving" column="reasonsforleaving"/>
+        <result property="dateofcorrection" column="dateofcorrection"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity">
+		SELECT * FROM employee_additional WHERE id = #{value}
+	</select>
+
+    <select id="queryEmployeeId" resultType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity">
+        SELECT * FROM employee_additional WHERE employeeid = #{id}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity">
+        SELECT * FROM employee_additional
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM employee_additional
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO employee_additional
+		( `employeeid`, `healthy`, `censusregistertype`, `maritalstatus`, `children`, `education`, `recruitmentsource`, `jobsalarylevel`, `belongtothepost`, `homeaddress`, `graduateschool`, `major`, `Family`, `Familyphone`, `emergencycontact`, `emergencycontactphone`, `correctionofsalary`, `departuretime`, `reasonsforleaving`, `dateofcorrection` )
+		VALUES
+		( #{employeeid}, #{healthy}, #{censusregistertype}, #{maritalstatus}, #{children}, #{education}, #{recruitmentsource}, #{jobsalarylevel}, #{belongtothepost}, #{homeaddress}, #{graduateschool}, #{major}, #{family}, #{familyphone}, #{emergencycontact}, #{emergencycontactphone}, #{correctionofsalary}, #{departuretime}, #{reasonsforleaving}, #{dateofcorrection} )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.company.entity.EmployeeAdditionalEntity">
+        UPDATE employee_additional
+        <set>
+            <if test="employeeid != null">`employeeid` = #{employeeid},</if>
+            <if test="healthy != null">`healthy` = #{healthy},</if>
+            <if test="censusregistertype != null">`censusregistertype` = #{censusregistertype},</if>
+            <if test="maritalstatus != null">`maritalstatus` = #{maritalstatus},</if>
+            <if test="children != null">`children` = #{children},</if>
+            <if test="education != null">`education` = #{education},</if>
+            <if test="recruitmentsource != null">`recruitmentsource` = #{recruitmentsource},</if>
+            <if test="jobsalarylevel != null">`jobsalarylevel` = #{jobsalarylevel},</if>
+            <if test="belongtothepost != null">`belongtothepost` = #{belongtothepost},</if>
+            <if test="homeaddress != null">`homeaddress` = #{homeaddress},</if>
+            <if test="graduateschool != null">`graduateschool` = #{graduateschool},</if>
+            <if test="major != null">`major` = #{major},</if>
+            <if test="family != null">`Family` = #{family},</if>
+            <if test="familyphone != null">`Familyphone` = #{familyphone},</if>
+            <if test="emergencycontact != null">`emergencycontact` = #{emergencycontact},</if>
+            <if test="emergencycontactphone != null">`emergencycontactphone` = #{emergencycontactphone},</if>
+            <if test="correctionofsalary != null">`correctionofsalary` = #{correctionofsalary},</if>
+            <if test="departuretime != null">`departuretime` = #{departuretime},</if>
+            <if test="reasonsforleaving != null">`reasonsforleaving` = #{reasonsforleaving},</if>
+            <if test="dateofcorrection != null">`dateofcorrection` = #{dateofcorrection}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM employee_additional WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM employee_additional WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

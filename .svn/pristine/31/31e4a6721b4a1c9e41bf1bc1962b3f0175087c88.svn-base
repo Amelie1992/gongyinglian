@@ -1,0 +1,326 @@
+
+package com.wzlue.chain.web.controller.storage;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.bill.entity.BillEntity;
+import com.wzlue.chain.bill.service.BillService;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.storage.entity.*;
+import com.wzlue.chain.storage.service.*;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysNumberRuleService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 仓储订单
+ * 
+ * @author 
+ * @email 
+ * @date 2018-08-29 17:48:31
+ */
+@RestController
+@RequestMapping("/storage/order")
+@Api("仓储订单")
+public class OrderController extends AbstractController{
+	@Autowired
+	private OrderService orderService;
+	@Autowired
+	private OrderOfferService orderOfferService;
+	@Autowired
+	private OrderCostService orderCostService;
+	@Autowired
+	private SysNumberRuleService sysNumberRuleService;
+	@Autowired
+	private OrderCommodityService orderCommodityService;
+	@Autowired
+	private OfferService offerService;
+    @Autowired
+    private BillService billService;
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+
+	/**
+	 * 买入订单列表,token,params参数为{"page":"当前页","limit":"展示条数"}
+	 */
+	@GetMapping(value="/list")
+	@ApiOperation(value="买入订单列表接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string"),
+			@ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+			@ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+			@ApiImplicitParam(name = "passStatus", dataType = "int", value = " 2：已入库6:已出库", paramType = "query")
+	})
+	public R list(@ApiIgnore @RequestParam Map<String, Object> params){
+		//查询列表数据
+        Query query = new Query(params);
+		SysUserEntity user = getUser();
+		if(user.getCompanyId()!=null){
+			//查询本公司买入的订单信息
+			query.put("merchantId",user.getCompanyId());
+		}
+
+		List<OrderEntity> orderList = orderService.queryList(query);
+		int total = orderService.queryTotal(query);
+		
+		return R.page(orderList,total);
+	}
+
+
+	/**
+	 * 卖出订单列表,token,params参数为{"page":"当前页","limit":"展示条数"}
+	 */
+	@GetMapping("/list2")
+	@ApiOperation(value="卖出订单列表接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string"),
+			@ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+			@ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+			@ApiImplicitParam(name = "passStatus", dataType = "int", value = " 2：已入库6:已出库", paramType = "query")
+	})
+	public R list2(@ApiIgnore @RequestParam Map<String, Object> params){
+		//查询列表数据
+		Query query = new Query(params);
+		SysUserEntity user = getUser();
+		if(user.getCompanyId()!=null){
+			//查询本公司卖出的订单信息
+			query.put("receiptMerchantId",user.getCompanyId());
+		}
+
+		List<OrderEntity> orderList = orderService.queryList(query);
+		int total = orderService.queryTotal(query);
+
+		return R.page(orderList,total);
+	}
+	
+	
+	/**
+	 * 信息,id,token
+	 */
+	@GetMapping("/info/{id}")
+//	@RequiresPermissions("storage:order:info")
+	@ApiOperation(value="订单信息接口")
+	@ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R info(@PathVariable("id") Long id){
+		OrderEntity order = orderService.queryObject(id);
+		OrderOfferEntity orderOfferEntity = orderOfferService.queryByOrderId(id);
+		Map<String,Object> map=new HashMap<>();
+		map.put("orderId",id);
+		List<OrderCommodityEntity> commodityEntityList = orderCommodityService.queryList(map);
+        HashMap<String, Object> map2 = new HashMap<>();
+        map2.put("order", order);
+        map2.put("orderOfferEntity",orderOfferEntity);
+        map2.put("commodityEntityList",commodityEntityList);
+        return R.ok(map2);
+	}
+
+	/**
+	 * 订单详情，id,token
+	 * @param id
+	 * @return
+	 */
+	@GetMapping("/detail/{id}")
+//	@RequiresPermissions("storage:order:info")
+	@ApiOperation(value="订单详情接口")
+	@ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R detail(@PathVariable("id") Long id){
+		OrderEntity order = orderService.queryObject(id);
+		OrderOfferEntity offer = orderOfferService.queryByOrderId(id);
+		Map<String, Object> map = new HashMap<>();
+		map.put("orderId", id);
+		List<OrderCommodityEntity> commodityEntityList = orderCommodityService.queryList(map);
+		return R.ok().put("order", order).put("offer", offer).put("commodityEntityList", commodityEntityList);
+	}
+
+
+    @GetMapping("/offerDetail/{id}")
+//    @RequiresPermissions("storage:order:info")
+    @ApiOperation(value="报盘详情接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+    public R offer(@PathVariable("id") Long id) {
+        OrderOfferEntity offer = orderOfferService.queryByOrderId(id);
+        return R.ok().put("offer", offer);
+    }
+
+
+    /**
+	 * 保存
+	 */
+	@PostMapping("/save")
+//	@RequiresPermissions("storage:order:save")
+	@ApiOperation(value="仓储订单保存接口")
+	@ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R save(@RequestBody OrderEntity order){
+		if (order.getContractNumber() != null) {
+			OfferEntity offer = new OfferEntity();
+			offer.setCode(order.getContractNumber());
+			OfferEntity offerEntity = offerService.checkCode(offer);
+			if (offerEntity != null) {
+				return R.error("编码已存在");
+			}
+		}
+		if (order.getGoodNumber() != null) {
+			order.setNumber(order.getGoodNumber());
+			order.setNumberType(1);
+		}
+		SysUserEntity user = getUser();
+		order.setMerchantId(user.getCompanyId());//买家公司id
+		order.setBuyCompanyName(orderService.getBuyCompany(user.getCompanyId().toString()));
+		OrderOfferEntity orderOffer = order.getOrderOfferEntity();
+		OfferEntity offer2 = offerService.queryObject(orderOffer.getOfferId());
+		order.setMerchantContact(offer2.getContact());
+		order.setMerchantPhone(offer2.getPhone());
+		order.setReceiptMerchantId(offer2.getMerchantId());
+		order.setSaleCompanyName(orderService.getBuyCompany(offer2.getMerchantId().toString()));
+		order.setCreatedBy(user.getUserId());
+		order.setCreatedTime(new Date());
+		order.setDelFlag(0);
+		order.setPassStatus(0);//0:待确认、1:已接单、2：仓库收到货，3：已取消
+		order.setPayStatus(0);//0:仓储费未结清、1:仓储费已结清
+		order.setStockStatus(1);//0:有库存、1:无库存
+		order.setOrderNumber(sysNumberRuleService.getCodeNumber("number_order_buy"));
+		order.setBuyStatus(0);
+		order.setSellStatus(0);
+		order.setAlterSale(0);
+		order.setTotal(BigDecimal.ZERO);//下单时金额为0 （null的话sql里值加不了）
+		orderService.save(order);
+		return R.ok();
+	}
+	
+	/**
+	 * 修改
+	 */
+	@PostMapping("/update")
+//	@RequiresPermissions("storage:order:update")
+	@ApiOperation(value="仓储订单修改接口")
+	@ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R update(@RequestBody OrderEntity order){
+        order.setUpdatedBy(getUserId());
+        order.setUpdatedTime(new Date());
+        orderService.update(order);
+        if (order.getPassStatus() == 3) {
+            //接单后取消订单 账单失效
+            OrderEntity orderEntity = orderService.queryObject(order.getId());
+            BillEntity bill = billService.queryByOrderNumber(orderEntity.getOrderNumber());
+            if (bill != null) {
+                bill.setValidState(1);
+                billService.update(bill);
+            }
+            //订单取消 报盘成交数量 -1
+            offerService.updateByOrderId2(order.getId());
+        }
+        if(order.getPassStatus()==4||order.getPassStatus()==5){   //买家or卖家结束订单---扣减信用分数
+            MerchantCompanyEntity companyEntity = merchantCompanyService.queryByUserId(getUserId());
+            merchantCompanyService.updateCreditType(CreditType.ORDEREND,companyEntity);
+
+        }
+        return R.ok();
+	}
+	
+	/**
+	 * 删除
+	 */
+	@PostMapping("/delete")
+//	@RequiresPermissions("storage:order:delete")
+	@ApiOperation(value="仓储订单删除接口")
+	@ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R delete(@RequestBody Long[] ids){
+		orderService.deleteBatch(ids);
+		
+		return R.ok();
+	}
+
+	/**
+	 * 接单
+	 * @param order
+	 * @return
+	 */
+	@PostMapping("/receipt")
+//	@RequiresPermissions("storage:order:update")
+    @ApiOperation(value="仓储订单接单接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R receipt(@RequestBody OrderEntity order){
+		SysUserEntity user = getUser();
+		order.setReceiptDetpId(null);//接单人部门id
+		order.setReceiptTime(new Date());//接单时间
+		order.setPassStatus(1);//0:待确认、1:已接单、2：仓库收到货，3：已取消
+		order.setUpdatedBy(user.getUserId());
+		order.setUpdatedTime(new Date());
+		orderService.receipt(order);
+
+		return R.ok();
+	}
+
+
+	/**
+	 * 到货
+	 * @param order
+	 * @return
+	 */
+	@PostMapping("/arrival")
+//	@RequiresPermissions("storage:order:update")
+    @ApiOperation(value="仓储订单到货接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R arrival(@RequestBody OrderEntity order){
+		SysUserEntity user = getUser();
+		order.setPassStatus(2);//0:待确认、1:已接单、2：仓库收到货，3：已取消
+		order.setStockStatus(0);//0:有库存、1:无库存
+		order.setArrivalTime(new Date());//到货日期
+		order.setUpdatedBy(user.getUserId());
+		order.setUpdatedTime(new Date());
+		orderService.arrival(order);
+
+		return R.ok();
+	}
+
+	/**
+	 * 仓库方修改货物信息或其他费用
+	 * @param order
+	 * @return
+	 */
+	@PostMapping("/updateOrder")
+//	@RequiresPermissions("storage:order:update")
+    @ApiOperation(value="仓库方修改货物信息或其他费用接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R updateOrder(@RequestBody OrderEntity order){
+		SysUserEntity user = getUser();
+		order.setUpdatedBy(user.getUserId());
+		order.setUpdatedTime(new Date());
+		orderService.updateOrder(order);
+
+		return R.ok();
+	}
+
+    /**
+     * 获取仓库报盘的公司
+     * @return
+     */
+	@GetMapping("/getCompanys")
+    @ApiOperation(value="获取仓储报盘公司的接口")
+    @ApiImplicitParam(paramType="header", name = "token", value = "token", required = true, dataType = "string")
+	public R getCompanys(){
+		SysUserEntity user = getUser();
+		List<MerchantCompanyEntity> companys = orderService.getCompanys(user.getCompanyId());
+		return R.ok().put("companys",companys);
+	}
+
+
+}

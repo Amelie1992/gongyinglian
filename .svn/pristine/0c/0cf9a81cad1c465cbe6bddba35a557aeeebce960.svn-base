@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysNoticePositionDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.sys.entity.SysNoticePositionEntity" id="sysNoticePositionMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="remarks" column="remarks"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createByName" column="create_by_name"/>
+        <result property="createTime" column="create_time"/>
+        <result property="modifyBy" column="modify_by"/>
+        <result property="modifyTime" column="modify_time"/>
+        <result property="deptId" column="dept_id"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.sys.entity.SysNoticePositionEntity">
+		SELECT * FROM sys_notice_position WHERE id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.sys.entity.SysNoticePositionEntity">
+        SELECT * FROM sys_notice_position
+        <where>
+            <if test="name!=null and name != ''">
+                name like concat('%',#{name},'%')
+            </if>
+        </where>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM sys_notice_position
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.sys.entity.SysNoticePositionEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO sys_notice_position
+        (
+        `name`,
+        `remarks`,
+        `create_by`,
+        `create_by_name`,
+        `create_time`,
+        `modify_by`,
+        `modify_time`,
+        `dept_id`
+        )
+        VALUES
+        (
+        #{name},
+        #{remarks},
+        #{createBy},
+        #{createByName},
+        #{createTime},
+        #{modifyBy},
+        #{modifyTime},
+        #{deptId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.sys.entity.SysNoticePositionEntity">
+        UPDATE sys_notice_position
+        <set>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="remarks != null">`remarks` = #{remarks},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createByName != null">`create_by_name` = #{createByName},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="modifyBy != null">`modify_by` = #{modifyBy},</if>
+            <if test="modifyTime != null">`modify_time` = #{modifyTime},</if>
+            <if test="deptId != null">`dept_id` = #{deptId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM sys_notice_position WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM sys_notice_position WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.goods.dao.ItemInfoApplyDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity" id="itemInfoApplyMap">
+        <result property="id" column="id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="factoryNo" column="factory_no"/>
+        <result property="pricingMethod" column="pricing_method"/>
+        <result property="pendingStatus" column="pending_status"/>
+        <result property="pendingInfo" column="pending_info"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <collection property="places" resultMap="item_place_map"></collection>
+    </resultMap>
+
+    <resultMap id="item_place_map" type="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity">
+        <id column="place_id" property="id"/>
+        <result column="place_code" property="place"/>
+        <result column="place_name" property="placeName"/>
+        <result column="numerical" property="numerical"/>
+        <result column="place_tariff" property="tariff"/>
+        <result column="place_value_add_tariff" property="valueAddTariff"/>
+        <result column="place_addition_duty" property="additionDuty"/>
+        <result column="place_remark" property="remark"/>
+        <result column="good_apply_id" property="goodApplyId"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        SELECT * FROM item_info_apply WHERE id = #{value}
+    </select>
+
+    <select id="queryList" resultType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        SELECT * FROM item_info_apply
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM item_info_apply
+    </select>
+
+    <select id ="pageList" resultMap="itemInfoApplyMap">
+      SELECT
+          DISTINCT (apply.id) AS id,
+          apply.item_name,
+          apply.factory_no,
+          apply.pricing_method,
+          apply.pending_status,
+          IFNULL(apply.pending_info,'无') AS pending_info,
+          apply.create_by,
+          apply.create_time,
+          apply.update_by,
+          apply.update_time,
+          apply.category_id,
+          apply.dept_id,
+          apply.company_id,
+          apply.authorizes_id,
+          cate.category_name AS category_name,
+          place.id AS place_id,
+          place.place AS place_code,
+          place.numerical AS numerical,
+          place.tariff AS place_tariff,
+          place.value_add_tariff AS place_value_add_tariff,
+          place.addition_duty AS place_addition_duty,
+          place.good_apply_id AS good_apply_id,
+          place.remark AS place_remark,
+          dict.name AS place_name
+      FROM item_info_apply apply
+      LEFT JOIN item_category cate ON  cate.id = apply.category_id
+      LEFT JOIN item_place_apply place ON place.good_apply_id = apply.id
+      LEFT JOIN sys_dict dict ON dict.code = place.place AND dict.type = '国家编码'
+      WHERE 1=1
+        AND apply.item_status = 1
+      <if test="goodsName !=null and goodsName !='' ">
+          AND apply.item_name LIKE  concat ('%',#{goodsName},'%')
+      </if>
+        <if test="pendingStatus != null and pendingStatus != ''">
+           AND apply.pending_status != #{pendingStatus}
+        </if>
+        ORDER  By apply.create_time DESC, apply.pending_status ASC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="pageCount" resultType="java.lang.Integer">
+        SELECT
+        COUNT(id)
+      FROM item_info_apply
+      WHERE 1=1
+        AND item_status = 1
+      <if test="goodsName !=null and goodsName !='' ">
+          AND item_name LIKE  concat ('%',#{goodsName},'%')
+      </if>
+    </select>
+
+    <select id="queryInfo" resultMap="itemInfoApplyMap">
+      SELECT
+          DISTINCT (apply.id) AS id,
+          apply.item_name,
+          apply.factory_no,
+          apply.pricing_method,
+          apply.pending_status,
+          IFNULL(apply.pending_info,'无') AS pending_info,
+          apply.create_by,
+          apply.create_time,
+          apply.update_by,
+          apply.update_time,
+          apply.category_id,
+          apply.dept_id,
+          apply.company_id,
+          apply.authorizes_id,
+          cate.category_name AS category_name,
+          place.id AS place_id,
+          place.place AS place_code,
+          place.numerical AS numerical,
+          place.tariff AS place_tariff,
+          place.value_add_tariff AS place_value_add_tariff,
+          place.addition_duty AS place_addition_duty,
+          place.good_apply_id AS good_apply_id,
+          place.remark AS place_remark,
+          dict.name AS place_name,
+          apply.dept_id
+      FROM item_info_apply apply
+      LEFT JOIN item_category cate ON  cate.id = apply.category_id
+      LEFT JOIN item_place_apply place ON place.good_apply_id = apply.id
+      LEFT JOIN sys_dict dict ON dict.code = place.place AND dict.type = '国家编码'
+      WHERE 1=1
+      AND apply.id = #{id}
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO item_info_apply
+        (
+        `item_name`,
+        `factory_no`,
+        `pricing_method`,
+        `pending_status`,
+        `pending_info`,
+        `category_id`,
+        `dept_id`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `company_id`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{itemName},
+        #{factoryNo},
+        #{pricingMethod},
+        #{pendingStatus},
+        #{pendingInfo},
+        #{categoryId},
+        #{deptId},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{companyId},
+        #{authorizesId}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        UPDATE item_info_apply
+        <set>
+            <if test="itemName != null">`item_name` = #{itemName}, </if>
+            <if test="factoryNo != null">`factory_no` = #{factoryNo}, </if>
+            <if test="pricingMethod != null">`pricing_method` = #{pricingMethod}, </if>
+            <if test="pendingStatus != null">`pending_status` = #{pendingStatus}, </if>
+            `pending_info` = #{pendingInfo},
+            <if test="categoryId != null">`category_id` = #{categoryId}, </if>
+            <if test="deptId != null">`dept_id` = #{deptId}, </if>
+            <if test="updateBy != null">`update_by` = #{updateBy}, </if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="companyId !=null">`company_id` = #{companyId}, </if>
+            <if test="authorizesId !=null">`authorizes_id` = #{authorizesId} </if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="review" parameterType="com.wzlue.chain.goods.entity.apply.ItemInfoApplyEntity">
+        UPDATE item_info_apply apply
+        SET
+         apply.pending_status = #{pendingStatus},
+         apply.pending_info = #{pendingInfo},
+         apply.update_by = #{updateBy},
+         apply.update_time = #{updateTime}
+        WHERE apply.id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM item_info_apply WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBanchById">
+        DELETE FROM item_info_apply WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateDel">
+        UPDATE item_info_apply item
+        SET item.item_status = 2
+        WHERE 1=1
+        AND item.id = #{id}
+    </update>
+
+    <update id="updateUpdate" parameterType="com.wzlue.chain.goods.entity.apply.ItemPlaceApplyEntity">
+        UPDATE item_place_apply
+        SET
+            place = #{place},
+
+            numerical = #{numerical},
+            tariff = #{tariff},
+            value_add_tariff =#{valueAddTariff},
+            addition_duty = #{additionDuty},
+            remark = #{remark}
+        WHERE
+          id = #{id}
+
+    </update>
+</mapper>

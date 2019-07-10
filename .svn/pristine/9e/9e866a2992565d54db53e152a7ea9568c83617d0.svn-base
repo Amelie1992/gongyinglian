@@ -1,0 +1,520 @@
+package com.wzlue.chain.bill.entity;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.List;
+
+
+/**
+ * 应收/应付账单
+ * 
+ * @author 
+ * @email 
+ * @date 2018-09-18 09:43:40
+ */
+public class BillEntity implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
+	//账单号
+	private Integer id;
+	//合同编号
+	private String contractNumber;
+	//订单编号
+	private String orderNumber;
+    //订单类型 0：报关 1：货物 2：物流 3：仓储 4：代理
+    private Integer orderType;
+	//收款商家
+	private String payee;
+	//付款商家
+	private String payer;
+    //收款商家id
+    private Integer payeeId;
+    //付款商家id
+    private Integer payerId;
+	//应收金额
+	private BigDecimal amountReceivable;
+	//应付金额
+	private BigDecimal amountPayable;
+	//已收金额
+	private BigDecimal amountReceived;
+	//已付金额
+	private BigDecimal amountPaid;
+	//剩余应收金额
+	private BigDecimal remainingAmountReceivable;
+	//剩余应付金额
+	private BigDecimal remainingAmountPayable;
+	//应收款项状态  0：未结清 1：已结清
+	private Integer receivableStatus;
+	//应付款项状态  0：未结清 1：已结清
+	private Integer payableStatus;
+	//有效状态  0：有效 1：失效
+    private Integer validState;
+	//确认收款时间
+	private Date receivingTime;
+	//付款时间
+	private Date paymentTime;
+	//收款备注
+	private String receivingRemarks;
+	//付款备注
+	private String paymentRemarks;
+
+	//账期账单 数据
+    //账单类型 0：普通账单 1：账期账单
+    private Integer billType;
+    //账期编号
+    private String creditNumber;
+    //账期申请时间
+    private Date applicationTime;
+    //账期金额
+    private BigDecimal creditAmount;
+    //审核状态 0：待审核 1：通过 2：不通过
+    private Integer auditStatus;
+    //审核意见
+    private String auditOpinion;
+
+	//重复订单 0：是 1：不是
+    private Integer repeatOrder;
+
+    //最终收款方
+    private String finalPayee;
+    //最终收款方id
+    private Integer finalPayeeId;
+
+	//权限部门id
+	private Integer deptId;
+	//创建人
+	private Integer createBy;
+	//创建时间
+	private Date createdTime;
+	//修改人
+	private Integer updateBy;
+	//修改时间
+	private Date updateTime;
+	//公司id
+	private Integer companyId;
+	//授权用户id
+	private Integer authorizesId;
+	//单位
+	private Long unit;
+    //付款记录（款项）
+    private List<PaymentRecordEntity> paymentRecords;
+
+	public Long getUnit() {
+		return unit;
+	}
+
+	public void setUnit(Long unit) {
+		this.unit = unit;
+	}
+
+	public Integer getValidState() {
+        return validState;
+    }
+
+    public void setValidState(Integer validState) {
+        this.validState = validState;
+    }
+
+    public String getFinalPayee() {
+        return finalPayee;
+    }
+
+    public void setFinalPayee(String finalPayee) {
+        this.finalPayee = finalPayee;
+    }
+
+    public Integer getFinalPayeeId() {
+        return finalPayeeId;
+    }
+
+    public void setFinalPayeeId(Integer finalPayeeId) {
+        this.finalPayeeId = finalPayeeId;
+    }
+
+    public Integer getRepeatOrder() {
+        return repeatOrder;
+    }
+
+    public void setRepeatOrder(Integer repeatOrder) {
+        this.repeatOrder = repeatOrder;
+    }
+
+    public Integer getBillType() {
+        return billType;
+    }
+
+    public void setBillType(Integer billType) {
+        this.billType = billType;
+    }
+
+    public String getCreditNumber() {
+        return creditNumber;
+    }
+
+    public void setCreditNumber(String creditNumber) {
+        this.creditNumber = creditNumber;
+    }
+
+    public Date getApplicationTime() {
+        return applicationTime;
+    }
+
+    public void setApplicationTime(Date applicationTime) {
+        this.applicationTime = applicationTime;
+    }
+
+    public Integer getAuditStatus() {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(Integer auditStatus) {
+        this.auditStatus = auditStatus;
+    }
+
+    public String getAuditOpinion() {
+        return auditOpinion;
+    }
+
+    public void setAuditOpinion(String auditOpinion) {
+        this.auditOpinion = auditOpinion;
+    }
+
+    public BigDecimal getCreditAmount() {
+        return creditAmount;
+    }
+
+    public void setCreditAmount(BigDecimal creditAmount) {
+        this.creditAmount = creditAmount;
+    }
+
+    public Integer getPayeeId() {
+        return payeeId;
+    }
+
+    public void setPayeeId(Integer payeeId) {
+        this.payeeId = payeeId;
+    }
+
+    public Integer getPayerId() {
+        return payerId;
+    }
+
+    public void setPayerId(Integer payerId) {
+        this.payerId = payerId;
+    }
+
+    public List<PaymentRecordEntity> getPaymentRecords() {
+
+        return paymentRecords;
+    }
+
+    public void setPaymentRecords(List<PaymentRecordEntity> paymentRecords) {
+        this.paymentRecords = paymentRecords;
+    }
+
+    /**
+	 * 设置：账单号
+	 */
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	/**
+	 * 获取：账单号
+	 */
+	public Integer getId() {
+		return id;
+	}
+	/**
+	 * 设置：合同编号
+	 */
+	public void setContractNumber(String contractNumber) {
+		this.contractNumber = contractNumber;
+	}
+	/**
+	 * 获取：合同编号
+	 */
+	public String getContractNumber() {
+		return contractNumber;
+	}
+	/**
+	 * 设置：订单编号
+	 */
+	public void setOrderNumber(String orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+	/**
+	 * 获取：订单编号
+	 */
+	public String getOrderNumber() {
+		return orderNumber;
+	}
+	/**
+	 * 设置：收款商家
+	 */
+	public void setPayee(String payee) {
+		this.payee = payee;
+	}
+	/**
+	 * 获取：收款商家
+	 */
+	public String getPayee() {
+		return payee;
+	}
+	/**
+	 * 设置：付款商家
+	 */
+	public void setPayer(String payer) {
+		this.payer = payer;
+	}
+	/**
+	 * 获取：付款商家
+	 */
+	public String getPayer() {
+		return payer;
+	}
+	/**
+	 * 设置：应收金额
+	 */
+	public void setAmountReceivable(BigDecimal amountReceivable) {
+		this.amountReceivable = amountReceivable;
+	}
+	/**
+	 * 获取：应收金额
+	 */
+	public BigDecimal getAmountReceivable() {
+		return amountReceivable;
+	}
+	/**
+	 * 设置：应付金额
+	 */
+	public void setAmountPayable(BigDecimal amountPayable) {
+		this.amountPayable = amountPayable;
+	}
+	/**
+	 * 获取：应付金额
+	 */
+	public BigDecimal getAmountPayable() {
+		return amountPayable;
+	}
+	/**
+	 * 设置：已收金额
+	 */
+	public void setAmountReceived(BigDecimal amountReceived) {
+		this.amountReceived = amountReceived;
+	}
+	/**
+	 * 获取：已收金额
+	 */
+	public BigDecimal getAmountReceived() {
+		return amountReceived;
+	}
+	/**
+	 * 设置：已付金额
+	 */
+	public void setAmountPaid(BigDecimal amountPaid) {
+		this.amountPaid = amountPaid;
+	}
+	/**
+	 * 获取：已付金额
+	 */
+	public BigDecimal getAmountPaid() {
+		return amountPaid;
+	}
+	/**
+	 * 设置：剩余应收金额
+	 */
+	public void setRemainingAmountReceivable(BigDecimal remainingAmountReceivable) {
+		this.remainingAmountReceivable = remainingAmountReceivable;
+	}
+	/**
+	 * 获取：剩余应收金额
+	 */
+	public BigDecimal getRemainingAmountReceivable() {
+		return remainingAmountReceivable;
+	}
+	/**
+	 * 设置：剩余应付金额
+	 */
+	public void setRemainingAmountPayable(BigDecimal remainingAmountPayable) {
+		this.remainingAmountPayable = remainingAmountPayable;
+	}
+	/**
+	 * 获取：剩余应付金额
+	 */
+	public BigDecimal getRemainingAmountPayable() {
+		return remainingAmountPayable;
+	}
+	/**
+	 * 设置：应收款项状态  0：未结清 1：已结清
+	 */
+	public void setReceivableStatus(Integer receivableStatus) {
+		this.receivableStatus = receivableStatus;
+	}
+	/**
+	 * 获取：应收款项状态  0：未结清 1：已结清
+	 */
+	public Integer getReceivableStatus() {
+		return receivableStatus;
+	}
+	/**
+	 * 设置：应付款项状态  0：未结清 1：已结清
+	 */
+	public void setPayableStatus(Integer payableStatus) {
+		this.payableStatus = payableStatus;
+	}
+	/**
+	 * 获取：应付款项状态  0：未结清 1：已结清
+	 */
+	public Integer getPayableStatus() {
+		return payableStatus;
+	}
+	/**
+	 * 设置：确认收款时间
+	 */
+	public void setReceivingTime(Date receivingTime) {
+		this.receivingTime = receivingTime;
+	}
+	/**
+	 * 获取：确认收款时间
+	 */
+	@JsonFormat(pattern="yyyy-MM-dd")
+	public Date getReceivingTime() {
+		return receivingTime;
+	}
+	/**
+	 * 设置：付款时间
+	 */
+	public void setPaymentTime(Date paymentTime) {
+		this.paymentTime = paymentTime;
+	}
+	/**
+	 * 获取：付款时间
+	 */
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	public Date getPaymentTime() {
+		return paymentTime;
+	}
+	/**
+	 * 设置：收款备注
+	 */
+	public void setReceivingRemarks(String receivingRemarks) {
+		this.receivingRemarks = receivingRemarks;
+	}
+	/**
+	 * 获取：收款备注
+	 */
+	public String getReceivingRemarks() {
+		return receivingRemarks;
+	}
+	/**
+	 * 设置：付款备注
+	 */
+	public void setPaymentRemarks(String paymentRemarks) {
+		this.paymentRemarks = paymentRemarks;
+	}
+	/**
+	 * 获取：付款备注
+	 */
+	public String getPaymentRemarks() {
+		return paymentRemarks;
+	}
+	/**
+	 * 设置：权限部门id 
+	 */
+	public void setDeptId(Integer deptId) {
+		this.deptId = deptId;
+	}
+	/**
+	 * 获取：权限部门id 
+	 */
+	public Integer getDeptId() {
+		return deptId;
+	}
+	/**
+	 * 设置：创建人
+	 */
+	public void setCreateBy(Integer createBy) {
+		this.createBy = createBy;
+	}
+	/**
+	 * 获取：创建人
+	 */
+	public Integer getCreateBy() {
+		return createBy;
+	}
+	/**
+	 * 设置：创建时间
+	 */
+	public void setCreatedTime(Date createdTime) {
+		this.createdTime = createdTime;
+	}
+	/**
+	 * 获取：创建时间
+	 */
+	public Date getCreatedTime() {
+		return createdTime;
+	}
+	/**
+	 * 设置：修改人
+	 */
+	public void setUpdateBy(Integer updateBy) {
+		this.updateBy = updateBy;
+	}
+	/**
+	 * 获取：修改人
+	 */
+	public Integer getUpdateBy() {
+		return updateBy;
+	}
+	/**
+	 * 设置：修改时间
+	 */
+	public void setUpdateTime(Date updateTime) {
+		this.updateTime = updateTime;
+	}
+	/**
+	 * 获取：修改时间
+	 */
+	public Date getUpdateTime() {
+		return updateTime;
+	}
+	/**
+	 * 设置：公司id
+	 */
+	public void setCompanyId(Integer companyId) {
+		this.companyId = companyId;
+	}
+	/**
+	 * 获取：公司id
+	 */
+	public Integer getCompanyId() {
+		return companyId;
+	}
+	/**
+	 * 设置：授权用户id
+	 */
+	public void setAuthorizesId(Integer authorizesId) {
+		this.authorizesId = authorizesId;
+	}
+	/**
+	 * 获取：授权用户id
+	 */
+	public Integer getAuthorizesId() {
+		return authorizesId;
+	}
+	/**
+	 * 设置：订单类型 0：报关 1：货物 2：物流 3：仓储 4：代理
+	 */
+	public void setOrderType(Integer orderType) {
+		this.orderType = orderType;
+	}
+	/**
+	 * 获取：订单类型 0：报关 1：货物 2：物流 3：仓储 4：代理
+	 */
+	public Integer getOrderType() {
+		return orderType;
+	}
+}

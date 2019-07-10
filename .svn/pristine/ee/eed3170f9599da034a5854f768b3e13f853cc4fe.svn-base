@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.highcharts.dao.HighchartsDao">
+
+		<!-- 报关订单量-->
+
+		<select id="queryDeclareOrderAmount" resultType="int">
+			SELECT COUNT(1) FROM declare_order p
+		</select>
+
+		<!-- 期货/现货订单量-->
+
+		<select id="queryPutgoodsOrderAmount" resultType="int">
+			SELECT COUNT(1) FROM goods_order p
+		</select>
+
+		<!-- 物流订单量-->
+
+		<select id="queryLogisticsOrderAmount" resultType="int">
+			SELECT COUNT(1) FROM logistics_order p
+		</select>
+
+		<!-- 仓储订单量-->
+
+		<select id="queryOrderBuy" resultType="int">
+			SELECT COUNT(1) FROM storage_order p
+		</select>
+
+		<!-- 代理订单量-->
+
+		<select id="queryAgentOrderAmount" resultType="int">
+			SELECT COUNT(1) FROM agent_order p
+		</select>
+
+		<!-- 应收应付  月 季度 年-->
+
+		<select id="queryCollectPayment">
+			SELECT COUNT(1) FROM bill p
+		</select>
+
+		<!-- 新增客服量-->
+
+		<select id="queryAddAcount">
+			SELECT COUNT(1) FROM sys_user p
+		</select>
+
+	 	<!-- 支付方式 线上，线下-->
+
+		<select id="queryPaymentMethod">
+			SELECT COUNT(1) FROM bill p
+		</select>
+
+
+
+		<!-- 帅选条件 -->
+
+		<sql id="highChartsParams">
+
+			<!--年-->
+			<if test="type=='YEAR'">
+				YEAR (now()) = YEAR (p.create_time)
+			</if>
+
+			<!-- 半年-->
+			<if test="type=='BYEAR'">
+				YEAR(create_date) = YEAR(date_sub(p.create_time,interval 1 year));
+			</if>
+
+			<!--月-->
+			<if test="type=='MONTH'">
+				MONTH(now()) = MONTH(p.create_time)
+			</if>
+
+			<!--日-->
+			<if test="type=='DAY'">
+				DAY(now()) =  DAY(p.create_time)
+			</if>
+
+			<!--季-->
+			<if test="type=='QUARTER'">
+				QUARTER(now()) =  QUARTER(p.create_time)
+			</if>
+
+			<!--星期-->
+			<if test="type=='DAYOFWEEK'">
+				DAYOFWEEK(now()) = DAYOFWEEK(p.create_time)
+			</if>
+
+		</sql>
+
+	</mapper>

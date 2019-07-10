@@ -1,0 +1,71 @@
+package com.wzlue.chain.marketing.service;
+
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.marketing.entity.MarketAuctionEntity;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 营销拍卖表
+ * 
+ * @author pengyong
+ * @email sunlightcs@gmail.com
+ * @date 2018-09-26 13:43:46
+ */
+public interface MarketAuctionService {
+	
+	MarketAuctionEntity queryObject(Long id);
+	
+	List<MarketAuctionEntity> queryList(Map<String, Object> map);
+	
+	int queryTotal(Map<String, Object> map);
+	
+	void save(MarketAuctionEntity marketAuction);
+	
+	void update(MarketAuctionEntity marketAuction);
+	
+	void delete(Long id);
+	
+	void deleteBatch(Long[] ids);
+	
+	/**
+	 * 根据状态查询当天列表数据
+	 * @Description:
+	 * @param marketAuction
+	 * @return
+	 * @version:v1.0
+	 * @author:qianTao
+	 * @date:2018年11月21日 上午9:57:27
+	 */
+	List<MarketAuctionEntity> queryListByStatusAndTime(MarketAuctionEntity marketAuction);
+	
+	/**
+	 * 根据id修改状态值
+	 * @Description:
+	 * @param status
+	 * @param id
+	 * @version:v1.0
+	 * @author:qianTao
+	 * @date:2018年11月21日 上午9:58:00
+	 */
+	void updateStatusByIds(int status,long id);
+	
+	/**
+	 * 判断拍卖结束后 拍卖是否成功
+	 * @Description:
+	 * @return
+	 * @version:v1.0
+	 * @author:qianTao
+	 * @date:2018年11月21日 上午9:59:05
+	 */
+	Boolean marketAuctionIsOK(long id);
+
+    void updateStartingPrice(MarketAuctionEntity marketAuction);
+
+    void updateStatus(Map<String, Object> map);
+
+    void updateStatus1(Map<String, Object> map);
+
+    List<MarketAuctionEntity> queryHot(Query query);
+}

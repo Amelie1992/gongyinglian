@@ -1,0 +1,76 @@
+package com.wzlue.chain.web.controller.traceback;
+
+import com.wzlue.chain.agent.entity.AgentOrderEntity;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import com.wzlue.chain.declare.entity.DeclareOrderEntity;
+import com.wzlue.chain.logistics.entity.LogisticsOrderEntity;
+import com.wzlue.chain.order.entity.GoodsOrderEntity;
+import com.wzlue.chain.storage.entity.OrderEntity;
+import com.wzlue.chain.traceback.entity.TraceBackEntity;
+import com.wzlue.chain.traceback.service.TraceBackService;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 追溯Controller
+ *
+ * @author Administrator
+ * @date 2018/09/29
+ */
+@RestController
+@RequestMapping("/traceBack")
+@Api(value = "追溯")
+public class TraceBackController extends AbstractController {
+    @Autowired
+    private TraceBackService traceBackService;
+    /**
+     * 列表
+     */
+    @GetMapping("/list")
+    @ApiOperation("追溯列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string"),
+            @ApiImplicitParam(paramType = "query", name = "orderType", value = "订单类型", required = true,defaultValue = "0",dataType = "integer")
+    })
+    public R queryList(@ApiIgnore @RequestParam Map<String, Object> params) {
+        params.put("companyId", getUser().getCompanyId());
+        Query query = new Query(params);
+        List<TraceBackEntity> list = traceBackService.queryList(query);
+        return R.page(list, traceBackService.queryTotal(query));
+    }
+    @ApiOperation("查询当前订单下的所有关联订单")
+    @GetMapping("/queryInfo")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string"),
+            @ApiImplicitParam(paramType = "query", name = "orderType", value = "订单类型", required = true,defaultValue = "0",dataType = "integer"),
+            @ApiImplicitParam(paramType = "query", name = "orderNumber", value = "当前订单编号", required = true,dataType = "string")
+
+    })
+    public R queryInfo(@ApiIgnore @RequestParam Map<String, Object> params) {
+        R r = R.ok();
+        Integer orderType =Integer.parseInt(params.get("orderType").toString());
+        params.put("orderType",orderType);
+        //获取公司id
+        params.put("companyId", getUser().getCompanyId());
+        //根据当前订单号，查询该订单下面的所有来源是该订单号的订单详情
+        Map<String, Object> fatherOrder = traceBackService.queryFatherSourceOrder(params);
+        Map<String, Object> sourceOrder = traceBackService.querySourceOrder(params);
+        Map<String,Object> result=new HashMap<>();
+        result.put("fatherOrder", fatherOrder);
+        result.put("orderType", orderType);
+        result.put("sourceOrder", sourceOrder);
+        r.put("data",result);
+        return r;
+    }
+}

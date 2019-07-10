@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.agent.dao.AgentOrderGoodsDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+	<resultMap type="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity" id="agentOrderGoodsMap">
+		<result property="id" column="id"/>
+		<result property="orderNumber" column="order_number"/>
+		<result property="originFlag" column="origin_flag"/>
+		<result property="originNumber" column="origin_number"/>
+		<result property="commodityId" column="commodity_id"/>
+		<result property="commodityName" column="commodity_name"/>
+		<result property="commodityNumber" column="commodity_number"/>
+		<result property="factoryNo" column="factory_no"/>
+		<result property="commodityCountry" column="commodity_country"/>
+		<result property="commodityPrice" column="commodity_price"/>
+		<result property="commodityCount" column="commodity_count"/>
+		<result property="weight" column="weight"/>
+		<result property="goodsUnit" column="goods_unit"/>
+		<result property="goodsName" column="goods_name"/>
+		<result property="goodsCount" column="goods_count"/>
+		<result property="goodsPrice" column="goods_price"/>
+		<result property="goodsTotalPrice" column="goods_total_price"/>
+	</resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity">
+		SELECT * FROM agent_order_goods WHERE id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity">
+		SELECT * FROM agent_order_goods
+		<choose>
+			<when test="sidx != null and sidx.trim() != ''">
+				ORDER BY ${sidx} ${order}
+			</when>
+			<otherwise>
+				ORDER BY id desc
+			</otherwise>
+		</choose>
+		<if test="offset != null and limit != null">
+			LIMIT #{offset}, #{limit}
+		</if>
+	</select>
+
+	<select id="queryTotal" resultType="int">
+		SELECT count(*) FROM agent_order_goods
+	</select>
+
+	<insert id="save" parameterType="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO agent_order_goods
+		(
+			`order_number`,
+			`origin_flag`,
+			`origin_number`,
+			`commodity_id`,
+			`commodity_name`,
+			`commodity_number`,
+			`factory_no`,
+			`commodity_country`,
+			`commodity_price`,
+			`commodity_count`,
+			`weight`,
+			`goods_unit`,
+			`goods_name`,
+			`goods_price`,
+			`goods_count`,
+			`goods_total_price`
+		)
+		VALUES
+		(
+			#{orderNumber},
+			#{originFlag},
+			#{originNumber},
+			#{commodityId},
+			#{commodityName},
+			#{commodityNumber},
+			#{factoryNo},
+			#{commodityCountry},
+			#{commodityPrice},
+			#{commodityCount},
+			#{weight},
+			#{goodsUnit},
+			#{goodsName},
+			#{goodsPrice},
+			#{goodsCount},
+			#{goodsTotalPrice}
+		)
+	</insert>
+
+	<update id="update" parameterType="com.wzlue.chain.agent.entity.AgentOrderGoodsEntity">
+		UPDATE agent_order_goods
+		<set>
+			<if test="orderNumber != null">`order_number` = #{orderNumber}, </if>
+			<if test="originFlag != null">`origin_flag` = #{originFlag}, </if>
+			<if test="originNumber != null">`origin_number` = #{originNumber}, </if>
+			<if test="commodityId != null">`commodity_id` = #{commodityId}, </if>
+			<if test="commodityName != null">`commodity_name` = #{commodityName}, </if>
+			<if test="commodityNumber != null">`commodity_number` = #{commodityNumber}, </if>
+			<if test="factoryNo != null">`factory_no` = #{factoryNo}, </if>
+			<if test="commodityCountry != null">`commodity_country` = #{commodityCountry}, </if>
+			<if test="commodityPrice != null">`commodity_price` = #{commodityPrice}, </if>
+			<if test="commodityCount != null">`commodity_count` = #{commodityCount}, </if>
+			<if test="weight != null">`weight` = #{weight}, </if>
+			<if test="goodsUnit != null">`goods_unit` = #{goodsUnit},</if>
+			<if test="goodsName != null">`goods_name` = #{goodsName},</if>
+			<if test="goodsPrice != null">`goods_price` = #{goodsPrice},</if>
+			<if test="goodsCount != null">`goods_count` = #{goodsCount},</if>
+			<if test="goodsTotalPrice != null">`goods_total_price` = #{goodsTotalPrice}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM agent_order_goods WHERE id = #{value}
+	</delete>
+
+	<delete id="deleteBatch">
+		DELETE FROM agent_order_goods WHERE id IN
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="listByOrderNumber" resultMap="agentOrderGoodsMap">
+		SELECT
+		   DISTINCT(g.id) AS id,
+		   g.order_number as order_number,
+		   g.commodity_id as commodity_id,
+	       g.commodity_name as commodity_name,
+		   g.commodity_number as commodity_number,
+		   g.factory_no as factory_no,
+		   g.commodity_country as commodity_country,
+		   g.commodity_price as commodity_price,
+		   g.commodity_count as commodity_count,
+		   g.weight as weight,
+		   g.goods_unit as goodsUnit,
+		   g.goods_name as goods_name,
+		   g.goods_price as goods_price,
+		   g.goods_count as goods_count,
+		   g.goods_total_price as goods_total_price
+
+		FROM agent_order_goods g
+		WHERE 1=1
+		<if test="orderNumber!=null and orderNumber!='' ">
+			AND g.order_number = #{orderNumber}
+		</if>
+	</select>
+
+
+	<delete id="deleteByOrderNumber">
+		DELETE FROM agent_order_goods
+		WHERE order_number = #{orderNumber}
+	</delete>
+</mapper>

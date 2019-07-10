@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.sys.dao.SysNumberRuleDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.sys.entity.SysNumberRuleEntity" id="sysNumberRuleMap">
+        <result property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="name" column="name"/>
+        <result property="prefix" column="prefix"/>
+        <result property="timeType" column="time_type"/>
+        <result property="length" column="length"/>
+        <result property="sample" column="sample"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createDate" column="create_date"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateDate" column="update_date"/>
+    </resultMap>
+
+	<select id="queryObject" resultType="com.wzlue.chain.sys.entity.SysNumberRuleEntity">
+		select * from sys_number_rule where id = #{value}
+	</select>
+
+	<select id="queryList" resultType="com.wzlue.chain.sys.entity.SysNumberRuleEntity">
+		select * from sys_number_rule
+		  WHERE 1=1
+		<if test="type!=null and type.trim() !=''">
+				and type like concat('%',#{type},'%')
+		</if>
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+			<otherwise>
+                order by id desc
+			</otherwise>
+        </choose>
+		<if test="offset != null and limit != null">
+			limit #{offset}, #{limit}
+		</if>
+
+	</select>
+	
+ 	<select id="queryTotal" resultType="int">
+		select count(*) from sys_number_rule 
+	</select>
+	<select id="queryParams" resultType="com.wzlue.chain.sys.entity.SysNumberRuleEntity">
+		select * from sys_number_rule
+		<where>
+			<if test="type != null and type.trim() != ''">
+				type = #{type}
+			</if>
+			<if test="prefix != null and prefix.trim() != ''">
+				and prefix = #{prefix}
+			</if>
+			<if test="status != null and status.trim() != ''">
+				and status = #{status}
+			</if>
+		</where>
+	</select>
+
+	<insert id="save" parameterType="com.wzlue.chain.sys.entity.SysNumberRuleEntity" useGeneratedKeys="true" keyProperty="id">
+		insert into sys_number_rule
+		(
+			`type`, 
+			`name`, 
+			`prefix`, 
+			`time_type`, 
+			`length`, 
+			`sample`, 
+			`status`, 
+			`create_by`
+		)
+		values
+		(
+			#{type}, 
+			#{name}, 
+			#{prefix}, 
+			#{timeType}, 
+			#{length}, 
+			#{sample}, 
+			#{status}, 
+			#{createBy}
+		)
+	</insert>
+	 
+	<update id="update" parameterType="com.wzlue.chain.sys.entity.SysNumberRuleEntity">
+		update sys_number_rule 
+		<set>
+			<if test="type != null">`type` = #{type}, </if>
+			<if test="name != null">`name` = #{name}, </if>
+			<if test="prefix != null">`prefix` = #{prefix}, </if>
+			<if test="timeType != null">`time_type` = #{timeType}, </if>
+			<if test="length != null">`length` = #{length}, </if>
+			<if test="sample != null">`sample` = #{sample}, </if>
+			<if test="status != null">`status` = #{status}, </if>
+			<if test="createBy != null">`create_by` = #{createBy}, </if>
+			<if test="createDate != null">`create_date` = #{createDate}, </if>
+			<if test="updateBy != null">`update_by` = #{updateBy}, </if>
+			<if test="updateDate != null">`update_date` = #{updateDate},</if>
+			<if test="numCount != null">`num_count` = #{numCount}</if>
+		</set>
+		where id = #{id}
+	</update>
+	<update id="updateCodeNumber" >
+		update sys_number_rule set `num_count` = 0
+	</update>
+
+	
+	<delete id="delete">
+		delete from sys_number_rule where id = #{value}
+	</delete>
+	
+	<delete id="deleteBatch">
+		delete from sys_number_rule where id in 
+		<foreach item="id" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="queryByTypeAndName" resultMap="sysNumberRuleMap">
+		Select
+		*
+		FROM
+		sys_number_rule
+		where 1=1
+		<if test="type !=null and type !='' ">
+			AND type = #{type}
+		</if>
+		<if test="name !=null and name !='' ">
+			AND name = #{name}
+		</if>
+	</select>
+</mapper>

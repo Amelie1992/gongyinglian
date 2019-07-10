@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>仓储出库商品表</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../../css/font-awesome.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../../plugins/bootstrap-validator/css/bootstrap-validator.min.css">
+    <link rel="stylesheet" href="../../plugins/ztree/css/metroStyle/metroStyle.css">
+    <link rel="stylesheet" href="../../css/main.css">
+
+</head>
+<body>
+<div id="rrapp" v-cloak class="container-fluid">
+    <div v-show="showList">
+        <div class="row">
+            <div class="col-xs-2">
+                <input type="text" class="form-control" v-model="params.name" placeholder=""/>
+            </div>
+            <button class="btn btn-default m-left-5" @click="query"><i class="fa fa-search"></i>&nbsp;查询
+            </button>
+            <button v-if="hasPermission('storage:storageoutcommodity:save')" class="btn btn-primary"
+                    @click="add">
+                <i class="fa fa-plus"></i>&nbsp;新增
+            </button>
+            <button v-if="hasPermission('storage:storageoutcommodity:update')" class="btn btn-warning"
+                    @click="update">
+                <i class="fa fa-edit"></i>&nbsp;修改
+            </button>
+            <button v-if="hasPermission('storage:storageoutcommodity:delete')" class="btn btn-danger"
+                    @click="del">
+                <i class="fa fa-trash-o"></i>&nbsp;删除
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-xs-12">
+                <table id="table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="!showList" class="panel panel-default" style="margin-top: 20px;">
+        <div class="panel-body">
+            <form class="form-horizontal">
+                                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">出库id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="outId" class="form-control" v-model="storageOutCommodity.outId" placeholder="出库id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">订单号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderNumber" class="form-control" v-model="storageOutCommodity.orderNumber" placeholder="订单号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">订单商品表id</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="orderCommodityId" class="form-control" v-model="storageOutCommodity.orderCommodityId" placeholder="订单商品表id"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">商品名称</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityName" class="form-control" v-model="storageOutCommodity.commodityName" placeholder="商品名称"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">商品编号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityNumber" class="form-control" v-model="storageOutCommodity.commodityNumber" placeholder="商品编号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">商品价格</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityPrice" class="form-control" v-model="storageOutCommodity.commodityPrice" placeholder="商品价格"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">商品单位</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityUnit" class="form-control" v-model="storageOutCommodity.commodityUnit" placeholder="商品单位"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">厂号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityFactoryNumber" class="form-control" v-model="storageOutCommodity.commodityFactoryNumber" placeholder="厂号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">产地</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="commodityCountry" class="form-control" v-model="storageOutCommodity.commodityCountry" placeholder="产地"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">重量</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="weight" class="form-control" v-model="storageOutCommodity.weight" placeholder="重量"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">仓库方填写的数量</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="outWeight" class="form-control" v-model="storageOutCommodity.outWeight" placeholder="仓库方填写的数量"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">单位：0，吨；1，托</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="outUnit" class="form-control" v-model="storageOutCommodity.outUnit" placeholder="单位：0，吨；1，托"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">生产日期</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="productionDate" class="form-control" v-model="storageOutCommodity.productionDate" placeholder="生产日期"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">保质期</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="qualityTime" class="form-control" v-model="storageOutCommodity.qualityTime" placeholder="保质期"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">有效期截止日期</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="expirationDate" class="form-control" v-model="storageOutCommodity.expirationDate" placeholder="有效期截止日期"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">报检号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="inspectionNo" class="form-control" v-model="storageOutCommodity.inspectionNo" placeholder="报检号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                                                <div class="row">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">集装箱号</div>
+                                <div class="col-sm-10">
+                                    <input type="text" name="containerNo" class="form-control" v-model="storageOutCommodity.containerNo" placeholder="集装箱号"/>
+                                </div>
+                            </div>
+                        </div>
+                                                    <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label"></div>
+                        <input type="button" class="btn btn-primary" @click="validate" value="确定"/>
+                        &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="../../libs/jquery.min.js"></script>
+<script src="../../plugins/layer/layer.js"></script>
+<script src="../../libs/bootstrap.min.js"></script>
+<script src="../../libs/vue.min.js"></script>
+<!--bootstrap-table-->
+<script src="../../plugins/bootstrap-table/bootstrap-table.min.js"></script>
+<script src="../../plugins/bootstrap-table/locale/bootstrap-table-zh-CN.js"></script>
+<!--bootstrap-validator-->
+<script src="../../plugins/bootstrap-validator/js/bootstrap-validator.min.js"></script>
+<script src="../../plugins/bootstrap-validator/js/zh_CN.min.js"></script>
+<script src="../../plugins/jqgrid/grid.locale-cn.js"></script>
+<script src="../../plugins/jqgrid/jquery.jqGrid.min.js"></script>
+<script src="../../messages/zh.js"></script>
+<script src="../../messages/en.js"></script>
+<script src="../../libs/vue-i18n.js"></script>
+<script src="../../js/common.js"></script>
+
+<script src="../../js/modules/storage/storageoutcommodity.js"></script>
+</body>
+</html>

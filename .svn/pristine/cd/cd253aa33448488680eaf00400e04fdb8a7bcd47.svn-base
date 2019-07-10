@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOrderDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOrderEntity" id="declareOrderMap">
+        <result property="id" column="id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="contractNumber" column="contract_number"/>
+        <result property="buyContacts" column="buy_contacts"/>
+        <result property="buyPhone" column="buy_phone"/>
+        <result property="buyAddress" column="buy_address"/>
+        <result property="buyCompanyId" column="buy_company_id"/>
+        <result property="buyCompanyName" column="buy_company_name"/>
+        <result property="buyDepartmentId" column="buy_department_id"/>
+        <result property="note" column="note"/>
+        <!--数量-->
+        <result property="num" column="num"/>
+        <!--价格-->
+        <result property="price" column="price"/>
+        <!--实付款-->
+        <result property="realPay" column="real_pay"/>
+        <result property="goodsType" column="goods_type"/>
+        <result property="goodsNumber" column="goods_number"/>
+        <result property="goodsNote" column="goods_note"/>
+        <result property="customs" column="customs"/>
+        <result property="total" column="total"/>
+        <result property="payState" column="pay_state"/>
+        <result property="orderState" column="order_state"/>
+        <result property="alterSale" column="alter_sale"/>
+        <result property="merchantContacts" column="merchant_contacts"/>
+        <result property="merchantPhone" column="merchant_phone"/>
+        <result property="merchantAddress" column="merchant_address"/>
+        <result property="merchantCompanyId" column="merchant_company_id"/>
+        <result property="merchantCompanyName" column="merchant_company_name"/>
+        <result property="departmentId" column="department_id"/>
+        <result property="returnFile" column="return_file"/>
+        <result property="orderTime" column="order_time"/>
+        <result property="buyStatus" column="buy_status"/>
+        <result property="sellStatus" column="sell_status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="offerName" column="offerName"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <collection property="orderOfferEntity" ofType="com.wzlue.chain.declare.entity.DeclareOrderOfferEntity"
+                    column="id"
+                    select="com.wzlue.chain.declare.dao.DeclareOrderOfferDao.getListById"
+                    autoMapping="true"></collection>
+        <collection property="orderOssEntityList" ofType="com.wzlue.chain.declare.entity.DeclareOrderOssEntity"
+                    column="id"
+                    select="com.wzlue.chain.declare.dao.DeclareOrderOssDao.getListById" autoMapping="true"></collection>
+        <collection property="goods" ofType="com.wzlue.chain.declare.entity.DeclareOrderCommodityEntity" column="id"
+                    select="com.wzlue.chain.declare.dao.DeclareOrderCommodityDao.getListById"
+                    autoMapping="true"></collection>
+    </resultMap>
+
+    <select id="queryObject" resultMap="declareOrderMap">
+        SELECT t1.*,t2.title as offerName FROM declare_order t1 LEFT JOIN declare_offer t2 on t1.dept_id = t2.id WHERE t1.id = #{value}
+    </select>
+
+    <select id="queryByOrderNumber" resultMap="declareOrderMap">
+        SELECT * FROM declare_order WHERE order_number =#{value}
+    </select>
+    <select id="queryListByNumberCode" resultMap="declareOrderMap">
+        SELECT * FROM declare_order WHERE goods_number =#{numberCode}
+    </select>
+
+    <select id="queryList" resultMap="declareOrderMap">
+        SELECT t1.*,t2.charge_rules as eachPrice FROM declare_order t1
+        left join declare_offer t2 on t1.dept_id = t2.id
+        <where>
+            t1.del_flag=0
+            <if test="buyCompanyId!=null and buyCompanyId != ''">and t1.buy_company_id=#{buyCompanyId}</if>
+            <if test="buyDepartmentId!=null">and t1.buy_department_id=#{buyDepartmentId}</if>
+            <if test="merchantCompanyId!=null and merchantCompanyId !=''">and
+                t1.merchant_company_id=#{merchantCompanyId}
+            </if>
+            <if test="departmentId!=null">and t1.department_id=#{departmentId}</if>
+            <if test="orderState!=null and orderState!=''">and t1.order_state=#{orderState}</if>
+            <if test="orderNumber!=null and orderNumber!=''">and t1.order_number like concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+        ORDER BY t1.order_state asc,t1.create_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+    <!--根据订单编号模糊查询-->
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM declare_order t1
+        <where>
+            t1.del_flag=0
+            <if test="buyCompanyId!=null and buyCompanyId != ''">and t1.buy_company_id=#{buyCompanyId}</if>
+            <if test="buyDepartmentId!=null">and t1.buy_department_id=#{buyDepartmentId}</if>
+            <if test="merchantCompanyId!=null and merchantCompanyId !=''">
+                and t1.merchant_company_id=#{merchantCompanyId}
+            </if>
+            <if test="departmentId!=null">and t1.department_id=#{departmentId}</if>
+            <if test="orderState!=null and orderState!=''">and t1.order_state=#{orderState}</if>
+            <if test="orderNumber!=null and orderNumber!=''">and t1.order_number like concat('%',#{orderNumber},'%')
+            </if>
+        </where>
+    </select>
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOrderEntity" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO declare_order
+        (
+        `order_number`,
+        `contract_number`,
+        `buy_contacts`,
+        `buy_phone`,
+        `buy_address`,
+        `buy_company_id`,
+        `buy_company_name`,
+        `buy_department_id`,
+        `note`,
+        `goods_type`,
+        `goods_number`,
+        `goods_note`,
+        `customs`,
+        `num`,
+        `price`,
+        `total`,
+        `real_pay`,
+        `pay_state`,
+        `order_state`,
+        `alter_sale`,
+        `merchant_contacts`,
+        `merchant_phone`,
+        `merchant_address`,
+        `merchant_company_id`,
+        `merchant_company_name`,
+        `department_id`,
+        `return_file`,
+        `order_time`,
+        `buy_status`,
+        `sell_status`,
+        `create_by`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `del_flag`,
+        `company_id`,
+        `dept_id`,
+        `authorizes_id`
+        )
+        VALUES
+        (
+        #{orderNumber},
+        #{contractNumber},
+        #{buyContacts},
+        #{buyPhone},
+        #{buyAddress},
+        #{buyCompanyId},
+        #{buyCompanyName},
+        #{buyDepartmentId},
+        #{note},
+        #{goodsType},
+        #{goodsNumber},
+        #{goodsNote},
+        #{customs},
+        #{num},
+        #{price},
+        #{total},
+        #{realPay},
+        #{payState},
+        #{orderState},
+        #{alterSale},
+        #{merchantContacts},
+        #{merchantPhone},
+        #{merchantAddress},
+        #{merchantCompanyId},
+        #{merchantCompanyName},
+        #{departmentId},
+        #{returnFile},
+        #{orderTime},
+        #{buyStatus},
+        #{sellStatus},
+        #{createBy},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{delFlag},
+        #{companyId},
+        #{deptId},
+        #{authorizesId}
+
+        )
+    </insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOrderEntity">
+        UPDATE declare_order
+        <set>
+            <if test="orderNumber != null">`order_number` = #{orderNumber},</if>
+            <if test="contractNumber != null">`contract_number` = #{contractNumber},</if>
+            <if test="buyContacts != null">`buy_contacts` = #{buyContacts},</if>
+            <if test="buyPhone != null">`buy_phone` = #{buyPhone},</if>
+            <if test="buyAddress != null">`buy_address` = #{buyAddress},</if>
+            <if test="buyCompanyId != null">`buy_company_id` = #{buyCompanyId},</if>
+            <if test="buyCompanyName != null">`buy_company_name` = #{buyCompanyName},</if>
+            <if test="buyDepartmentId != null">`buy_department_id` = #{buyDepartmentId},</if>
+            <if test="note != null">`note` = #{note},</if>
+            <if test="goodsType != null">`goods_type` = #{goodsType},</if>
+            <if test="goodsNumber != null">`goods_number` = #{goodsNumber},</if>
+            <if test="goodsNote != null">`goods_note` = #{goodsNote},</if>
+            <if test="customs != null">`customs` = #{customs},</if>
+            <if test="num != null">`num` = #{num},</if>
+            <if test="price != null">`price` = #{price},</if>
+            <if test="total != null">`total` = #{total},</if>
+            <if test="realPay != null">`real_pay` = #{realPay},</if>
+            <if test="payState != null">`pay_state` = #{payState},</if>
+            <if test="orderState != null">`order_state` = #{orderState},</if>
+            <if test="alterSale != null">`alter_sale` = #{alterSale},</if>
+            <if test="merchantContacts != null">`merchant_contacts` = #{merchantContacts},</if>
+            <if test="merchantPhone != null">`merchant_phone` = #{merchantPhone},</if>
+            <if test="merchantAddress != null">`merchant_address` = #{merchantAddress},</if>
+            <if test="merchantCompanyId != null">`merchant_company_id` = #{merchantCompanyId},</if>
+            <if test="merchantCompanyName != null">`merchant_company_name` = #{merchantCompanyName},</if>
+            <if test="departmentId != null">`department_id` = #{departmentId},</if>
+            <if test="returnFile != null">`return_file` = #{returnFile},</if>
+            <if test="orderTime != null">`order_time` = #{orderTime},</if>
+            <if test="buyStatus != null">`buy_status` = #{buyStatus},</if>
+            <if test="sellStatus != null">`sell_status` = #{sellStatus},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM declare_order WHERE id = #{value}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM declare_order WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="updateOrderState" parameterType="map">
+        UPDATE declare_order
+        <set>
+            order_state = #{orderState},
+            update_by = #{userId},
+            `update_time` = now()
+        </set>
+        WHERE id =#{id}
+
+    </update>
+
+    <select id="getCompanys" resultType="com.wzlue.chain.company.entity.MerchantCompanyEntity">
+       SELECT DISTINCT a.id,a.company_name
+        FROM merchant_company a
+        INNER JOIN declare_offer b ON a.id=b.company_id AND b.del_flag=0 AND b.grounding_state = 1
+		WHERE a.id != #{companyId}
+    </select>
+
+    <update id="updateByOrderId">
+        UPDATE declare_offer a
+        LEFT JOIN declare_order_offer b on a.id=b.offer_id
+        SET a.transaction_number=IFNULL(a.transaction_number,0)+1,a.transaction_time=NOW()
+        WHERE b.order_id=#{id}
+    </update>
+    <update id="updateByOrderIdLess">
+        UPDATE declare_offer a
+        LEFT JOIN declare_order_offer b on a.id=b.offer_id
+        SET a.transaction_number=IFNULL(a.transaction_number,1)-1,a.transaction_time=NOW()
+        WHERE b.order_id=#{id}
+    </update>
+
+    <select id="showList" resultType="java.util.Map">
+        SELECT
+        IFNULL(COUNT(do.`id`),0) AS total
+        <choose>
+            <when test="dateType !=null and dateType=='year' ">
+                ,CONCAT(MONTH(do.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType=='quarter' ">
+                ,CONCAT(MONTH(do.`create_time`),'月') AS title
+            </when>
+            <when test="dateType !=null and dateType =='month'">
+                ,CONCAT(MONTH(do.`create_time`),'-',DAYOFMONTH(do.`create_time`)) AS title
+            </when>
+        </choose>
+        FROM declare_order do
+        WHERE 1=1
+        AND do.`del_flag` != 1
+        <if test="companyId !=null ">
+             AND do.company_id = #{companyId}
+        </if>
+        <if test="stime!=null and etime!=null">
+            AND TO_DAYS(do.`create_time`) BETWEEN TO_DAYS(STR_TO_DATE(#{stime},'%Y-%m-%d')) AND
+            TO_DAYS(STR_TO_DATE(#{etime},'%Y-%m-%d'))
+            <choose>
+                <when test="dateType=='year' or dataType=='quarter'">
+                    GROUP BY MONTH(do.`create_time`)
+                </when>
+                <when test="dateType=='month'">
+                    GROUP BY TO_DAYS(do.`create_time`)
+                </when>
+            </choose>
+        </if>
+    </select>
+    <select id="queryListByNumberCodeAndNumberType" resultType="map">
+        SELECT t1.id id,order_number orderNumber FROM declare_order t1
+        <where>
+            t1.goods_number=#{numberCode}
+            and t1.goods_type=#{numberType}
+            and (t1.company_id=#{companyId} or t1.merchant_company_id=#{companyId})
+        </where>
+    </select>
+</mapper>

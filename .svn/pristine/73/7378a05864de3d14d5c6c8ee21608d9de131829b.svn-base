@@ -1,0 +1,112 @@
+package com.wzlue.chain.declare.service.impl;
+
+import com.wzlue.chain.agent.dao.ContractAnnexDao;
+import com.wzlue.chain.agent.entity.ContractAnnexEntity;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.company.dao.MerchantCompanyDao;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.declare.dao.DeclareContractDao;
+import com.wzlue.chain.declare.entity.DeclareContractEntity;
+import com.wzlue.chain.declare.service.DeclareContractService;
+
+
+
+@Service("declareContractService")
+public class DeclareContractServiceImpl implements DeclareContractService {
+	@Autowired
+	private DeclareContractDao declareContractDao;
+	@Autowired
+    private ContractAnnexDao contractAnnexDao;
+	@Autowired
+    private MerchantCompanyDao merchantCompanyDao;
+
+	@Override
+	public DeclareContractEntity queryObject(Long id){
+		return declareContractDao.queryObject(id);
+	}
+	
+	@Override
+	public List<DeclareContractEntity> queryList(Map<String, Object> map){
+		return declareContractDao.queryList(map);
+	}
+	
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return declareContractDao.queryTotal(map);
+	}
+	
+	@Override
+	public void save(DeclareContractEntity declareContract){
+        declareContract.setCreateTime(new Date());
+        declareContract.setUpdateTime(new Date());
+        declareContract.setDataSource(1);
+		declareContractDao.save(declareContract);
+        //插入合同附件信息
+        if (declareContract.getFile()!=null && declareContract.getFile().get(0)!=null){
+            for (ContractAnnexEntity annexEntity : declareContract.getFile()){
+                annexEntity.setContractId(declareContract.getId());
+                annexEntity.setCreateBy(declareContract.getCreateBy().toString());
+                annexEntity.setCreateTime(new Date());
+                annexEntity.setContractType((long) 2);
+                contractAnnexDao.save(annexEntity);
+            }
+        }
+	}
+	
+	@Override
+	public void update(DeclareContractEntity declareContract){
+        Date now = new Date();
+        declareContract.setUpdateTime(now);
+        declareContractDao.update(declareContract);
+
+        //合同附件信息
+        contractAnnexDao.deleteByContractId(declareContract.getId(),2);
+        if (declareContract.getFile()!=null && declareContract.getFile().get(0)!=null){
+            for (ContractAnnexEntity annexEntity : declareContract.getFile()){
+                annexEntity.setContractId(declareContract.getId());
+                annexEntity.setContractType((long) 2);
+                annexEntity.setCreateBy(declareContract.getCreateBy().toString());
+                annexEntity.setCreateTime(new Date());
+                contractAnnexDao.save(annexEntity);
+            }
+        }
+
+
+	}
+	
+	@Override
+	public void delete(Long id){
+		declareContractDao.delete(id);
+	}
+	
+	@Override
+	public void deleteBatch(Long[] ids){
+		declareContractDao.deleteBatch(ids);
+	}
+
+    @Override
+    public DeclareContractEntity queryInfo(Long id) {
+        return declareContractDao.queryInfo(id);
+    }
+
+    @Override
+    public List<DeclareContractEntity> pageList(Map<String, Object> map) {
+        MerchantCompanyEntity companyEntity = merchantCompanyDao.queryByUserId(Long.valueOf(map.get("userId").toString()));
+        if (companyEntity!=null){
+            map.put("owner",companyEntity.getId());
+        }
+        return declareContractDao.pageList(map);
+    }
+
+    @Override
+    public int pageTotal(Map<String, Object> map) {
+        return declareContractDao.pageTotal(map);
+    }
+}

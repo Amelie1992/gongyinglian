@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.declare.dao.DeclareOfferDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.declare.entity.DeclareOfferEntity" id="declareOfferMap">
+        <result property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="companyName" column="company_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="businessInfo" column="business_info"/>
+        <result property="contacts" column="contacts"/>
+        <result property="contactWay" column="contact_way"/>
+        <result property="commodityCode" column="commodity_code"/>
+        <result property="declareType" column="declare_type"/>
+        <result property="chargeRules" column="charge_rules"/>
+        <result property="unit" column="unit"/>
+        <result property="groundingState" column="grounding_state"/>
+        <result property="createBy" column="create_by"/>
+        <result property="authorizesId" column="authorizes_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="transactionTime" column="transaction_time"/>
+        <result property="transactionNumber" column="transaction_number"/>
+        <result property="delFlag" column="del_flag"/>
+        <collection property="customsList" ofType="com.wzlue.chain.declare.entity.DeclareOfferCustomsEntity"
+                    column="id" select="com.wzlue.chain.declare.dao.DeclareOfferCustomsDao.getListById"
+                    autoMapping="true"/>
+
+    </resultMap>
+
+    <select id="queryObject" resultMap="declareOfferMap">
+				SELECT
+                    a.*
+                FROM
+                    declare_offer a
+                WHERE
+                del_flag=0
+                and a.id = #{value}
+	</select>
+
+    <select id="queryList" resultMap="declareOfferMap">
+        SELECT
+        *
+        FROM
+        declare_offer o
+        <where>
+            del_flag=0
+            <if test="declareType!=null and declareType !=''">AND o.declare_type=#{declareType}</if>
+            <if test="title!=null and title.trim()!=''">and o.title LIKE CONCAT('%',#{title},'%')</if>
+            <if test="companyId!=null and companyId!=''">and o.company_id=#{companyId}</if>
+            <if test="groundingState!=null and groundingState!=''">and o.grounding_state=#{groundingState}</if>
+            <if test="customsName!=null and customsName!=''">
+                and (
+                select count(1) from declare_offer_customs oc where o.id = oc.offer_id and
+                oc.customs_name=#{customsName}
+                )
+            </if>
+        </where>
+        ORDER BY update_time desc
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+
+    <select id="queryTotal" resultType="int">
+        SELECT count(*) FROM
+        declare_offer o
+        <where>
+            del_flag=0
+            <if test="declareType!=null and declareType !=''">AND o.declare_type=#{declareType}</if>
+            <if test="title!=null and title!=''">and o.title LIKE CONCAT('%',#{title},'%')</if>
+            <if test="groundingState!=null and groundingState!=''">and o.grounding_state=#{groundingState}</if>
+            <if test="companyId!=null and companyId!=''">and o.company_id=#{companyId}</if>
+            <if test="customsName!=null and customsName!=''">
+                and (
+                select count(1) from declare_offer_customs oc where o.id = oc.offer_id and
+                oc.customs_name=#{customsName}
+                )
+            </if>
+        </where>
+    </select>
+    <!--判断编码是否重复-->
+    <select id="checkCode" resultType="int">
+         select count(1) from declare_offer
+         WHERE `commodity_code` = #{commodityCode}
+    </select>
+
+    <insert id="save" parameterType="com.wzlue.chain.declare.entity.DeclareOfferEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO declare_offer
+		(
+        `title`,
+        `company_name`,
+        `company_id`,
+        `dept_id`,
+        `business_info`,
+        `contacts`,
+        `contact_way`,
+        `commodity_code`,
+        `declare_type`,
+        `charge_rules`,
+        `unit`,
+        `grounding_state`,
+        `create_by`,
+        `authorizes_id`,
+        `create_time`,
+        `update_by`,
+        `update_time`,
+        `transaction_time`,
+        `transaction_number`
+        )
+		VALUES
+		(
+        #{title},
+        #{companyName},
+        #{companyId},
+        #{deptId},
+        #{businessInfo},
+        #{contacts},
+        #{contactWay},
+        #{commodityCode},
+        #{declareType},
+        #{chargeRules},
+        #{unit},
+        #{groundingState},
+        #{createBy},
+        #{authorizesId},
+        #{createTime},
+        #{updateBy},
+        #{updateTime},
+        #{transactionTime},
+        #{transactionNumber}
+        )
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.declare.entity.DeclareOfferEntity">
+        UPDATE declare_offer
+        <set>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="companyName != null">`company_name` = #{companyName},</if>
+            <if test="companyId != null">`company_id` = #{companyId},</if>
+            <if test="deptId != null">`dept_id` = #{deptId},</if>
+            <if test="businessInfo != null">`business_info` = #{businessInfo},</if>
+            <if test="contacts != null">`contacts` = #{contacts},</if>
+            <if test="contactWay != null">`contact_way` = #{contactWay},</if>
+            <if test="commodityCode != null">`commodity_code` = #{commodityCode},</if>
+            <if test="declareType != null">`declare_type` = #{declareType},</if>
+            <if test="chargeRules != null">`charge_rules` = #{chargeRules},</if>
+            <if test="unit != null">`unit` = #{unit},</if>
+            <if test="groundingState != null">`grounding_state` = #{groundingState},</if>
+            <if test="createBy != null">`create_by` = #{createBy},</if>
+            <if test="createTime != null">`create_time` = #{createTime},</if>
+            <if test="updateBy != null">`update_by` = #{updateBy},</if>
+            <if test="updateTime != null">`update_time` = #{updateTime},</if>
+            <if test="transactionTime != null">`transaction_time` = #{transactionTime},</if>
+            <if test="transactionNumber != null">`transaction_number` = #{transactionNumber},</if>
+            <if test="delFlag != null">`del_flag` = #{delFlag},</if>
+            <if test="authorizesId != null">`authorizes_id` = #{authorizesId}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateOffer" parameterType="map">
+        UPDATE declare_offer
+        <set>
+            <if test="state==0">`grounding_state` = 0,</if>
+            <if test="state==1">`grounding_state` = 1,</if>
+            update_by = #{userId},
+            `update_time` = now()
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <delete id="delete">
+		DELETE FROM declare_offer WHERE id = #{value}
+	</delete>
+
+    <update id="deleteBatch">
+        UPDATE declare_offer
+        <set>
+            del_flag=1
+        </set>
+        WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <select id="getListByCompanyId" resultMap="declareOfferMap">
+        SELECT DISTINCT
+            a.*
+        FROM declare_offer a
+        WHERE 1=1
+        AND a.company_id = #{id}
+    </select>
+
+</mapper>

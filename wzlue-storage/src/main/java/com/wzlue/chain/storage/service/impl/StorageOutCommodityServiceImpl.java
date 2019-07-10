@@ -1,0 +1,60 @@
+package com.wzlue.chain.storage.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.storage.dao.StorageOutCommodityDao;
+import com.wzlue.chain.storage.entity.StorageOutCommodityEntity;
+import com.wzlue.chain.storage.service.StorageOutCommodityService;
+
+
+
+@Service("storageOutCommodityService")
+public class StorageOutCommodityServiceImpl implements StorageOutCommodityService {
+	@Autowired
+	private StorageOutCommodityDao storageOutCommodityDao;
+	
+	@Override
+	public StorageOutCommodityEntity queryObject(Long id){
+		return storageOutCommodityDao.queryObject(id);
+	}
+	
+	@Override
+	public List<StorageOutCommodityEntity> queryList(Map<String, Object> map){
+		return storageOutCommodityDao.queryList(map);
+	}
+	
+	@Override
+	public int queryTotal(Map<String, Object> map){
+		return storageOutCommodityDao.queryTotal(map);
+	}
+	
+	@Override
+	public void save(StorageOutCommodityEntity storageOutCommodity){
+		storageOutCommodityDao.save(storageOutCommodity);
+	}
+	
+	@Override
+	public void update(StorageOutCommodityEntity storageOutCommodity){
+		storageOutCommodityDao.update(storageOutCommodity);
+	}
+	
+	@Override
+	public void delete(Long id){
+		storageOutCommodityDao.delete(id);
+	}
+	
+	@Override
+	public void deleteBatch(Long[] ids){
+		storageOutCommodityDao.deleteBatch(ids);
+	}
+
+	@Override
+	public Long queryOrderCommodityId(Long id) {
+		return storageOutCommodityDao.queryOrderCommodityId(id);
+	}
+
+}

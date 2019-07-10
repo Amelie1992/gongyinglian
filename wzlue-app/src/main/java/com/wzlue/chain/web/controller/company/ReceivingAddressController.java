@@ -1,0 +1,189 @@
+
+package com.wzlue.chain.web.controller.company;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.wzlue.chain.common.annotation.SysLog;
+import com.wzlue.chain.common.base.LogSource;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+
+import com.wzlue.chain.company.entity.ReceivingAddressEntity;
+import com.wzlue.chain.company.service.ReceivingAddressService;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import springfox.documentation.annotations.ApiIgnore;
+
+
+/**
+ * 收货地址
+ *
+ * @author
+ * @email
+ * @date 2018-08-18 10:55:39
+ */
+@RestController
+@RequestMapping("/company/receivingaddress")
+@Api(value = "收货地址")
+public class ReceivingAddressController extends AbstractController {
+    @Autowired
+    private ReceivingAddressService receivingaddressService;
+
+    /**
+     * 列表
+     */
+    @GetMapping("/list")
+    @ApiOperation(value = "收货地址列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "page", dataType = "int", value = "页码", paramType = "query", defaultValue = "1"),
+            @ApiImplicitParam(name = "limit", dataType = "int", value = "一页几条", paramType = "query", defaultValue = "10"),
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R list(@ApiIgnore @RequestParam Map<String, Object> params) {
+        SysUserEntity user = getUser();
+        params.put("userId", user.getUserId());
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<ReceivingAddressEntity> receivingaddressList = receivingaddressService.queryList(query);
+        int total = receivingaddressService.queryTotal(query);
+
+        return R.page(receivingaddressList, total);
+    }
+
+
+    /**
+     * 信息
+     */
+    @GetMapping("/info/{id}")
+    @ApiOperation(value = "收货地址详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+   /* @RequiresPermissions("company:receivingaddress:info")*/
+    public R info(@PathVariable("id") Integer id) {
+        ReceivingAddressEntity receivingaddress = receivingaddressService.queryObject(id);
+
+        return R.ok(receivingaddress);
+    }
+
+    /**
+     * 保存
+     */
+    @SysLog(value = "保存收货地址", source = LogSource.APP)
+    @PostMapping("/save")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    @ApiOperation(value = "保存收货地址")
+    /*@RequiresPermissions("company:receivingaddress:save")*/
+    public R save(@RequestBody ReceivingAddressEntity receivingaddress) {
+        SysUserEntity user = getUser();
+        receivingaddress.setCreateBy(Integer.parseInt(String.valueOf(user.getUserId())));
+        receivingaddress.setCompanyId(Integer.parseInt(String.valueOf(user.getCompanyId())));
+        receivingaddressService.save(receivingaddress);
+        if("1".equals(receivingaddress.getDefaultaddress()))
+            receivingaddressService.setDefatultAddress(user.getUserId(), Long.valueOf(receivingaddress.getId()));
+
+        return R.ok();
+    }
+
+    /**
+     * 修改
+     */
+    @SysLog(value = "修改收货地址", source = LogSource.PC)
+    @PostMapping("/update")
+    @ApiOperation(value = "修改收货地址")
+    /*@RequiresPermissions("company:receivingaddress:update")*/
+    public R update(@RequestBody ReceivingAddressEntity receivingaddress) {
+        receivingaddressService.update(receivingaddress);
+
+        return R.ok();
+    }
+
+    /**
+     * 删除
+     */
+    @SysLog(value = "删除收货地址", source = LogSource.PC)
+    @PostMapping("/delete")
+    @ApiOperation(value = "刪除收货地址")
+    /*@RequiresPermissions("company:receivingaddress:delete")*/
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R delete(@RequestBody Integer[] ids) {
+        receivingaddressService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+
+    /**
+     * 删除2
+     */
+    @SysLog(value = "删除收货地址", source = LogSource.PC)
+    @PostMapping("/delete2")
+    @ApiOperation(value = "刪除收货地址2")
+    /*@RequiresPermissions("company:receivingaddress:delete")*/
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R delete2(@RequestBody List<Map<String, Object>> ids) {
+        List<Integer> list = new ArrayList<>();
+        for (Map<String, Object> map: ids) {
+           list.add(Integer.valueOf(map.get("id")+""));
+        }
+        Integer[] sz = list.toArray(new Integer[list.size()]);
+
+        receivingaddressService.deleteBatch(sz);
+
+        return R.ok();
+    }
+
+    /**
+     * 列表
+     */
+    @GetMapping("/listByUserId")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    public R listByUserId(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        params.put("userId", getUserId());
+        Query query = new Query(params);
+
+        List<ReceivingAddressEntity> receivingaddressList = receivingaddressService.queryList(query);
+        int total = receivingaddressService.queryTotal(query);
+
+        return R.page(receivingaddressList, total);
+    }
+
+    /**
+     * 设置默认地址
+     *
+     * @param id
+     * @return
+     */
+    @PostMapping("/setDefatultAddress")
+    @ApiImplicitParams({
+            @ApiImplicitParam(paramType = "header", name = "token", value = "token", required = true, dataType = "string")
+    })
+    @ApiOperation(value = "设置默认收货地址")
+    public R setDefatultAddress(@RequestBody Long id) {
+        boolean bl = receivingaddressService.setDefatultAddress(getUserId(), id);
+        if (bl)
+            return R.ok();
+        else
+            return R.ok();
+    }
+}

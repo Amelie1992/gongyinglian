@@ -1,0 +1,601 @@
+
+package com.wzlue.chain.web.controller.company;
+
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.wzlue.chain.agreement.entity.AgreeMentEntity;
+import com.wzlue.chain.agreement.entity.AgreeMentGlEntity;
+import com.wzlue.chain.agreement.service.AgreeMentGlService;
+import com.wzlue.chain.agreement.service.AgreeMentService;
+import com.wzlue.chain.bill.entity.MyAccountEntity;
+import com.wzlue.chain.bill.service.MyAccountService;
+import com.wzlue.chain.chatMsg.service.ChatMessageService;
+import com.wzlue.chain.chatMsg.service.api.IMUserAPI;
+import com.wzlue.chain.common.annotation.JsonObject;
+import com.wzlue.chain.common.annotation.SysLog;
+import com.wzlue.chain.common.base.LogSource;
+import com.wzlue.chain.common.base.Query;
+import com.wzlue.chain.common.base.R;
+import com.wzlue.chain.common.enums.CreditType;
+import com.wzlue.chain.common.utils.SnowflakeIdWorker;
+import com.wzlue.chain.company.dao.EmployeeDao;
+import com.wzlue.chain.company.entity.EmployeeAdditionalEntity;
+import com.wzlue.chain.company.entity.EmployeeEntity;
+import com.wzlue.chain.company.entity.MerchantCompanyEntity;
+import com.wzlue.chain.company.entity.MerchantCompanyServiceEntity;
+import com.wzlue.chain.company.service.EmployeeAdditionalService;
+import com.wzlue.chain.company.service.EmployeeService;
+import com.wzlue.chain.company.service.MerchantCompanyService;
+import com.wzlue.chain.company.service.ServiceTypeService;
+import com.wzlue.chain.sys.entity.SysRoleEntity;
+import com.wzlue.chain.sys.entity.SysUserEntity;
+import com.wzlue.chain.sys.service.SysRoleMenuService;
+import com.wzlue.chain.sys.service.SysUserRoleService;
+import com.wzlue.chain.sys.service.SysUserService;
+import com.wzlue.chain.sys.service.SysUserTokenService;
+import com.wzlue.chain.web.controller.sys.AbstractController;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import javax.transaction.Transactional;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+
+/**
+ * 商户注册公司表
+ *
+ * @author
+ * @email
+ * @date 2018-08-17 11:27:53
+ */
+@RestController
+@RequestMapping("/company/merchantusers")
+public class MerchantCompanyController extends AbstractController {
+    @Autowired
+    private MerchantCompanyService merchantCompanyService;
+    @Autowired
+    private SysUserService sysUserService;
+    @Autowired
+    private IMUserAPI easemobIMUsers;
+    @Autowired
+    private ChatMessageService chatMessageService;
+    @Autowired
+    private MyAccountService myAccountService;
+    @Autowired
+    private AgreeMentService agreeMentService;
+    @Autowired
+    private AgreeMentGlService agreeMentGlService;
+    @Autowired
+    private SysUserRoleService sysUserRoleService;
+    @Autowired
+    private SysUserTokenService sysUserTokenService;
+    @Autowired
+    private EmployeeService employeeService;
+    @Autowired
+    private EmployeeDao employeeDao;
+    @Autowired
+    private EmployeeAdditionalService employeeAdditionalService;
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/list")
+    public R list(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        List<MerchantCompanyEntity> merchantUsersList = merchantCompanyService.queryList(query);
+        int total = merchantCompanyService.queryTotal(query);
+
+        return R.page(merchantUsersList, total);
+    }
+
+    @RequestMapping("/alllist")
+    public R alllist(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+
+        int total = merchantCompanyService.queryTotal(query);
+        query.setLimit(total);
+        List<MerchantCompanyEntity> merchantUsersList = merchantCompanyService.queryList(query);
+
+        return R.ok().put("merchantUsersList", merchantUsersList);
+    }
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/companyList")
+    public R companyList(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        query.put("userId", getUserId());
+        List<MerchantCompanyEntity> merchantUsersList = merchantCompanyService.pageList(query);
+        int total = merchantCompanyService.pageCount(query);
+
+        return R.page(merchantUsersList, total);
+    }
+
+    /**
+     * 列表
+     */
+    @RequestMapping("/queryAgentofferCompany")
+    public R queryAgentofferCompany(@RequestParam Map<String, Object> params) {
+        //查询列表数据
+        Query query = new Query(params);
+        List<MerchantCompanyEntity> merchantUsersList = merchantCompanyService.queryAgentofferCompany(query);
+        int total = merchantCompanyService.queryAgentofferCompanyCount(query);
+
+        return R.page(merchantUsersList, total);
+    }
+
+    /**
+     * 查询当前用户所属公司信息
+     */
+    @RequestMapping("/gerInfoByUser")
+    public R gerInfoByUser() {
+        //查询列表数据
+        MerchantCompanyEntity company = merchantCompanyService.getInfoByUser(getUserId());
+
+        return R.ok().put("company", company);
+    }
+
+
+    /**
+     * 信息
+     */
+    @RequestMapping("/info/{id}")
+//    @RequiresPermissions("company:merchantusers:info")
+    public R info(@PathVariable("id") Integer id) {
+        MerchantCompanyEntity merchantUsers = merchantCompanyService.queryObject(id);
+
+        return R.ok().put("merchantUsers", merchantUsers);
+    }
+
+    /**
+     * 保存
+     */
+    @RequestMapping("/save")
+//    @RequiresPermissions("company:merchantusers:save")
+    public R save(@RequestBody MerchantCompanyEntity merchantCompanyEntity) {
+        merchantCompanyService.save(merchantCompanyEntity);
+
+        return R.ok();
+    }
+
+    /**
+     * 更新
+     */
+    @RequestMapping("/update")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R update(@RequestBody MerchantCompanyEntity merchantCompanyEntity) {
+        SysUserEntity userEntity = sysUserService.queryObject(merchantCompanyEntity.getUserId());
+        merchantCompanyService.saveOrUpdate(merchantCompanyEntity,userEntity);
+
+        return R.ok();
+    }
+
+
+    /**
+     * 修改(完善信息，更新公司信息)
+     */
+//    @SysLog(value = "修改公司", source = LogSource.PC)
+    @RequestMapping("/saveOrUpdate")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R saveOrUpdate(@RequestBody MerchantCompanyEntity merchantCompanyEntity) {
+
+        // 获取用户
+        SysUserEntity userEntity = (SysUserEntity) SecurityUtils.getSubject().getPrincipal();
+
+        if(null == userEntity) return R.error("登陆失效！");
+
+        //查询是否有重复的公司名称。
+        if (merchantCompanyService.getCompanyByNameCount(merchantCompanyEntity.getCompanyName()) > 0 && "0".equals(merchantCompanyEntity.getAuditStatus()))
+            return R.error("公司名称已存在");
+        // 设置公司用户id
+        merchantCompanyEntity.setUserId(userEntity.getUserId());
+        // 设置公司的手机号码为登陆的账号
+        merchantCompanyEntity.setMobile(userEntity.getUsername());
+
+        // 更新公司信息
+        // 0 待审核， 1 审核通过， 2 已注销， 3 审核不通过
+        if(null != merchantCompanyEntity.getId()){
+            // 如果公司 审核不通过， 公司修改信息，状态设置为:0 待审核
+           /* if("3".equals(merchantCompanyEntity.getAuditStatus())){
+                merchantCompanyEntity.setAuditStatus("0");
+            }*/
+
+            merchantCompanyEntity.setAuditStatus("0");
+
+        }else {
+            // 公司信息为空，说明创建公司，状态设置为：0 待审核
+            merchantCompanyEntity.setAuditStatus("0");
+            // 设置初始分数
+            merchantCompanyEntity.setCreditScore(CreditType.UNVERIFIED.getScore());
+        }
+
+        // 保存公司或修改公司信息
+        merchantCompanyService.saveOrUpdate(merchantCompanyEntity, userEntity);
+
+
+        // 修改服务类型与角色关系
+        if("1".equals(merchantCompanyEntity.getAuditStatus())) {
+            // 获取注册公司的服务类型
+            List<MerchantCompanyServiceEntity> entities = merchantCompanyService.queryCompanyServiceByCompanyId(merchantCompanyEntity.getId());
+            // 更新 用户角色
+            List<Long> roleList = this.getRoleList(entities);
+            sysUserRoleService.saveOrUpdate(userEntity.getUserId(), roleList);
+        }
+        // 注册默认角色
+        /*SysRoleEntity role = new SysRoleEntity();
+        role.setCreateUserId(userEntity.getUserId());
+        role.setCreateTime(new Date());
+        role.setRoleName("客服");
+        role.setRemark("聊天权限");
+        role.setCompanyName(merchantCompanyEntity.getCompanyName());
+        merchantCompanyService.saveRole(role);*/
+
+        // 注册账户
+      /*  MyAccountEntity accountEntity = new MyAccountEntity();
+        long l = new SnowflakeIdWorker(0, 0).nextId();
+        accountEntity.setAccount(l + "");
+        accountEntity.setCreateBy(getUserId());
+        accountEntity.setCompanyId(merchantCompanyEntity.getId());
+        accountEntity.setSalt(userEntity.getSalt());
+        myAccountService.save(accountEntity);*/
+
+//        ////完善企业信息--为该企业新增一名员工（该注册帐号）
+//        EmployeeEntity employee = new EmployeeEntity();
+//        String gh = getGH();
+//        if (StrUtil.isBlank(gh)) return R.error("系统繁忙，稍后再试！");
+//        employee.setCompanyId(merchantCompanyEntity.getId());
+//        employee.setCompanyname(merchantCompanyEntity.getCompanyName());
+//        employee.setWorknumber(gh);
+//        employee.setCreateBy(getUserId().intValue());
+//        employeeDao.save(employee);
+//
+//        chatMessageService.createNewIMUser(userEntity.getUsername());
+
+        return R.ok();
+    }
+
+    /**
+     * 生成工号
+     *
+     * @return
+     */
+    private String getGH() {
+        String gh = "";
+        gh = (employeeService.getGH() + 1) + "";
+        return gh;
+    }
+
+
+    /**
+     * 删除
+     */
+    @SysLog(value = "删除公司", source = LogSource.PC)
+    @RequestMapping("/delete")
+//    @RequiresPermissions("company:merchantusers:delete")
+    public R delete(@RequestBody Integer[] ids) {
+        merchantCompanyService.deleteBatch(ids);
+
+        return R.ok();
+    }
+
+    @SysLog(value = "注销", source = LogSource.PC)
+    @RequestMapping("/unsubscribe")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R unsubscribe(@RequestBody Map<String, Object> param) {
+        merchantCompanyService.unsubscribe(Long.valueOf(param.get("id").toString()), param.get("msg").toString());
+
+        return R.ok();
+    }
+
+    @SysLog(value = "恢复", source = LogSource.PC)
+    @RequestMapping("/recovery")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R recovery(@RequestBody Long id) {
+        merchantCompanyService.recovery(id);
+
+        return R.ok();
+    }
+
+    @SysLog(value = "授权", source = LogSource.PC)
+    @RequestMapping("/auditpass")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R auditpass(@RequestBody Map<String, Object> param) {
+        //为该公司(员工管理)新增一个老板帐号--公司注册帐号
+        EmployeeEntity employee = new EmployeeEntity();
+        String gh = getGH();
+        if (StrUtil.isBlank(gh)) return R.error("系统繁忙，稍后再试！");
+        MerchantCompanyEntity company = merchantCompanyService.queryObject((Integer) param.get("id"));
+        employee.setWorknumber(gh);
+        employee.setUserId(company.getUserId());
+        employee.setName(company.getLegalPersonName());
+        String cardNo = company.getCardNo();
+        if (cardNo!=null){
+            employee.setIdcard(cardNo);
+            String substring1 = cardNo.substring(6, 14); //出生年月日
+            Date date = null;
+            try {
+                date = new SimpleDateFormat("yyyyMMdd").parse(substring1);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            employee.setDateofbirth(date);
+            String substring2 = cardNo.substring(16, 17); //性别
+            if(Integer.parseInt(substring2)%2==0){
+                employee.setSex("2");
+            }else {
+                employee.setSex("1");
+            }
+        }
+        if(null == employeeDao.getByUserId(company.getUserId())) {
+            employee.setPhonenumber(company.getMobile());
+            employee.setEmail(company.getEmail());
+            employee.setCompanyId(company.getId());
+            employee.setCompanyname(company.getCompanyName());
+            employee.setJobstate("0");
+            employee.setSocialsecurity("1");
+            employee.setHousingfund("1");
+            employeeDao.save(employee);
+            //员工补充信息
+            EmployeeAdditionalEntity addition = new EmployeeAdditionalEntity();
+            addition.setEmployeeid(employee.getId());
+            employeeAdditionalService.save(addition);
+        }
+
+        // 公司通过
+        merchantCompanyService.auditpass(Long.valueOf(param.get("id").toString()), param.get("msg").toString());
+        // 更新 公司信用分数
+        if (company.getCreditScore()==0){
+            merchantCompanyService.updateCreditType(CreditType.VERIFIED, new MerchantCompanyEntity() {{
+                setId(Long.valueOf(param.get("id").toString()));
+            }});
+        }else {
+            company.setAuditStatus("1");
+            merchantCompanyService.update(company);
+        }
+
+        // 获取注册公司的服务类型
+        List<MerchantCompanyServiceEntity> entities = merchantCompanyService.queryCompanyServiceByCompanyId(Long.valueOf(param.get("id").toString()));
+
+        // 更新 用户角色
+        List<Long> roleList = this.getRoleList(entities);
+
+        sysUserRoleService.saveOrUpdate(Long.valueOf(param.get("userId").toString()), roleList);
+
+        return R.ok();
+    }
+
+    // 设置对应的角色
+    private List<Long> getRoleList(List<MerchantCompanyServiceEntity> entities) {
+        /*
+        角色对应的服务关系                 服务类型
+             4	货物	货物(不允许删除)           1	货物
+             5	物流	物流(不允许删除)           2	物流
+             6	报关	报关(不允许删除)           3	报关
+             7	仓储	仓储(不允许删除)           4	仓储
+             8	代理	代理(不允许删除)           5	代理服务
+             9	金融	金融(不允许删除)           6	金融
+            10	保险	保险(不允许删除)           7	保险
+                                             13	其他
+         */
+        List<Long> tempList = new ArrayList();
+        tempList.add(2L); // 默认公司角色
+        for (MerchantCompanyServiceEntity entity : entities) { // 添加角色
+            if (1 == entity.getServiceId()) { // 添加货物类型
+                tempList.add(4L);
+            } else if (2 == entity.getServiceId()) {// 添加物流类型
+                tempList.add(5L);
+            } else if (3 == entity.getServiceId()) {// 添加报关类型
+                tempList.add(6L);
+            } else if (4 == entity.getServiceId()) {// 添加仓储类型
+                tempList.add(7L);
+            } else if (5 == entity.getServiceId()) {// 添加代理服务类型
+                tempList.add(8L);
+            } else if (6 == entity.getServiceId()) {// 添加金融类型
+                tempList.add(9L);
+            } else if (7 == entity.getServiceId()) {// 添加保险类型
+                tempList.add(10L);
+            } else if (13 == entity.getServiceId()) {// 添加其他类型
+
+            }
+        }
+
+        return tempList;
+    }
+
+    @SysLog(value = "授权不通过", source = LogSource.PC)
+    @RequestMapping("/noauditpass")
+//    @RequiresPermissions("company:merchantusers:update")
+    public R noauditpass(@RequestBody Map<String, Object> param) {
+
+        merchantCompanyService.noauditpass(Long.valueOf(param.get("id").toString()), param.get("msg").toString());
+
+        merchantCompanyService.updateCreditType(CreditType.AUDITFAILED, new MerchantCompanyEntity() {{
+            setId(Long.valueOf(Long.valueOf(param.get("id").toString())));
+        }});
+        return R.ok();
+    }
+
+
+    /**
+     * 注册
+     */
+    @Deprecated
+    @SysLog(value = "注册", source = LogSource.PC)
+    @RequestMapping("/register")
+    public R register(@JsonObject MerchantCompanyEntity company, @JsonObject SysUserEntity user) throws Exception {
+
+        try {
+            // 保存用户
+//            sysUserService.save(user);
+            // IM通信
+//            chatMessageService.createNewIMUser(user.getUsername());
+
+           /* if (null != user.getUserId()) {
+                // 保存公司
+                company.setUserId(user.getUserId());
+                merchantCompanyService.register(user, company);
+                // 注册账号
+                MyAccountEntity accountEntity = new MyAccountEntity();
+                long l = new SnowflakeIdWorker(0, 0).nextId();
+                accountEntity.setAccount(l + "");
+                accountEntity.setCreateBy(user.getUserId());
+                accountEntity.setCompanyId(company.getId());
+                accountEntity.setSalt(user.getSalt());
+                myAccountService.save(accountEntity);
+
+                //保存协议
+                //AgreeMentEntity agreeMent=new AgreeMentEntity();
+                AgreeMentEntity agreeMentEntity=agreeMentService.queryObjectByType("注册协议");
+                if(null != agreeMentEntity) {
+                    AgreeMentGlEntity agreeMentGlEntity = new AgreeMentGlEntity();
+                    agreeMentGlEntity.setXieyiglXid(agreeMentEntity.getXieyiId());
+                    agreeMentGlEntity.setXieyiglUid(user.getUserId().intValue());
+                    agreeMentGlEntity.setXieyiglGuid(company.getId().intValue());
+                    agreeMentGlService.save(agreeMentGlEntity);
+                }
+            }*/
+        } catch (Exception e) {
+            System.out.println(e);
+            return R.error("注册失败！");
+        }
+        return R.ok();
+    }
+
+
+    /**
+     * 获取用户的用户信息. 所属企业信息
+     */
+    @RequestMapping("/getUserCompany")
+    public R getUserCompany() {
+
+        Long userid;
+        if(null == (userid = getUserId())) return R.error("登陆失效");
+
+        SysUserEntity userEntity = sysUserService.queryObject(userid);
+        MerchantCompanyEntity merchantCompanyEntity = merchantCompanyService.queryByUserId(userid);
+
+        Map<String, Object> allMap = new HashMap<>();
+        allMap.put("company", merchantCompanyEntity);
+        allMap.put("user", userEntity);
+
+        return R.ok(allMap);
+    }
+
+    /**
+     * 查询客服
+     *
+     * @param companyid companyid='' 查询平台，companyid !='' 查询企业
+     * @return
+     */
+    @RequestMapping("/getCustomerService")
+    public R queryCustomerServicebyCompanyId(@RequestParam("companyId") String companyid) {
+        List<SysUserEntity> userEntity = merchantCompanyService.queryCustomerServicebyCompanyId(companyid);
+        SysUserEntity sortUser = null;
+        if (null != userEntity)
+            sortUser = getSortUser(userEntity);
+
+        return R.ok(sortUser);
+
+    }
+
+    /**
+     * 先获取在线的客服（如果多个随机一个），没有在线的随机一个不线的
+     *
+     * @param userEntity 客服列表
+     * @return
+     */
+    private SysUserEntity getSortUser(List<SysUserEntity> userEntity) {
+        //  客服
+        SysUserEntity sysUserEntity = new SysUserEntity();
+        //  在线的客服
+        List<SysUserEntity> onLine = null;
+        // 随机数
+        int sortNum = 0;
+        if (userEntity.size() < 1) {
+            return null;
+        }
+        for (SysUserEntity ss : userEntity) {
+            if(ss.getUsername() == null){
+                continue;
+            }
+            String state = (String)easemobIMUsers.getIMUserStatus(ss.getUsername());
+            if(state == null){
+                continue;
+            }
+            Map data = JSONObject.parseObject(state).getObject("data", Map.class);
+            if ("online".equals(data.get(ss.getUsername()))) {
+                onLine = new ArrayList<>();
+                onLine.add(ss);
+            }
+
+        }
+        //  在线
+        if (null != onLine && (sortNum = onLine.size()) > 0) {
+            if (sortNum == 1) {
+                return onLine.get(0);
+            } else {
+                return onLine.get(RandomUtil.randomInt(sortNum));
+            }
+        }
+        //  不在线
+        return userEntity.get(RandomUtil.randomInt(userEntity.size()));
+    }
+
+
+    //获取当前系统用户所在公司可出库的仓库公司信息
+    @RequestMapping("/getCompanys")
+    public R getCompanys() {
+        List<MerchantCompanyEntity> list = merchantCompanyService.queryCompanysForOutByCompanyId(getUser().getCompanyId());
+        return R.ok().put("list", list);
+    }
+
+    //获取协议里的内容
+    @RequestMapping("/getAgreement")
+    public R getAgreement() {
+        AgreeMentEntity agreeMentEntity = agreeMentService.queryObjectByType("注册协议");
+        return R.ok(agreeMentEntity);
+    }
+
+    /**
+     * 根据服务查询公司列表
+     *
+     * @param param
+     * @return
+     */
+    @RequestMapping("/getCompanyByService")
+    public R getCompanyByService(@RequestBody Map<String, Object> param) {
+        List<MerchantCompanyEntity> list = merchantCompanyService.getCompanyByService(param);
+        return R.ok().put("list", list);
+    }
+
+    /**
+     * 获取用户的用户信息. 所属企业信息2
+     */
+    @RequestMapping("/getUserCompany2")
+    public R getUserCompany2() {
+
+        Long userid;
+        if(null == (userid = getUserId())) return R.error("登陆失效");
+
+        SysUserEntity userEntity = sysUserService.queryObject(userid);
+        List<MerchantCompanyEntity> companies = merchantCompanyService.queryByUserId2(userid);
+
+        Map<String, Object> allMap = new HashMap<>();
+        allMap.put("companies", companies);
+        allMap.put("user", userEntity);
+
+        return R.ok(allMap);
+    }
+}

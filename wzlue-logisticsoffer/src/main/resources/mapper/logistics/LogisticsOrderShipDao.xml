@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wzlue.chain.logistics.dao.LogisticsOrderShipDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity" id="logisticsOrderShipMap">
+        <result property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="logisticsCompanyId" column="logistics_company_id"/>
+        <result property="logisticsCode" column="logistics_code"/>
+        <result property="logisticsNumber" column="logistics_number"/>
+        <result property="numberPlate" column="number_plate"/>
+        <result property="driverName" column="driver_name"/>
+        <result property="driverNumber" column="driver_number"/>
+        <result property="driverIdNumber" column="driver_id_number"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity">
+		SELECT * FROM logistics_order_ship WHERE id = #{value}
+	</select>
+
+    <select id="queryByOrderId" resultType="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity">
+		SELECT * FROM logistics_order_ship WHERE order_id = #{orderId}
+	</select>
+
+    <select id="queryList" resultType="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity">
+        SELECT * FROM logistics_order_ship
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                ORDER BY ${sidx} ${order}
+            </when>
+            <otherwise>
+                ORDER BY id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryTotal" resultType="int">
+		SELECT count(*) FROM logistics_order_ship
+	</select>
+
+    <insert id="save" parameterType="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity" useGeneratedKeys="true"
+            keyProperty="id">
+		INSERT INTO logistics_order_ship
+		(
+        `order_id`,
+        `logistics_company_id`,
+        `logistics_number`,
+        `logistics_code`,
+        `number_plate`,
+        `driver_name`,
+        `driver_number`,
+        `driver_id_number`,
+        `remark`
+		)
+		VALUES
+		(
+        #{orderId},
+        #{logisticsCompanyId},
+        #{logisticsNumber},
+        #{logisticsCode},
+        #{numberPlate},
+        #{driverName},
+        #{driverNumber},
+        #{driverIdNumber},
+        #{remark}
+									)
+	</insert>
+
+    <update id="update" parameterType="com.wzlue.chain.logistics.entity.LogisticsOrderShipEntity">
+        UPDATE logistics_order_ship
+        <set>
+            <if test="orderId != null">`order_id` = #{orderId},</if>
+            <if test="logisticsCompanyId != null">`logistics_company_id` = #{logisticsCompanyId},</if>
+            <if test="logisticsNumber != null">`logistics_number` = #{logisticsNumber},</if>
+            <if test="logisticsCode != null">`logistics_code` = #{logisticsCode},</if>
+            <if test="numberPlate != null">`number_plate` = #{numberPlate},</if>
+            <if test="driverName != null">`driver_name` = #{driverName},</if>
+            <if test="driverNumber != null">`driver_number` = #{driverNumber},</if>
+            <if test="driverIdNumber != null">`driver_id_number` = #{driverIdNumber},</if>
+            <if test="remark != null">`remark` = #{remark}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+		DELETE FROM logistics_order_ship WHERE id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM logistics_order_ship WHERE id IN
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
